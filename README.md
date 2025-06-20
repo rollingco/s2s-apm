@@ -1,2 +1,2 @@
 # s2s-apm
-S2S APM payment test1
+S2S APM payment
