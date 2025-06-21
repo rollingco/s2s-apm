@@ -1,7 +1,9 @@
 <?php
+// Log callback data from payment system (successful transaction)
 file_put_contents(
-    'callback_log.txt',
-    date('Y-m-d H:i:s') . "\n" . print_r($_POST, true),
+    __DIR__ . '/callback_log.txt',
+    date('Y-m-d H:i:s') . " CALLBACK:\n" . print_r($_POST ?: $_GET, true) . "\n\n",
     FILE_APPEND
 );
-echo "OK";
+
+echo "<h2>✅ Payment completed successfully!</h2>";
