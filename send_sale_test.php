@@ -1,8 +1,8 @@
 <?php
 $client_key = 'a9375190-26f2-11f0-be42-022c42254708';
 $password = '554999c284e9f29cf95f090d9a8f3171';
-$payment_url = 'https://pay.leogcltd.com'; // заміни на актуальний, якщо є
-
+//$payment_url = 'https://pay.leogcltd.com'; // заміни на актуальний, якщо є
+$payment_url = 'https://pay.leogcltd.com/api/v1/session';
 $order_id = 'ORDER_' . time(); // Унікальний ID
 $amount = '1.99';
 $currency = 'USD';
