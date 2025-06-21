@@ -10,16 +10,20 @@ $identifier = 'success@gmail.com';
 $description = 'Test payment';
 $payer_ip = $_SERVER['REMOTE_ADDR'];
 $success_url = 'https://zal25.pp.ua/s2stest/callback.php';
+$fail_url = 'https://zal25.pp.ua/s2stest/fail.php';
+$cancel_url = 'https://zal25.pp.ua/s2stest/cancel.php';
 
-// Хеш згідно з документацією
+// Hash згідно з формулою: identifier + order_id + amount + currency + PASSWORD
 $hash = md5(strtoupper(strrev($identifier . $order_id . $amount . $currency . $password)));
 
 $data = [
-    "operation" => "SALE",
+    "operation" => "sale", // маленькими літерами
     "merchant_key" => $merchant_key,
     "success_url" => $success_url,
+    "fail_url" => $fail_url,
+    "cancel_url" => $cancel_url,
     "order" => [
-        "id" => $order_id,
+        "number" => $order_id,
         "amount" => $amount,
         "currency" => $currency,
         "description" => $description
@@ -31,7 +35,7 @@ $data = [
     "hash" => $hash
 ];
 
-// Надсилання запиту як JSON
+// JSON-запит
 $json_payload = json_encode($data);
 
 $ch = curl_init($payment_url);
@@ -46,23 +50,27 @@ $response = curl_exec($ch);
 $curl_error = curl_error($ch);
 curl_close($ch);
 
-// Парсимо відповідь
 $response_data = json_decode($response, true);
 
-// Вивід
+// Вивід на екран
 echo "<pre>";
-echo "🔹 <b>ORDER_ID:</b> $order_id\n\n";
-echo "📤 <b>Sent JSON:</b>\n";
+echo "🔹 ORDER_ID: $order_id\n\n";
+echo "📤 Sent:\n";
 print_r($data);
-echo "\n🔐 <b>HASH:</b> $hash\n";
-echo "\n📥 <b>Response:</b>\n";
+echo "\n📥 Response:\n";
 print_r($response_data);
 if ($curl_error) {
-    echo "\n❌ <b>CURL Error:</b> $curl_error\n";
+    echo "\n❌ CURL Error: $curl_error\n";
 }
 echo "</pre>";
 
-// Якщо є redirect_url — редирект на оплату
+// Якщо redirect_url — вивести посилання
 if (!empty($response_data['redirect_url'])) {
-    echo "<p><a href='" . htmlspecialchars($response_data['redirect_url']) . "' target='_blank'>Перейти до оплати</a></p>";
+    echo "<p><a href='" . htmlspecialchars($response_data['redirect_url']) . "' target='_blank'>➡ Перейти до оплати</a></p>";
 }
+// Якщо помилка — вивести повідомлення
+if (!empty($response_data['error'])) {
+    echo "<p style='color: red;'>❗ Помилка: " . htmlspecialchars($response_data['error']) . "</p>";
+} elseif (empty($response_data['redirect_url'])) {
+    echo "<p style='color: orange;'>⚠️ Немає redirect_url у відповіді.</p>";
+}           
