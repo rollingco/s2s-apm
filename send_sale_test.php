@@ -21,7 +21,7 @@ $hash_source = $identifier . $order_id . $amount . $currency . $password;
 $hash = md5(strtoupper(strrev($hash_source)));
 
 $data = [
-    "operation" => "sale", // lowercase required!
+    "action" => "SALE",
     "merchant_key" => $merchant_key,
     "success_url" => $success_url,
     "fail_url" => $fail_url,
