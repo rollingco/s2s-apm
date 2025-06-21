@@ -1,4 +1,6 @@
 <?php
+echo "<h3>🟢 File cancel.php starting...</h3>";
+
 // Log cancellation by user
 file_put_contents(
     __DIR__ . '/cancel_log.txt',

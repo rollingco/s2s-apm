@@ -1,4 +1,6 @@
 <?php
+echo "<h3>🟢 File fail.php starting...</h3>";
+
 // Log failed payment attempt
 file_put_contents(
     __DIR__ . '/fail_log.txt',
