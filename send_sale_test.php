@@ -33,12 +33,20 @@ $data = [
 ];
 
 // CURL-запит
+$json_payload = json_encode($data);
+
 $ch = curl_init($payment_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $json_payload);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'Content-Length: ' . strlen($json_payload)
+]);
 $response = curl_exec($ch);
 $curl_error = curl_error($ch);
 curl_close($ch);
+
 
 // Вивід на екран
 echo "<pre>";
