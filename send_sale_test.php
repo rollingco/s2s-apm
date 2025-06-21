@@ -17,7 +17,7 @@ $cancel_url = 'https://zal25.pp.ua/s2stest/cancel.php';
 $hash = md5(strtoupper(strrev($identifier . $order_id . $amount . $currency . $password)));
 
 $data = [
-    "operation" => "sale", // маленькими літерами
+    "operation" => "Sale", 
     "merchant_key" => $merchant_key,
     "success_url" => $success_url,
     "fail_url" => $fail_url,
