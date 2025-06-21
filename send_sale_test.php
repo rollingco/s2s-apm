@@ -4,8 +4,8 @@ echo "<h3>🟢 File send_sale_test.php starting...</h3>";
 
 $merchant_key = 'a9375190-26f2-11f0-be42-022c42254708';
 $password = '554999c284e9f29cf95f090d9a8f3171';
-//$payment_url = 'https://pay.leogcltd.com/api/v1/session';
-$payment_url = 'https://pay.leogcltd.com/post';
+$payment_url = 'https://pay.leogcltd.com/api/v1/payment';
+//$payment_url = 'https://pay.leogcltd.com/post';
 $order_id = 'ORDER_' . time();
 $amount = '1.99';
 $currency = 'USD';
