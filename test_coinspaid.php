@@ -2,7 +2,7 @@
 // 🟢 LeoGaming + Coinspaid sandbox тестовий запит
 
 // LeoGaming sandbox API endpoint
-$url = 'https://sandbox-api.leogaming.com/payment';
+$url = 'https://api.leogaming.com/payment';
 
 // ✅ Дані для тестової транзакції
 $postData = [
