@@ -1,73 +1,122 @@
 <?php
-// HTML header
-echo "<!DOCTYPE html><html><head><meta charset='UTF-8'>
-<style>
-body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
-.block { border: 1px solid #444; margin-bottom: 20px; padding: 10px; border-radius: 8px; }
-.mock { background: #222; border-left: 5px solid #ff00ff; }
-.test { background: #222; border-left: 5px solid #ffff00; }
-.live { background: #222; border-left: 5px solid #00ff00; }
-h2 { margin-top: 0; }
-.info { color: #0ff; }
-.debug { color: #ff0; }
-.error { color: #f66; }
-</style></head><body>";
+/**
+ * Tola Wallet – MOCKING via Stoplight
+ * Uses the Stoplight mock endpoint you shared to simulate API calls.
+ * Verbose logging is printed to STDOUT (works in CLI and browser).
+ */
 
-logBlock("MOCKING", "mock", "https://api-sandbox.tolamobile.io/mock/transaction", [
-    "type" => "charge",
-    "msisdn" => "254000000001",
-    "sourcereference" => "TEST-MOCK-123",
-    "amount" => 10
-]);
+// ========= CONFIG =========
+$MOCK_ENDPOINT = "https://stoplight.io/mocks/tolamobile/api-docs/39881367/transaction";
+// Stoplight example uses Basic auth with a dummy token. Replace if they give you a real one.
+$AUTH_SCHEME   = "Basic";
+$AUTH_TOKEN    = "123"; // <- change if needed
+$HEADERS_EXTRA = [
+    "Accept: application/json",
+    "Content-Type: application/json",
+];
 
-logBlock("TEST MODE", "test", "https://api-sandbox.tolamobile.io/v1/transaction", [
-    "type" => "charge",
-    "msisdn" => "254000000001",
-    "sourcereference" => "TEST-ENV-456",
-    "amount" => 25
-]);
+// Example payload from your curl (disbursement). You can switch to "charge" if you need.
+$payload = [
+    "msisdn"         => "254000000001",
+    "type"           => "disbursement",   // or "charge"
+    "channel"        => "KENYA.SAFARICOM",
+    "currency"       => "KES",
+    "amount"         => 100,
+    "sourcereference"=> "8FD2KuZNJnBPLKmz"
+];
 
-logBlock("LIVE MODE", "live", "https://api.tolamobile.io/v1/transaction", [
-    "type" => "charge",
-    "msisdn" => "23276123456",
-    "sourcereference" => "LIVE-TX-789",
-    "amount" => 50
-]);
+// ========= RUN =========
+logLine("=== MOCKING with Stoplight ===", "INFO");
+logLine("Endpoint: $MOCK_ENDPOINT", "INFO");
+logLine("Auth: $AUTH_SCHEME " . maskToken($AUTH_TOKEN), "INFO");
 
-echo "</body></html>";
+$response = sendJsonPost($MOCK_ENDPOINT, $payload, $AUTH_SCHEME, $AUTH_TOKEN, $HEADERS_EXTRA);
 
-function logBlock($title, $class, $url, $data) {
-    echo "<div class='block $class'>";
-    echo "<h2>$title</h2>";
-    echo "<div class='info'>[INFO] Sending request to: $url</div>";
-    echo "<div class='debug'>[DEBUG] Payload: " . json_encode($data) . "</div>";
+logLine("HTTP Code: {$response['http_code']}", "INFO");
+logLine("Duration: {$response['duration_sec']} sec", "INFO");
 
-    $response = sendRequest($url, $data);
-
-    if ($response['error']) {
-        echo "<div class='error'>[ERROR] " . htmlspecialchars($response['error']) . "</div>";
-    }
-    echo "<div class='info'>[INFO] HTTP Code: " . $response['code'] . "</div>";
-    echo "<div class='debug'>[DEBUG] Raw Response: " . htmlspecialchars($response['raw']) . "</div>";
-    echo "</div>";
+if ($response['curl_error']) {
+    logLine("cURL Error: {$response['curl_error']}", "ERROR");
 }
 
-function sendRequest($url, $data) {
+// Pretty-print raw response
+$pretty = tryPrettyJson($response['raw']);
+logLine("Raw Response:\n" . $pretty, "DEBUG");
+
+exit(0);
+
+// ========= FUNCTIONS =========
+
+/**
+ * Send JSON POST with verbose timing + headers
+ */
+function sendJsonPost(string $url, array $data, string $authScheme, string $token, array $extraHeaders = []): array {
     $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer YOUR_API_TOKEN'
+
+    $headers = $extraHeaders;
+    if (!empty($authScheme) && !empty($token)) {
+        $headers[] = "Authorization: $authScheme $token";
+    }
+
+    $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    logLine("Payload:\n" . tryPrettyJson($json), "DEBUG");
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_HTTPHEADER     => $headers,
+        CURLOPT_POSTFIELDS     => $json,
+        CURLOPT_HEADER         => false,
+        CURLOPT_TIMEOUT        => 60,
     ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    $result = curl_exec($ch);
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_errno($ch) ? curl_error($ch) : '';
+
+    $start = microtime(true);
+    $raw   = curl_exec($ch);
+    $info  = curl_getinfo($ch);
+    $errNo = curl_errno($ch);
+    $err   = $errNo ? curl_error($ch) : "";
     curl_close($ch);
+    $end   = microtime(true);
+
     return [
-        'code' => $code,
-        'raw' => $result,
-        'error' => $error
+        "raw"         => $raw,
+        "http_code"   => $info['http_code'] ?? 0,
+        "duration_sec"=> number_format($end - $start, 3, '.', ''),
+        "curl_error"  => $err,
     ];
+}
+
+/**
+ * Pretty-print JSON if possible, otherwise return the original string
+ */
+function tryPrettyJson($maybeJson): string {
+    if (is_array($maybeJson)) {
+        return json_encode($maybeJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    if (is_string($maybeJson)) {
+        $decoded = json_decode($maybeJson, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        return $maybeJson;
+    }
+    return print_r($maybeJson, true);
+}
+
+/**
+ * Simple timestamped logger
+ */
+function logLine(string $msg, string $level = "INFO"): void {
+    $ts = date("Y-m-d H:i:s");
+    // Colorize in browser/CLI (basic ANSI for CLI; HTML-safe output still readable)
+    $prefix = "[$ts] [$level] ";
+    echo $prefix . $msg . PHP_EOL;
+}
+
+/**
+ * Mask token for logs
+ */
+function maskToken(string $token): string {
+    if (strlen($token) <= 4) return str_repeat("*", strlen($token));
+    return substr($token, 0, 2) . str_repeat("*", max(0, strlen($token) - 4)) . substr($token, -2);
 }
