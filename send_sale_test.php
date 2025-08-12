@@ -8,11 +8,11 @@ $payment_url = 'https://api.leogcltd.com/post-va';
 $order_id = 'ORDER_' . time();
 $amount = '1.99';
 $currency = 'USD';
-$brand = 'vcard'; // <- Уточни, якщо інший
+$brand = 'vcard'; 
 $identifier = 'success@gmail.com';
 $description = 'Test payment';
 $payer_ip = $_SERVER['REMOTE_ADDR'];
-$return_url = 'https://zal25.pp.ua/s2stest/callback.php'; // один URL
+$return_url = 'https://zal25.pp.ua/s2stest/callback.php';
 
 // HASH = md5(strtoupper(strrev(identifier + order_id + amount + currency + password)))
 $hash_source = $identifier . $order_id . $amount . $currency . $password;
