@@ -34,7 +34,7 @@ header('Content-Type: text/html; charset=utf-8');
 $endpoint = "https://stoplight.io/mocks/tolamobile/api-docs/39881367/transaction";
 
 // NB: У Stoplight авторизація часто не потрібна. Якщо бачиш 401 — спробуй БЕЗ заголовка Authorization.
-$useAuth = true;                 // ← можеш швидко вимкнути/увімкнути
+$useAuth = false;                 // ← можеш швидко вимкнути/увімкнути
 $authHdr = "Authorization: Basic 123";
 
 $headers = [
