@@ -1,122 +1,117 @@
 <?php
-/**
- * Tola Wallet – MOCKING via Stoplight
- * Uses the Stoplight mock endpoint you shared to simulate API calls.
- * Verbose logging is printed to STDOUT (works in CLI and browser).
- */
+// ---------- HTML wrapper + CSS ----------
+header('Content-Type: text/html; charset=utf-8');
+?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tola Mock Logger</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171923; --text:#e6e6e6; --muted:#9aa4af; --ok:#2ecc71; --warn:#f1c40f; --err:#ff6b6b; --info:#00d1d1; }
+  html,body { background:var(--bg); color:var(--text); margin:0; font:14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  .wrap { padding:22px; max-width:1100px; margin:0 auto; }
+  .block { background:var(--panel); border:1px solid #2a2f3a; border-radius:12px; margin:18px 0; box-shadow: 0 4px 18px rgba(0,0,0,.25); }
+  .block > .hdr { padding:12px 16px; font-weight:700; letter-spacing:.4px; }
+  .mock  .hdr { border-left:6px solid #d86cff; }
+  .test  .hdr { border-left:6px solid #ffd166; }
+  .live  .hdr { border-left:6px solid #5bff95; }
+  .body { padding:12px 16px 16px; }
+  .kv   { color:var(--muted); }
+  .line { margin:6px 0; }
+  .tag  { padding:2px 6px; border-radius:6px; font-size:12px; margin-right:6px; }
+  .t-info  { background: rgba(0,209,209,.12); color: var(--info); }
+  .t-debug { background: rgba(241,196,15,.12); color: var(--warn); }
+  .t-ok    { background: rgba(46,204,113,.12); color: var(--ok); }
+  .t-err   { background: rgba(255,107,107,.12); color: var(--err); }
+  pre { background:#11131a; padding:12px; border-radius:10px; overflow:auto; border:1px solid #232635; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<?php
+// ---------- CONFIG (Stoplight mock) ----------
+$endpoint = "https://stoplight.io/mocks/tolamobile/api-docs/39881367/transaction";
 
-// ========= CONFIG =========
-$MOCK_ENDPOINT = "https://stoplight.io/mocks/tolamobile/api-docs/39881367/transaction";
-// Stoplight example uses Basic auth with a dummy token. Replace if they give you a real one.
-$AUTH_SCHEME   = "Basic";
-$AUTH_TOKEN    = "123"; // <- change if needed
-$HEADERS_EXTRA = [
-    "Accept: application/json",
-    "Content-Type: application/json",
+// NB: У Stoplight авторизація часто не потрібна. Якщо бачиш 401 — спробуй БЕЗ заголовка Authorization.
+$useAuth = true;                 // ← можеш швидко вимкнути/увімкнути
+$authHdr = "Authorization: Basic 123";
+
+$headers = [
+  "Accept: application/json",
+  "Content-Type: application/json",
 ];
+if ($useAuth) $headers[] = $authHdr;
 
-// Example payload from your curl (disbursement). You can switch to "charge" if you need.
+// payload з твого прикладу
 $payload = [
-    "msisdn"         => "254000000001",
-    "type"           => "disbursement",   // or "charge"
-    "channel"        => "KENYA.SAFARICOM",
-    "currency"       => "KES",
-    "amount"         => 100,
-    "sourcereference"=> "8FD2KuZNJnBPLKmz"
+  "msisdn"          => "254000000001",
+  "type"            => "disbursement",   // або "charge"
+  "channel"         => "KENYA.SAFARICOM",
+  "currency"        => "KES",
+  "amount"          => 100,
+  "sourcereference" => "8FD2KuZNJnBPLKmz",
 ];
 
-// ========= RUN =========
-logLine("=== MOCKING with Stoplight ===", "INFO");
-logLine("Endpoint: $MOCK_ENDPOINT", "INFO");
-logLine("Auth: $AUTH_SCHEME " . maskToken($AUTH_TOKEN), "INFO");
+// ---------- RENDER HELPERS ----------
+function h($s){ return htmlspecialchars($s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
+function pretty($data){
+  if (is_string($data)) {
+    $d = json_decode($data, true);
+    if (json_last_error() === JSON_ERROR_NONE) $data = $d; else return h($data);
+  }
+  return h(json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
+}
+function tag($txt,$cls){ echo '<span class="tag '.$cls.'">'.h($txt).'</span>'; }
+function section_start($title,$cls){ echo '<div class="block '.$cls.'"><div class="hdr">'.h($title).'</div><div class="body">'; }
+function section_end(){ echo '</div></div>'; }
 
-$response = sendJsonPost($MOCK_ENDPOINT, $payload, $AUTH_SCHEME, $AUTH_TOKEN, $HEADERS_EXTRA);
+// ---------- SEND ----------
+section_start('MOCKING (Stoplight)', 'mock');
 
-logLine("HTTP Code: {$response['http_code']}", "INFO");
-logLine("Duration: {$response['duration_sec']} sec", "INFO");
+echo '<div class="line">'; tag(date('Y-m-d H:i:s'),'t-info'); echo ' <span class="kv">Endpoint:</span> '.h($endpoint).'</div>';
+echo '<div class="line">'; tag('HEADERS','t-debug'); echo '</div><pre>'.pretty($headers).'</pre>';
+echo '<div class="line">'; tag('Payload','t-debug'); echo '</div><pre>'.pretty($payload).'</pre>';
 
-if ($response['curl_error']) {
-    logLine("cURL Error: {$response['curl_error']}", "ERROR");
+$ch = curl_init($endpoint);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST           => true,
+  CURLOPT_HTTPHEADER     => $headers,
+  CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),
+  CURLOPT_HEADER         => true,   // ← щоб побачити і заголовки відповіді
+  CURLOPT_TIMEOUT        => 60,
+]);
+
+$start = microtime(true);
+$raw    = curl_exec($ch);
+$info   = curl_getinfo($ch);
+$errno  = curl_errno($ch);
+$error  = $errno ? curl_error($ch) : '';
+curl_close($ch);
+$dur = number_format(microtime(true) - $start, 3, '.', '');
+
+// Розділяємо заголовки/тіло
+$respHeaders = '';
+$respBody    = '';
+if ($raw !== false && isset($info['header_size'])) {
+  $respHeaders = substr($raw, 0, $info['header_size']);
+  $respBody    = substr($raw, $info['header_size']);
 }
 
-// Pretty-print raw response
-$pretty = tryPrettyJson($response['raw']);
-logLine("Raw Response:\n" . $pretty, "DEBUG");
+$code = $info['http_code'] ?? 0;
+$cls  = ($code >= 200 && $code < 300) ? 't-ok' : ($code >= 400 ? 't-err' : 't-info');
 
-exit(0);
-
-// ========= FUNCTIONS =========
-
-/**
- * Send JSON POST with verbose timing + headers
- */
-function sendJsonPost(string $url, array $data, string $authScheme, string $token, array $extraHeaders = []): array {
-    $ch = curl_init($url);
-
-    $headers = $extraHeaders;
-    if (!empty($authScheme) && !empty($token)) {
-        $headers[] = "Authorization: $authScheme $token";
-    }
-
-    $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    logLine("Payload:\n" . tryPrettyJson($json), "DEBUG");
-
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_HTTPHEADER     => $headers,
-        CURLOPT_POSTFIELDS     => $json,
-        CURLOPT_HEADER         => false,
-        CURLOPT_TIMEOUT        => 60,
-    ]);
-
-    $start = microtime(true);
-    $raw   = curl_exec($ch);
-    $info  = curl_getinfo($ch);
-    $errNo = curl_errno($ch);
-    $err   = $errNo ? curl_error($ch) : "";
-    curl_close($ch);
-    $end   = microtime(true);
-
-    return [
-        "raw"         => $raw,
-        "http_code"   => $info['http_code'] ?? 0,
-        "duration_sec"=> number_format($end - $start, 3, '.', ''),
-        "curl_error"  => $err,
-    ];
+echo '<div class="line">'; tag("HTTP $code", $cls); echo ' <span class="kv">Duration:</span> '.h($dur).' sec</div>';
+if ($error) {
+  echo '<div class="line">'; tag('cURL ERROR','t-err'); echo ' '.h($error).'</div>';
 }
 
-/**
- * Pretty-print JSON if possible, otherwise return the original string
- */
-function tryPrettyJson($maybeJson): string {
-    if (is_array($maybeJson)) {
-        return json_encode($maybeJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    }
-    if (is_string($maybeJson)) {
-        $decoded = json_decode($maybeJson, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        }
-        return $maybeJson;
-    }
-    return print_r($maybeJson, true);
-}
+echo '<div class="line"><span class="kv">Response headers:</span></div><pre>'.h(trim($respHeaders)).'</pre>';
+echo '<div class="line"><span class="kv">Response body:</span></div><pre>'.pretty($respBody).'</pre>';
 
-/**
- * Simple timestamped logger
- */
-function logLine(string $msg, string $level = "INFO"): void {
-    $ts = date("Y-m-d H:i:s");
-    // Colorize in browser/CLI (basic ANSI for CLI; HTML-safe output still readable)
-    $prefix = "[$ts] [$level] ";
-    echo $prefix . $msg . PHP_EOL;
-}
-
-/**
- * Mask token for logs
- */
-function maskToken(string $token): string {
-    if (strlen($token) <= 4) return str_repeat("*", strlen($token));
-    return substr($token, 0, 2) . str_repeat("*", max(0, strlen($token) - 4)) . substr($token, -2);
-}
+section_end();
+?>
+</div>
+</body>
+</html>
