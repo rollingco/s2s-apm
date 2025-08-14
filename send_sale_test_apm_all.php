@@ -1,10 +1,16 @@
 <?php
 /**
- * Universal S2S APM SALE tester
- * - Iterates brands sequentially
+ * Universal S2S APM SALE tester (multi-brand)
+ * - Iterates over ALL brands from the documentation
  * - Sends x-www-form-urlencoded to https://api.leogcltd.com/post-va
- * - Pretty logs per brand
- * - Handles REDIRECT (GET/POST), SUCCESS, DECLINED
+ * - Pretty logs per brand (HTML)
+ * - Handles SUCCESS / DECLINED / REDIRECT (GET/POST)
+ * - Allows brand-specific overrides: identifier, payer_*, parameters[...]
+ *
+ * Notes:
+ * - For vcard (TEST connector): use identifier success@gmail.com (SUCCESS) or fail@gmail.com (DECLINED)
+ * - Some brands require additional parameters per Appendix B; fill them in overrides below
+ * - Apple Pay via S2S APM requires parameters[paymentToken] generated on your side (left as placeholder)
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -28,113 +34,136 @@ function sale_hash($identifier, $order_id, $amount, $currency, $password) {
     return md5(strtoupper(strrev($src)));
 }
 
-/* ================== BRAND SET ==================
- * Expand this list as needed. Keys:
- *  - brand: APM method code
- *  - idType: 'email' | 'phone' | 'custom' — how to fill identifier
- *  - identifier: value (optional, overrides default)
- *  - parameters: extra parameters[...] required by brand
- *  - payer: optional payer_* fields if brand requires them
+/* ================== FULL BRAND LIST (from doc) ================== */
+$ALL_BRANDS = [
+    // A
+    'airtel','allpay','applepay','araka','astropay','axxi-cash','axxi-pin','a2a_transfer',
+    // B
+    'beeline','billplz','bitolo','bpwallet','cardpaymentz','citizen','cnfmo','crypto-btg','dcp','dl','dlocal','doku-hpp','dpbanktransfer',
+    // F
+    'fairpay','fawry','feexpaycard',
+    // G
+    'gigadat','googlepay',
+    // H
+    'hayvn','hayvn-wdwl','helio','help2pay',
+    // I
+    'ideal_crdz','instant-bills-pay','ipasspay',
+    // J
+    'jvz',
+    // K
+    'kashahpp',
+    // M
+    'm2p-debit','m2p-withdrawal','mcpayhpp','mcpayment','mercury','moov-money','moov-togo','mpesa','mtn-mobile-money',
+    // N
+    'naps','netbanking-upi','next-level-finance','nimbbl','noda','nv-apm',
+    // O
+    'om-wallet','one-collection',
+    // P
+    'pagsmile','panapay-netbanking','panapay-upi','papara','payablhpp','payftr-in','payhere','paymentrush','payneteasyhpp','payok-payout','payok-promptpay','payok-upi','paypal','paythrough-upi','paytota','pix','pr-cash','pr-creditcard','pr-cryptocurrency','pr-online','ptbs','ptn-email','ptn-inapp','ptn-sms',
+    'pyk-bkmexpress','pyk-dana','pyk-linkaja','pyk-momo','pyk-nequipush','pyk-ovo','pyk-paparawallet','pyk-payout','pyk-pix','pyk-promptpay','pyk-shopeepay','pyk-truemoney','pyk-upi','pyk-viettelpay','pyk-zalopay',
+    // S
+    'sepa','sofortuber','stcpay','stripe-js','swifipay-deposit','sz-in-imps','sz-in-paytm','sz-in-upi','sz-jp-p2p','sz-kr-p2p','sz-my-ob','sz-th-ob','sz-th-qr','sz-vn-ob','sz-vn-p2p',
+    // T
+    'tabby','tamara','togocom','trustgate',
+    // U
+    'unipayment',
+    // V
+    'vcard','vouchstar','vpayapp_upi',
+    // W
+    'webpaygate','winnerpay',
+    // X
+    'xprowirelatam-ted','xprowirelatam-cash','xprowirelatam-bank-transfer','xprowirelatam-bank-slip','xprowirelatam-picpay','xprowirelatam-pix','xswitfly',
+    // Y
+    'yapily','yo-uganda-limited',
+    // Z
+    'zeropay',
+];
+
+/* ================== BRAND-SPECIFIC OVERRIDES ==================
+ * For brands that require special identifier format, payer fields, or parameters[...]
+ * Add/modify as needed per Appendix B.
  */
-$BRANDS = [
-    // 1) Test connector — should always work in TEST
-    [
-        'brand' => 'vcard',
-        'idType' => 'email',
-        'identifier' => 'success@gmail.com', // success / fail for testing
-        'parameters' => [], // none
-    ],
-    // 2) UPI (sample from doc: sz-in-upi requires parameters[upiAddress])
-    [
-        'brand' => 'sz-in-upi',
+$BRAND_OVERRIDES = [
+    // TEST connector — success/fail via identifier
+    'vcard' => [
         'idType' => 'email',
         'identifier' => 'success@gmail.com',
-        'parameters' => [
-            'upiAddress' => 'address@upi',
-        ],
-        'payer' => [
-            'payer_first_name' => 'John',
-            'payer_last_name'  => 'Doe',
-            'payer_email'      => 'doe@example.com',
-        ],
+        'parameters' => [],
     ],
-    // 3) Tabby (BNPL) — requires category / buyer_registered_since / buyer_loyalty_level
-    [
-        'brand' => 'tabby',
+
+    // UPI (example from doc: requires parameters[upiAddress])
+    'sz-in-upi' => [
+        'idType' => 'email',
+        'identifier' => 'success@gmail.com',
+        'parameters' => [ 'upiAddress' => 'address@upi' ],
+        'payer' => [ 'payer_first_name' => 'John', 'payer_last_name' => 'Doe', 'payer_email' => 'doe@example.com' ],
+    ],
+
+    // Tabby (BNPL)
+    'tabby' => [
         'idType' => 'custom',
         'identifier' => '0987654321-abcd',
         'parameters' => [
-            'category'              => 'Clothes',
-            'buyer_registered_since'=> '2019-08-24T14:15:22',
-            'buyer_loyalty_level'   => '0',
+            'category' => 'Clothes',
+            'buyer_registered_since' => '2019-08-24T14:15:22',
+            'buyer_loyalty_level' => '0',
         ],
         'payer' => [
-            'payer_first_name' => 'John',
-            'payer_last_name'  => 'Doe',
-            'payer_address'    => 'BigStreet',
-            'payer_country'    => 'US',
-            'payer_state'      => 'CA',
-            'payer_city'       => 'City',
-            'payer_zip'        => '123456',
-            'payer_email'      => 'doe@example.com',
-            'payer_phone'      => '0987654321',
+            'payer_first_name' => 'John', 'payer_last_name' => 'Doe', 'payer_address' => 'BigStreet',
+            'payer_country' => 'US', 'payer_state' => 'CA', 'payer_city' => 'City', 'payer_zip' => '123456',
+            'payer_email' => 'doe@example.com', 'payer_phone' => '0987654321',
         ],
     ],
-    // 4) Tamara (BNPL) — requires product fields & amounts
-    [
-        'brand' => 'tamara',
+
+    // Tamara (BNPL)
+    'tamara' => [
         'idType' => 'custom',
         'identifier' => '0987654321-abcd',
         'parameters' => [
-            'shipping_amount'     => '1.01',
-            'tax_amount'          => '1.01',
-            'product_reference_id'=> 'item125430',
-            'product_type'        => 'Clothes',
-            'product_sku'         => 'ABC-12345-S-BL',
-            'product_amount'      => '998.17',
+            'shipping_amount' => '1.01', 'tax_amount' => '1.01',
+            'product_reference_id' => 'item125430', 'product_type' => 'Clothes',
+            'product_sku' => 'ABC-12345-S-BL', 'product_amount' => '998.17',
         ],
         'payer' => [
-            'payer_first_name' => 'John',
-            'payer_last_name'  => 'Doe',
-            'payer_address'    => 'BigStreet',
-            'payer_country'    => 'US',
-            'payer_state'      => 'CA',
-            'payer_city'       => 'City',
-            'payer_zip'        => '123456',
-            'payer_email'      => 'doe@example.com',
-            'payer_phone'      => '0987654321',
+            'payer_first_name' => 'John', 'payer_last_name' => 'Doe', 'payer_address' => 'BigStreet',
+            'payer_country' => 'US', 'payer_state' => 'CA', 'payer_city' => 'City', 'payer_zip' => '123456',
+            'payer_email' => 'doe@example.com', 'payer_phone' => '0987654321',
         ],
     ],
-    // 5) Fawry — phone number must be sent in identifier
-    [
-        'brand' => 'fawry',
+
+    // Fawry — phone number in identifier (not parameters)
+    'fawry' => [
         'idType' => 'phone',
         'identifier' => '+201234567890',
         'parameters' => [],
-        'payer' => [
-            'payer_first_name' => 'Omar',
-            'payer_last_name'  => 'Ali',
-            'payer_email'      => 'omar@example.com',
-        ],
+        'payer' => [ 'payer_first_name' => 'Omar', 'payer_last_name' => 'Ali', 'payer_email' => 'omar@example.com' ],
     ],
-    // 6) SEPA — typical IBAN holder (example)
-    [
-        'brand' => 'sepa',
+
+    // SEPA (example IBAN/holder)
+    'sepa' => [
         'idType' => 'email',
         'identifier' => 'success@gmail.com',
-        'parameters' => [
-            'iban'                 => 'DE89370400440532013000',
-            'account_holder_name'  => 'John Doe',
-        ],
+        'parameters' => [ 'iban' => 'DE89370400440532013000', 'account_holder_name' => 'John Doe' ],
     ],
-    // 7) Apple Pay — (token not provided here; left as placeholder)
-    // To really test applepay via S2S APM, you'd need parameters[paymentToken]
-    [
-        'brand' => 'applepay',
+
+    // Apple Pay — requires parameters[paymentToken] from your Apple Pay integration
+    'applepay' => [
         'idType' => 'email',
         'identifier' => 'success@gmail.com',
         'parameters' => [
             // 'paymentToken' => '... ApplePay paymentData token ...'
+        ],
+    ],
+
+    // payneteasyhpp — requires full payer details (doc remark)
+    'payneteasyhpp' => [
+        'idType' => 'email',
+        'identifier' => 'success@gmail.com',
+        'parameters' => [],
+        'payer' => [
+            'payer_first_name' => 'John', 'payer_last_name' => 'Doe', 'payer_address' => 'BigStreet',
+            'payer_city' => 'City', 'payer_state' => 'CA', 'payer_zip' => '123456',
+            'payer_country' => 'US', 'payer_phone' => '+1234567890', 'payer_email' => 'doe@example.com',
         ],
     ],
 ];
@@ -143,7 +172,7 @@ $BRANDS = [
 ?>
 <!doctype html>
 <html><head><meta charset="utf-8">
-<title>S2S APM — Multi-brand tester</title>
+<title>S2S APM — Multi-brand tester (full)</title>
 <style>
 body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:20px}
 h1{font-weight:700;margin:0 0 16px}
@@ -157,16 +186,32 @@ pre{background:#020617;border-radius:12px;padding:12px;overflow:auto;border:1px 
 .badge.err{color:#ef4444;border-color:#7f1d1d}
 .badge.redir{color:#f59e0b;border-color:#7c2d12}
 a{color:#93c5fd}
+hr.sep{border:none;border-top:1px dashed #334155;margin:12px 0}
+.note{font-size:12px;color:#94a3b8}
 </style>
 </head><body>
-<h1>🧪 S2S APM — Multi-brand tester</h1>
+<h1>🧪 S2S APM — Multi-brand tester (full)</h1>
+<p class="note">Endpoint: <?=htmlspecialchars($PAYMENT_URL)?> · Amount: <?=$AMOUNT?> <?=$CURRENCY?> · Return URL: <?=htmlspecialchars($BASE_RETURN)?></p>
 <?php
 
+/* ================== BUILD FINAL RUN LIST ================== */
+$RUN = [];
+foreach ($ALL_BRANDS as $b) {
+    $ov = $BRAND_OVERRIDES[$b] ?? [];
+    $RUN[] = array_merge([
+        'brand' => $b,
+        'idType' => 'email',
+        'identifier' => 'success@gmail.com', // default identifier (override per brand if needed)
+        'parameters' => [],
+        'payer' => [],
+    ], $ov);
+}
+
 /* ================== RUN SEQUENTIALLY ================== */
-foreach ($BRANDS as $i => $cfg) {
+foreach ($RUN as $i => $cfg) {
     $brand      = $cfg['brand'];
     $idType     = $cfg['idType'] ?? 'email';
-    $identifier = $cfg['identifier'] ?? ($idType === 'phone' ? '+10000000000' : 'success@gmail.com'); // default for demo
+    $identifier = $cfg['identifier'] ?? ($idType === 'phone' ? '+10000000000' : 'success@gmail.com');
     $parameters = $cfg['parameters'] ?? [];
     $payer      = $cfg['payer'] ?? [];
 
@@ -265,6 +310,7 @@ foreach ($BRANDS as $i => $cfg) {
         }
     }
 
+    echo '<hr class="sep">';
     echo '</div>'; // .brand
 }
 
