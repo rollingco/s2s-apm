@@ -35,49 +35,8 @@ function sale_hash($identifier, $order_id, $amount, $currency, $password) {
 }
 
 /* ================== FULL BRAND LIST (from doc) ================== */
-$ALL_BRANDS = [
-    // A
-    'airtel','allpay','applepay','araka','astropay','axxi-cash','axxi-pin','a2a_transfer',
-    // B
-    'beeline','billplz','bitolo','bpwallet','cardpaymentz','citizen','cnfmo','crypto-btg','dcp','dl','dlocal','doku-hpp','dpbanktransfer',
-    // F
-    'fairpay','fawry','feexpaycard',
-    // G
-    'gigadat','googlepay',
-    // H
-    'hayvn','hayvn-wdwl','helio','help2pay',
-    // I
-    'ideal_crdz','instant-bills-pay','ipasspay',
-    // J
-    'jvz',
-    // K
-    'kashahpp',
-    // M
-    'm2p-debit','m2p-withdrawal','mcpayhpp','mcpayment','mercury','moov-money','moov-togo','mpesa','mtn-mobile-money',
-    // N
-    'naps','netbanking-upi','next-level-finance','nimbbl','noda','nv-apm',
-    // O
-    'om-wallet','one-collection',
-    // P
-    'pagsmile','panapay-netbanking','panapay-upi','papara','payablhpp','payftr-in','payhere','paymentrush','payneteasyhpp','payok-payout','payok-promptpay','payok-upi','paypal','paythrough-upi','paytota','pix','pr-cash','pr-creditcard','pr-cryptocurrency','pr-online','ptbs','ptn-email','ptn-inapp','ptn-sms',
-    'pyk-bkmexpress','pyk-dana','pyk-linkaja','pyk-momo','pyk-nequipush','pyk-ovo','pyk-paparawallet','pyk-payout','pyk-pix','pyk-promptpay','pyk-shopeepay','pyk-truemoney','pyk-upi','pyk-viettelpay','pyk-zalopay',
-    // S
-    'sepa','sofortuber','stcpay','stripe-js','swifipay-deposit','sz-in-imps','sz-in-paytm','sz-in-upi','sz-jp-p2p','sz-kr-p2p','sz-my-ob','sz-th-ob','sz-th-qr','sz-vn-ob','sz-vn-p2p',
-    // T
-    'tabby','tamara','togocom','trustgate',
-    // U
-    'unipayment',
-    // V
-    'vcard','vouchstar','vpayapp_upi',
-    // W
-    'webpaygate','winnerpay',
-    // X
-    'xprowirelatam-ted','xprowirelatam-cash','xprowirelatam-bank-transfer','xprowirelatam-bank-slip','xprowirelatam-picpay','xprowirelatam-pix','xswitfly',
-    // Y
-    'yapily','yo-uganda-limited',
-    // Z
-    'zeropay',
-];
+$ALL_BRANDS = ['vcard','applepay','googlepay','paypal'];
+
 
 /* ================== BRAND-SPECIFIC OVERRIDES ==================
  * For brands that require special identifier format, payer fields, or parameters[...]
