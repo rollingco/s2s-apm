@@ -23,7 +23,7 @@ $BRAND_OVERRIDES = [
     'paypal' => ['identifier' => 'success@gmail.com']
 ];
 ?>
-<!doctype html>
+<!doctype  html>
 <html><head><meta charset="utf-8">
 <title>S2S APM — Tester</title>
 <style>
