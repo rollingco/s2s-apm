@@ -7,7 +7,7 @@ $password = '554999c284e9f29cf95f090d9a8f3171';
 $payment_url = 'https://api.leogcltd.com/post-va';
 $payment_url = 'https://api.leogcltd.com/callback/aquanow';
 
-$order_id =  'ORDER_' . time();
+$order_id = 'ORDER_' . time();
 $amount = '1.99';
 $currency = 'USD';
 $brand = 'vcard'; 
