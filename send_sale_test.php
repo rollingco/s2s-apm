@@ -51,7 +51,7 @@ curl_close($ch);
 
 // Спроба розпарсити JSON-відповідь
 $response_data = json_decode($response, true);
-
+echo "$payment_url\n";
 echo "<pre>";
 echo "🔹 ORDER_ID: $order_id\n\n";
 echo "📤 Sent:\n";
