@@ -196,7 +196,7 @@ foreach ($tests as $tIndex => $t) {
             $hash = $hasher($src);
             $payload['hash'] = $hash;
             $url = rtrim($CHECKOUT_HOST,'/').'/api/v1/session';
-            $url = $CHECKOUT_HOST;
+       
 
             echo "\n-- REQUEST ----------------------------------------------------------------\n";
             kv('POST', $url);
