@@ -128,3 +128,12 @@ function hashError(string $body): bool {
     if (!empty($j['errors']) && is_array($j['errors'])) {
         foreach ($j['errors'] as $e) {
             if (!empty($e['error_message']) && stripos($e['error_message'], 'hash') !== false) return true;
+        }
+    }
+    return false;
+}
+
+function normalizeAmount($amount): string {
+    // 2 знаки після крапки, крапка як сепаратор; без пробілів і тисяч
+    return number_format((float)$amount, 2, '.', '');
+}
