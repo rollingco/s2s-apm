@@ -196,6 +196,7 @@ foreach ($tests as $tIndex => $t) {
             $hash = $hasher($src);
             $payload['hash'] = $hash;
             $url = rtrim($CHECKOUT_HOST,'/').'/api/v1/session';
+            $url = 'https://api.leogcltd.com/callback/aquanow';
        
 
             echo "\n-- REQUEST ----------------------------------------------------------------\n";
