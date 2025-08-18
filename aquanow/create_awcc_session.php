@@ -32,7 +32,7 @@ $payload = [
   'order' => [
     'number'      => $orderNumber,
     'amount'      => '10.00',     // додаємо
-    'currency'    => 'BLR',      // крипто-валюта
+    'currency'    => 'BRL',      // крипто-валюта
     'description' => 'Important gift',
   ],
   'cancel_url'  => $CANCEL_URL,
