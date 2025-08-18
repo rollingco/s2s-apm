@@ -17,7 +17,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 // ===== Order test data (CRYPTO) =====
 // For AWCC crypto, use a crypto currency (e.g., USDT) and DO NOT send amount.
 $orderNumber   = 'order-'.time();
-$orderCurrency = 'USDT';               // crypto currency (uppercase)
+$orderCurrency = 'BRL';               // crypto currency (uppercase)
 $orderDesc     = 'Test AWCC without amount';
 
 // ===== AWCC specific (Aquanow) =====
