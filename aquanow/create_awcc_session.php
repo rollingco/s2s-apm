@@ -9,7 +9,7 @@
 // ===== CONFIG (your MID) =====
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $MERCHANT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$MERCHANT_PASS = '54999c284e9f29cf95f090d9a8f3171'; // must match merch1_pass_post in Postman
+$MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171'; // must match merch1_pass_post in Postman
 
 $SUCCESS_URL   = 'https://example.com/success';
 $CANCEL_URL    = 'https://example.com/cancel';
