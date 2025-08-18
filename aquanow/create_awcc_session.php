@@ -76,9 +76,14 @@ echo "HTTP {$res['code']}\n{$res['body']}\n";
 $data = json_decode($res['body'], true);
 if (is_array($data)) {
     foreach (['checkout_url','redirect_url','payment_url','url'] as $k) {
-        if (!empty($data[$k])) { echo "\nOpen in browser: {$data[$k]}\n"; break; }
+        if (!empty($data[$k])) {
+            $url = htmlspecialchars($data[$k], ENT_QUOTES);
+            echo "<p>Open in browser: <a href=\"$url\" target=\"_blank\">$url</a></p>";
+            break;
+        }
     }
 }
+
 
 // ================= helpers =================
 function httpPostJson(string $url, array $data): array {
