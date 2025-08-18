@@ -24,35 +24,34 @@ $orderDesc     = 'Test AWCC without amount';
 $networkType = 'eth';                  // 'eth' or 'tron'
 $bech32      = false;                  // irrelevant for USDT, kept for completeness
 
-// ===== Build payload (NO amount) =====
 $payload = [
-    'merchant_key' => $MERCHANT_KEY,
-    'operation'    => 'purchase',
-    'methods'      => ['awcc'],
-    'parameters'   => [
-        'awcc' => [
-            'network_type' => $networkType,
-            'bech32'       => $bech32 ? 'true' : 'false',
-        ],
-    ],
-    'order' => [
-        'number'      => $orderNumber,
-        // 'amount'    => not sent for crypto flow w/o amount
-        'currency'    => $orderCurrency,  // MUST be uppercase
-        'description' => $orderDesc,
-    ],
-    'cancel_url'  => $CANCEL_URL,
-    'success_url' => $SUCCESS_URL,
+  'merchant_key' => $MERCHANT_KEY,
+  'operation'    => 'purchase',
+  'methods'      => ['awcc'],
+  'parameters'   => ['awcc' => ['network_type' => 'eth']], // або 'tron'
+  'order' => [
+    'number'      => $orderNumber,
+    'amount'      => '10.00',     // додаємо
+    'currency'    => 'USDT',      // крипто-валюта
+    'description' => 'Important gift',
+  ],
+  'cancel_url'  => $CANCEL_URL,
+  'success_url' => $SUCCESS_URL,
+  'customer' => ['name' => 'John Doe', 'email' => 'test@example.com'],
+  'billing_address' => [
+    'country' => 'US','state' => 'CA','city' => 'Los Angeles',
+    'address' => 'Moor Building 35274','zip' => '123456','phone' => '347777112233',
+  ],
 ];
+// Hash з amount (той самий pipeline):
+$payload['hash'] = sha1(md5(strtoupper(
+  $payload['order']['number'] .
+  $payload['order']['amount'] .
+  $payload['order']['currency'] .
+  $payload['order']['description'] .
+  $MERCHANT_PASS
+)));
 
-// ===== Hash (NO amount in the string_to_sign) =====
-$payload['hash'] = buildSessionHash_AWCC_NoAmount(
-    $payload['order']['number'],
-    $payload['order']['currency'],
-    $payload['order']['description'],
-    $MERCHANT_PASS,
-    $debug // will be filled for printing
-);
 
 // ===== Send request =====
 $endpoint = rtrim($CHECKOUT_HOST, '/').'/api/v1/session';
