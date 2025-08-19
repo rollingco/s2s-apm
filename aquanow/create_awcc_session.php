@@ -1,5 +1,13 @@
 <?php
-// CONFIG
+/**
+ * Create Checkout session (AWCC) — final clean version
+ * - Per support: send fiat currency (USD/EUR/CAD) in order.currency and include amount.
+ * - AWCC parameters: only 'network_type' (eth|tron) if applicable and optional 'bech32'.
+ * - Signature: SHA1( MD5( UPPER(order.number + order.amount + order.currency + order.description + merchant.pass) ) )
+ * - Output: HTML with a clickable "Open in browser" link (target=_blank).
+ */
+
+// ===== CONFIG (your MID) =====
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $MERCHANT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 $MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171';
@@ -7,45 +15,52 @@ $MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171';
 $SUCCESS_URL   = 'https://example.com/success';
 $CANCEL_URL    = 'https://example.com/cancel';
 
-// ORDER (fiat)
+// ===== ORDER (fiat) =====
 $orderNumber   = 'order-'.time();
-$orderAmount   = '10.00';     // fiat amount
-$orderCurrency = 'USD';       // MUST be USD/EUR/CAD per support
+$orderAmount   = '10.00';          // fiat amount (required)
+$orderCurrency = 'USD';            // per support: USD (or EUR/CAD if enabled)
 $orderDesc     = 'Important gift';
 
-// AWCC parameters
-$cryptoType   = 'USDT';       // required per support
-$networkType  = 'eth';        // 'eth' or 'tron' for USDT
-$bech32       = false;
+// ===== AWCC parameters =====
+// For USDT flows you may set network_type to 'eth' or 'tron' if applicable.
+// It's safe to send it; backend will ignore if not needed for your flow.
+$networkType = 'eth';              // 'eth' or 'tron' (optional, used for USDT cases)
+$bech32      = false;              // optional; true returns bech32 segwit (BTC) / BCH address
 
-// Build payload
+// ===== Build payload =====
 $payload = [
   'merchant_key' => $MERCHANT_KEY,
   'operation'    => 'purchase',
   'methods'      => ['awcc'],
   'parameters'   => [
     'awcc' => [
-      'cryptoType'   => $cryptoType,  // <<<<<<<<<< HERE
-      'network_type' => $networkType, // for USDT
+      'network_type' => $networkType,           // keep or remove if not applicable
       'bech32'       => $bech32 ? 'true' : 'false',
     ],
   ],
   'order' => [
     'number'      => $orderNumber,
-    'amount'      => $orderAmount,      // fiat amount
-    'currency'    => $orderCurrency,    // fiat currency
+    'amount'      => $orderAmount,
+    'currency'    => $orderCurrency,            // MUST be fiat per support
     'description' => $orderDesc,
   ],
   'cancel_url'  => $CANCEL_URL,
   'success_url' => $SUCCESS_URL,
-  'customer' => ['name' => 'John Doe', 'email' => 'test@example.com'],
+  'customer' => [
+    'name'  => 'John Doe',
+    'email' => 'test@example.com',
+  ],
   'billing_address' => [
-    'country' => 'US','state' => 'CA','city' => 'Los Angeles',
-    'address' => 'Moor Building 35274','zip' => '123456','phone' => '347777112233',
+    'country' => 'US',
+    'state'   => 'CA',
+    'city'    => 'Los Angeles',
+    'address' => 'Moor Building 35274',
+    'zip'     => '123456',
+    'phone'   => '347777112233',
   ],
 ];
 
-// Hash (WITH amount, fiat currency)
+// ===== Signature (Postman-style) =====
 $toMd5Upper = strtoupper(
   $payload['order']['number'] .
   $payload['order']['amount'] .
@@ -55,15 +70,36 @@ $toMd5Upper = strtoupper(
 );
 $payload['hash'] = sha1(md5($toMd5Upper));
 
-// Send
+// ===== Send request =====
 $endpoint = rtrim($CHECKOUT_HOST, '/').'/api/v1/session';
 $res = httpPostJson($endpoint, $payload);
 
-// Output (HTML with clickable link)
+// ===== Output (HTML) =====
 header('Content-Type: text/html; charset=utf-8');
+
 echo "<h3>POST $endpoint</h3>";
-echo "<h4>Request</h4><pre>".htmlspecialchars(json_encode($payload, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT), ENT_QUOTES)."</pre>";
-echo "<h4>Response</h4><pre>HTTP {$res['code']}\n{$res['body']}</pre>";
+
+echo "<h4>Hash debug</h4>";
+echo "<pre>";
+echo "string_to_sign:   ".htmlspecialchars(
+  $payload['order']['number'] .
+  $payload['order']['amount'] .
+  $payload['order']['currency'] .
+  $payload['order']['description'] .
+  $MERCHANT_PASS,
+  ENT_QUOTES
+)."\n";
+echo "uppercased:       ".htmlspecialchars($toMd5Upper, ENT_QUOTES)."\n";
+echo "md5(upper):       ".md5($toMd5Upper)."\n";
+echo "sha1(md5_hex):    ".$payload['hash']."\n";
+echo "</pre>";
+
+echo "<h4>Request</h4>";
+echo "<pre>".htmlspecialchars(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), ENT_QUOTES)."</pre>";
+
+echo "<h4>Response</h4>";
+echo "<pre>HTTP {$res['code']}\n{$res['body']}</pre>";
+
 $data = json_decode($res['body'], true);
 if (is_array($data)) {
   foreach (['checkout_url','redirect_url','payment_url','url'] as $k) {
@@ -75,6 +111,7 @@ if (is_array($data)) {
   }
 }
 
+// ================= helpers =================
 function httpPostJson(string $url, array $data): array {
   $json = json_encode($data, JSON_UNESCAPED_SLASHES);
   $ch = curl_init();
