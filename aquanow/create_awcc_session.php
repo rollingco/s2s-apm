@@ -1,39 +1,45 @@
 <?php
 /**
- * Create Checkout session (AWCC, crypto w/o amount) — PHP
- * - Payload: order has NO "amount"
- * - Signature: SHA1( MD5( UPPER(order.number + order.currency + order.description + merchant.pass) ) )
- * - Verbose debug block prints the exact string_to_sign and hashes to match Postman Console.
+ * Create Checkout session (AWCC) — PHP (browser-friendly output)
+ * - This variant uses amount + BRL (as per your current test)
+ * - Signature: SHA1( MD5( UPPER(order.number + order.amount + order.currency + order.description + merchant.pass) ) )
+ * - HTML output with clickable link (target=_blank)
  */
 
 // ===== CONFIG (your MID) =====
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $MERCHANT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171'; // your latest value
+$MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171';
 
 $SUCCESS_URL   = 'https://example.com/success';
 $CANCEL_URL    = 'https://example.com/cancel';
 
-// ===== Order test data (CRYPTO) =====
-// For AWCC crypto, use a crypto currency (e.g., USDT) and DO NOT send amount.
+// ===== Order test data =====
 $orderNumber   = 'order-'.time();
-$orderCurrency = 'BRL';               // crypto currency (uppercase)
-$orderDesc     = 'Test AWCC without amount';
+$orderAmount   = '10.00';        // amount is present in this scenario
+$orderCurrency = 'BRL';          // BRL per your test (for USDT use 'USDT' + network_type)
+$orderDesc     = 'Important gift';
 
 // ===== AWCC specific (Aquanow) =====
-$networkType = 'eth';                  // 'eth' or 'tron'
-$bech32      = false;                  // irrelevant for USDT, kept for completeness
+$networkType = 'eth';            // 'eth' or 'tron' (relevant mainly for USDT)
+$bech32      = false;
 
+// ===== Build payload =====
 $payload = [
   'merchant_key' => $MERCHANT_KEY,
   'operation'    => 'purchase',
   'methods'      => ['awcc'],
-  'parameters'   => ['awcc' => ['network_type' => 'eth']], // або 'tron'
+  'parameters'   => [
+      'awcc' => [
+          'network_type' => $networkType,          // optional for BRL, required for USDT
+          'bech32'       => $bech32 ? 'true' : 'false',
+      ],
+  ],
   'order' => [
     'number'      => $orderNumber,
-    'amount'      => '10.00',     // додаємо
-    'currency'    => 'BRL',      // крипто-валюта
-    'description' => 'Important gift',
+    'amount'      => $orderAmount,
+    'currency'    => $orderCurrency,
+    'description' => $orderDesc,
   ],
   'cancel_url'  => $CANCEL_URL,
   'success_url' => $SUCCESS_URL,
@@ -43,47 +49,56 @@ $payload = [
     'address' => 'Moor Building 35274','zip' => '123456','phone' => '347777112233',
   ],
 ];
-// Hash з amount (той самий pipeline):
-$payload['hash'] = sha1(md5(strtoupper(
-  $payload['order']['number'] .
-  $payload['order']['amount'] .
-  $payload['order']['currency'] .
-  $payload['order']['description'] .
-  $MERCHANT_PASS
-)));
 
+// ===== Hash with amount (Postman-style) =====
+$toMd5Upper = strtoupper(
+    $payload['order']['number'] .
+    $payload['order']['amount'] .
+    $payload['order']['currency'] .
+    $payload['order']['description'] .
+    $MERCHANT_PASS
+);
+$payload['hash'] = sha1(md5($toMd5Upper));
 
 // ===== Send request =====
 $endpoint = rtrim($CHECKOUT_HOST, '/').'/api/v1/session';
 $res = httpPostJson($endpoint, $payload);
 
-// ===== Output (verbose) =====
-header('Content-Type: text/plain; charset=utf-8');
+// ===== Output (HTML) =====
+header('Content-Type: text/html; charset=utf-8');
 
-echo "POST $endpoint\n\n";
+echo "<h3>POST $endpoint</h3>";
 
-// Debug block — compare with Postman Console if needed
-echo "=== HASH DEBUG (AWCC, w/o amount) ==================================\n";
-echo "string_to_sign:   {$debug['string_to_sign']}\n";
-echo "uppercased:       {$debug['upper']}\n";
-echo "md5(upper):       {$debug['md5_hex']}\n";
-echo "sha1(md5_hex):    {$payload['hash']}\n";
-echo "=====================================================================\n\n";
+echo "<h4>Hash debug</h4>";
+echo "<pre>";
+echo "string_to_sign:   ".htmlspecialchars(
+    $payload['order']['number'] .
+    $payload['order']['amount'] .
+    $payload['order']['currency'] .
+    $payload['order']['description'] .
+    $MERCHANT_PASS, ENT_QUOTES
+)."\n";
+echo "uppercased:       ".htmlspecialchars($toMd5Upper, ENT_QUOTES)."\n";
+echo "md5(upper):       ".md5($toMd5Upper)."\n";
+echo "sha1(md5_hex):    ".$payload['hash']."\n";
+echo "</pre>";
 
-echo "Request:\n".json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)."\n\n";
-echo "HTTP {$res['code']}\n{$res['body']}\n";
+echo "<h4>Request</h4>";
+echo "<pre>".htmlspecialchars(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), ENT_QUOTES)."</pre>";
+
+echo "<h4>Response</h4>";
+echo "<pre>HTTP {$res['code']}\n{$res['body']}</pre>";
 
 $data = json_decode($res['body'], true);
 if (is_array($data)) {
     foreach (['checkout_url','redirect_url','payment_url','url'] as $k) {
         if (!empty($data[$k])) {
             $url = htmlspecialchars($data[$k], ENT_QUOTES);
-            echo "<p>Open in browser: <a href=\"$url\" target=\"_blank\">$url</a></p>";
+            echo "<p><strong>Open in browser:</strong> <a href=\"$url\" target=\"_blank\" rel=\"noopener noreferrer\">$url</a></p>";
             break;
         }
     }
 }
-
 
 // ================= helpers =================
 function httpPostJson(string $url, array $data): array {
@@ -103,32 +118,4 @@ function httpPostJson(string $url, array $data): array {
     curl_close($ch);
     if ($err) { $body = "cURL error: $err"; }
     return ['code'=>$code, 'body'=>$body];
-}
-
-/**
- * AWCC crypto (no amount) signature:
- *   string_to_sign = order.number + order.currency + order.description + merchant.pass
- *   upper = strtoupper(string_to_sign)
- *   md5_hex = md5(upper)
- *   sha1_hex = sha1(md5_hex)
- */
-function buildSessionHash_AWCC_NoAmount(
-    string $orderNumber,
-    string $orderCurrency,
-    string $orderDescription,
-    string $merchantPass,
-    ?array &$debug = null
-): string {
-    $stringToSign = $orderNumber . $orderCurrency . $orderDescription . $merchantPass;
-    $upper        = strtoupper($stringToSign);
-    $md5Hex       = md5($upper);
-    $sha1Hex      = sha1($md5Hex);
-
-    $debug = [
-        'string_to_sign' => $stringToSign,
-        'upper'          => $upper,
-        'md5_hex'        => $md5Hex,
-        'sha1_hex'       => $sha1Hex,
-    ];
-    return $sha1Hex;
 }
