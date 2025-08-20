@@ -31,6 +31,7 @@ $bech32      = false;              // optional; true returns bech32 segwit (BTC)
 // ===== Build payload =====
 $payload = [
   'merchant_key' => $MERCHANT_KEY,
+  'accountId'   => 'CA1001161C', // optional, can be used to identify the user
   'operation'    => 'purchase',
   'methods'      => ['awcc'],
   'parameters'   => [
