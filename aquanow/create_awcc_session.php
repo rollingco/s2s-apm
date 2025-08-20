@@ -14,7 +14,7 @@ $MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171';
 
 $SUCCESS_URL   = 'https://example.com/success';
 $CANCEL_URL    = 'https://example.com/cancel';
-
+   
 // ===== ORDER (fiat) =====
 $orderNumber   = 'order-'.time();
 $orderAmount   = '10.00';          // fiat amount (required)
