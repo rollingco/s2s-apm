@@ -34,7 +34,7 @@ $payload = [
   'methods'      => ['awcc'],
   'parameters'   => [
     'awcc' => [
-      'network_type' => $networkType,           // keep or remove if not applicable
+      //'network_type' => $networkType,           // keep or remove if not applicable
       'bech32'       => $bech32 ? 'true' : 'false',
     ],
   ],
