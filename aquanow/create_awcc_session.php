@@ -18,7 +18,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 // ===== ORDER (fiat) =====
 $orderNumber   = 'order-'.time();
 $orderAmount   = '10.00';          // fiat amount (required)
-$orderCurrency = 'USDT';            // per support: USD (or EUR/CAD if enabled)
+$orderCurrency = 'BRL';            // per support: USD (or EUR/CAD if enabled)
 $orderDesc     = 'Important gift';
 
 // ===== AWCC parameters =====
