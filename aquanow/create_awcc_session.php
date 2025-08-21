@@ -14,7 +14,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 // Order data
 $orderNumber   = 'order-1234';
 $orderAmount   = '100.19';      // must have 2 decimals
-$orderCurrency = 'BRL';
+$orderCurrency = 'USDT';
 $orderDesc     = 'Important gift';
 
 // Build payload exactly as in cURL
