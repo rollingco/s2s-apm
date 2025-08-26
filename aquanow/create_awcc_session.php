@@ -15,7 +15,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 
 // Order
 $orderNumber   = 'order-1234';
-$orderAmount   = '1000.19';
+$orderAmount   = '19.19';
 $orderCurrency = 'BRL';
 $orderDesc     = 'Important gift';
 
@@ -24,13 +24,14 @@ $payload = [
     "merchant_key" => $MERCHANT_KEY,
     "operation"    => "purchase",
     "methods"      => ["awcc"],
-    "parameters"   => [
-        "awcc" => [
-            "network_type" => "string",
-            "bech32"       => false,
-            "crypto_type"  => "string"
+    'parameters'   => [
+        'awcc' => [
+            'network_type' => 'eth',   // мережа
+            'bech32'       => false,
+            'crypto_type'  => 'USDT'   // монета
         ]
     ],
+
     "order" => [
         "number"      => $orderNumber,
         "amount"      => $orderAmount,
