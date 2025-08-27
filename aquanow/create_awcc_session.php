@@ -1,9 +1,8 @@
 <?php
 /**
- * Create Checkout session (AWCC) — strictly per latest support response
- * - parameters.awcc: network_type (string), bech32 (boolean), crypto_type (string)
- * - order.currency = BRL (as in support sample)
- * - hash = sha1(md5(strtoupper(order.number + order.amount + order.currency + order.description + merchant_pass)))
+ * Create Checkout session (AWCC) — with accountId
+ * - Added accountId per AquaNow support
+ * - Signature: sha1(md5(strtoupper(order.number + order.amount + order.currency + order.description + merchant_pass)))
  */
 
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
@@ -14,24 +13,23 @@ $SUCCESS_URL   = 'https://example.com/success';
 $CANCEL_URL    = 'https://example.com/cancel';
 
 // Order
-$orderNumber   = 'order-1234';
-$orderAmount   = '19.19';
-$orderCurrency = 'USD';
+$orderNumber   = 'order-'.time();
+$orderAmount   = '1000.19';
+$orderCurrency = 'BRL';
 $orderDesc     = 'Important gift';
 
-// Parameters.awcc — exactly as support requires
+// Parameters.awcc
 $payload = [
     "merchant_key" => $MERCHANT_KEY,
     "operation"    => "purchase",
     "methods"      => ["awcc"],
-    'parameters'   => [
-        'awcc' => [
-            'network_type' => 'eth',   // мережа
-            'bech32'       => false,
-            'crypto_type'  => 'USDT'   // монета
+    "parameters"   => [
+        "awcc" => [
+            "network_type" => "eth",
+            "bech32"       => false,
+            "crypto_type"  => "USDT"
         ]
     ],
-
     "order" => [
         "number"      => $orderNumber,
         "amount"      => $orderAmount,
@@ -51,7 +49,8 @@ $payload = [
         "address" => "Moor Building 35274",
         "zip"     => "123456",
         "phone"   => "347771112233"
-    ]
+    ],
+    "accountId" => "CA1001161C"   // <--- додали згідно з AquaNow
 ];
 
 // Signature
