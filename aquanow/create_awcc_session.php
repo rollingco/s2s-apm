@@ -16,7 +16,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 // Order
 $orderNumber   = 'order-'.time();
 $orderAmount   = '0.19';
-$orderCurrency = 'BRL';
+$orderCurrency = 'USD';
 $orderDesc     = 'Important gift';
 
 // Parameters.awcc
