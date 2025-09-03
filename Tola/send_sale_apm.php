@@ -1,7 +1,9 @@
 <?php
 /**
  * S2S APM SALE — working config (multipart/form-data + Basic Auth)
- * This is the version that previously returned: result=SUCCESS, status=PREPARE
+ * ✔ 200 OK / result=SUCCESS, status=PREPARE
+ * ❌ NO `msisdn` field (removed)
+ * ☎ payer_phone uses a normal number (default 23233310905)
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -9,20 +11,19 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===== CONFIG (working pair) ===== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
-$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708'; 
-$CLIENT_KEY   = 'a9375190-26f2-11f0-be42-022c42254708';// <- working client_key
-$SECRET      = '554999c284e9f29cf95f090d9a8f3171';     // <- same secret for SALE hash
+$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708'; // working client_key
+$SECRET      = '554999c284e9f29cf95f090d9a8f3171';     // same secret for SALE hash
 
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
-/* ===== RUNTIME (override via query if needed) ===== */
+/* ===== RUNTIME (override via query) ===== */
 $brand       = $_GET['brand']  ?? 'afri-money';
 $identifier  = $_GET['id']     ?? '111';
 $order_ccy   = $_GET['ccy']    ?? 'SLE';
 $order_amt   = $_GET['amt']    ?? '100.00';
 $return_url  = $_GET['return'] ?? 'https://google.com';
-$msisdn      = $_GET['msisdn'] ?? '254000000000'; // controls test scenario
+$payer_phone = $_GET['phone']  ?? '23233310905'; // ← normal phone; change via ?phone=
 
 $order_id    = 'ORDER_' . time();
 $order_desc  = 'Important gift';
@@ -35,7 +36,7 @@ function build_sale_hash($identifier, $order_id, $amount, $currency, $secret){
 }
 $hash = build_sale_hash($identifier, $order_id, $order_amt, $order_ccy, $SECRET);
 
-/* ===== multipart/form-data payload (do NOT set Content-Type manually) ===== */
+/* ===== multipart/form-data payload (DO NOT set Content-Type manually) ===== */
 $form = [
   'action'            => 'SALE',
   'client_key'        => $CLIENT_KEY,
@@ -47,8 +48,7 @@ $form = [
   'identifier'        => $identifier,
   'payer_ip'          => $payer_ip,
   'return_url'        => $return_url,
-  'payer_phone'       => $msisdn, // connector expects phone here
-  'msisdn'            => $msisdn, // keep for Tola-style test routing
+  'payer_phone'       => $payer_phone, // only this phone field is sent
   'hash'              => $hash,
 ];
 
@@ -99,7 +99,7 @@ if (is_array($data)) {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SALE — working config</title>
+<title>SALE — working config (no msisdn)</title>
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--info:#00d1d1}
 html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
@@ -117,10 +117,10 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
 <body>
 <div class="wrap">
   <div class="panel">
-    <div class="h">🟢 SALE sent (working config)</div>
+    <div class="h">🟢 SALE sent (200 OK config)</div>
     <div><span class="kv">Endpoint:</span> <?=h($PAYMENT_URL)?></div>
     <div><span class="kv">Client key:</span> <?=h($CLIENT_KEY)?></div>
-    <div><span class="kv">Order ID:</span> <?=h($order_id)?> &nbsp; <span class="kv">MSISDN:</span> <?=h($msisdn)?> &nbsp; <span class="kv">Duration:</span> <?=h($dur)?>s</div>
+    <div><span class="kv">Order ID:</span> <?=h($order_id)?> &nbsp; <span class="kv">Phone (payer_phone):</span> <?=h($payer_phone)?> &nbsp; <span class="kv">Duration:</span> <?=h($dur)?>s</div>
   </div>
 
   <div class="panel">
