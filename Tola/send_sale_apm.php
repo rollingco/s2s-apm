@@ -48,7 +48,7 @@ $form = [
   'identifier'        => $identifier,
   'payer_ip'          => $payer_ip,
   'return_url'        => $return_url,
-  'payer_phone'       => $msisdn, // for this connector
+  'payer_phone'       => '380673812507', // for this connector
   'msisdn'            => $msisdn, // for Tola sandbox rules
   'hash'              => $hash,
 ];
