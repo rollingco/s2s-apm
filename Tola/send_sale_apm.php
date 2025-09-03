@@ -11,7 +11,8 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===== CONFIG (working pair) ===== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
-$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708'; // working client_key
+$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
+$CLIENT_KEY   = 'a9375190-26f2-11f0-be42-022c42254708'; // working client_key
 $SECRET      = '554999c284e9f29cf95f090d9a8f3171';     // same secret for SALE hash
 
 $API_USER    = 'leogc';
