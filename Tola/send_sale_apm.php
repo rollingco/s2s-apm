@@ -28,7 +28,7 @@ $SERVER_WEBHOOK_INFO = 'https://www.zal25.pp.ua/s2stest/Tola/callback.php';
 $brand        = $_GET['brand'] ?? 'afri-money';
 $identifier   = $_GET['id']    ?? '111';
 $order_ccy    = $_GET['ccy']   ?? 'SLE';
-$order_amt    = $_GET['amt']   ?? '100.00';
+$order_amt    = $_GET['amt']   ?? '0.19';
 $payer_phone  = $_GET['phone'] ?? '23233310905';
 $return_url   = $_GET['return']?? 'https://google.com';
 
