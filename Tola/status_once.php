@@ -137,7 +137,7 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
     <pre><?=pretty($respBody)?></pre>
     <?php if (is_array($parsed)): ?>
       <div class="kv">Parsed JSON:</div>
-      <pre><?=pretty($parsed))?></pre>
+      <pre><?=pretty($parsed)?></pre>
     <?php endif; ?>
   </div>
 </div>
