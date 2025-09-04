@@ -1,41 +1,268 @@
+<?php
+/**
+ * S2S APM SALE — minimal form (phone + amount) → full logs + status shortcut
+ * - Only uses payer_phone (NO msisdn anywhere)
+ * - Body: multipart/form-data
+ * - Auth: Basic (username:password)
+ * - After SALE, shows link to status_once.php?trans_id=...
+ */
+
+header('Content-Type: text/html; charset=utf-8');
+
+/* ===================== CONFIG (defaults) ===================== */
+$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+
+$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';  // current client_key
+$SECRET      = '554999c284e9f29cf95f090d9a8f3171';      // password/secret for SALE signature
+
+$API_USER    = 'leogc';
+$API_PASS    = 'ORuIO57N6KJyeJ';
+
+$DEFAULTS = [
+  'brand'       => 'afri-money',     // stays fixed unless you change here
+  'identifier'  => '111',            // test preset per connector
+  'currency'    => 'SLE',            // fixed currency
+  'return_url'  => 'https://google.com',
+  'phone'       => '23233310905',    // sensible default SLE number
+  'amount'      => '100.00',         // default amount
+];
+
+/* ===================== Helpers ===================== */
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8'); }
+function pretty($v){
+  if (is_string($v)) { $d = json_decode($v,true); if (json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
+  return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
+}
+
+/**
+ * SALE signature (Appendix A):
+ * md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )
+ */
+function build_sale_hash($identifier, $order_id, $amount, $currency, $secret){
+  $src = $identifier . $order_id . $amount . $currency . $secret;
+  return md5(strtoupper(strrev($src)));
+}
+
+/* ===================== Read form (POST) ===================== */
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$submitted = ($method === 'POST');
+
+$brand       = $DEFAULTS['brand'];
+$identifier  = $DEFAULTS['identifier'];
+$order_ccy   = $DEFAULTS['currency'];
+$return_url  = $DEFAULTS['return_url'];
+
+if ($submitted) {
+  // sanitize phone: remove spaces, leading '+'
+  $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
+  $payer_phone = ltrim($payer_phone, '+');
+
+  // sanitize amount: keep digits and dot, format to 2 decimals
+  $rawAmt = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
+  $order_amt = number_format((float)$rawAmt, 2, '.', '');
+
+  $errors = [];
+  if ($payer_phone === '') $errors[] = 'Phone is required.';
+  if (!is_numeric($order_amt) || (float)$order_amt <= 0) $errors[] = 'Amount must be a positive number.';
+
+  if (!empty($errors)) {
+    // render the form with errors; do not send SALE
+    render_page([
+      'showForm'    => true,
+      'errors'      => $errors,
+      'prefill'     => ['phone' => $_POST['phone'] ?? $DEFAULTS['phone'], 'amount' => $_POST['amount'] ?? $DEFAULTS['amount']],
+      'debug'       => [],
+      'response'    => [],
+      'statusLink'  => '',
+    ]);
+    exit;
+  }
+
+} else {
+  // initial page load: prefill defaults
+  $payer_phone = $DEFAULTS['phone'];
+  $order_amt   = $DEFAULTS['amount'];
+}
+
+/* ===================== Build SALE request (only if submitted) ===================== */
+$debug = [];
+$responseBlocks = [
+  'headersRaw' => '',
+  'bodyRaw'    => '',
+  'json'       => null,
+];
+$statusLink = '';
+
+if ($submitted) {
+  $order_id    = 'ORDER_' . time();
+  $order_desc  = 'APM payment';
+  $payer_ip    = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+  $hash = build_sale_hash($identifier, $order_id, $order_amt, $order_ccy, $SECRET);
+
+  // multipart/form-data payload (do not set Content-Type manually)
+  $form = [
+    'action'            => 'SALE',
+    'client_key'        => $CLIENT_KEY,
+    'brand'             => $brand,
+    'order_id'          => $order_id,
+    'order_amount'      => $order_amt,
+    'order_currency'    => $order_ccy,
+    'order_description' => $order_desc,
+    'identifier'        => $identifier,
+    'payer_ip'          => $payer_ip,
+    'return_url'        => $return_url,
+    'payer_phone'       => $payer_phone,     // ONLY phone we send
+    'hash'              => $hash,
+  ];
+
+  $debug['endpoint']   = $PAYMENT_URL;
+  $debug['client_key'] = $CLIENT_KEY;
+  $debug['order_id']   = $order_id;
+  $debug['form']       = $form;
+
+  // SEND
+  $ch = curl_init($PAYMENT_URL);
+  curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_POSTFIELDS     => $form,                        // multipart/form-data
+    CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,  // Basic Auth
+    CURLOPT_HEADER         => true,
+    CURLOPT_TIMEOUT        => 60,
+  ]);
+  $start = microtime(true);
+  $raw   = curl_exec($ch);
+  $info  = curl_getinfo($ch);
+  $err   = curl_errno($ch) ? curl_error($ch) : '';
+  curl_close($ch);
+  $dur = number_format(microtime(true) - $start, 3, '.', '');
+
+  $debug['duration_sec'] = $dur;
+  $debug['http_code']    = (int)($info['http_code'] ?? 0);
+  if ($err) $debug['curl_error'] = $err;
+
+  if ($raw !== false && isset($info['header_size'])) {
+    $responseBlocks['headersRaw'] = substr($raw, 0, $info['header_size']);
+    $responseBlocks['bodyRaw']    = substr($raw, $info['header_size']);
+  } else {
+    $responseBlocks['bodyRaw'] = (string)$raw;
+  }
+
+  $json = json_decode($responseBlocks['bodyRaw'], true);
+  if (json_last_error() === JSON_ERROR_NONE) {
+    $responseBlocks['json'] = $json;
+    // build status_once link if trans_id present
+    if (!empty($json['trans_id'])) {
+      $basePath   = rtrim(dirname($_SERVER['PHP_SELF']), '/');
+      $statusOnce = $basePath . '/status_once.php';
+      $statusLink = $statusOnce . '?trans_id=' . urlencode($json['trans_id']);
+    }
+  }
+}
+
+/* ===================== Render page ===================== */
+render_page([
+  'showForm'    => true,
+  'errors'      => [],
+  'prefill'     => ['phone' => $payer_phone, 'amount' => $order_amt],
+  'debug'       => $debug,
+  'response'    => $responseBlocks,
+  'statusLink'  => $statusLink,
+]);
+
+
+/* ---------------------- View ---------------------- */
+function render_page($ctx){
+  $showForm   = $ctx['showForm'];
+  $errors     = $ctx['errors'] ?? [];
+  $prefill    = $ctx['prefill'] ?? ['phone'=>'','amount'=>''];
+  $debug      = $ctx['debug'] ?? [];
+  $resp       = $ctx['response'] ?? [];
+  $statusLink = $ctx['statusLink'] ?? '';
+
+  $self = (isset($_SERVER['HTTPS'])?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
+  ?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SALE — phone+amount → logs</title>
+<style>
+:root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--ok:#2ecc71;--warn:#f1c40f;--err:#ff6b6b;--info:#00d1d1}
+html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
+.wrap{padding:22px;max-width:1100px;margin:0 auto}
+.h{font-weight:700;margin:10px 0 6px}
+.panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
+.kv{color:var(--muted)}
+pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
+.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none}
+.btn:hover{opacity:.9}
+.error{color:var(--err);margin:6px 0}
+input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6}
+label{display:inline-block;min-width:120px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
   <div class="panel">
-    <div class="h">🧪 Test presets (by identifier)</div>
-    <div class="kv">Виберіть сценарій: підставимо потрібний <code>identifier</code> і коректний SLE <code>payer_phone</code>.</div><br>
-    <?php
-      // два офіційні пресети з документації
-      $presets = [
-        'SALE → SETTLED'  => ['id' => 'success@gmail.com', 'phone' => '23233310905'],
-        'SALE → DECLINED' => ['id' => 'fail@gmail.com',    'phone' => '23233310905'],
-      ];
-      $baseParams = [
-        'brand'  => $brand,
-        'ccy'    => $order_ccy,
-        'amt'    => $order_amt,
-        'return' => $return_url,
-      ];
-      foreach ($presets as $label => $p) {
-        $url = $self.'?'.http_build_query(array_merge($baseParams, [
-          'id'    => $p['id'],
-          'phone' => $p['phone'],
-        ]));
-        echo '<a class="btn" href="'.h($url).'" target="_blank">'.h($label).' (id='.$p['id'].')</a> ';
-      }
-    ?>
-
-    <hr style="border:0;border-top:1px solid #2a2f3a;margin:14px 0">
-
-    <div class="h">Custom run</div>
-    <form action="<?=h($self)?>" method="get" style="margin-top:8px">
-      <?php foreach ($baseParams as $k=>$v): ?>
-        <input type="hidden" name="<?=h($k)?>" value="<?=h($v)?>">
-      <?php endforeach; ?>
-      <label>identifier:
-        <input type="text" name="id" value="<?=h($identifier)?>">
-      </label>
-      <span style="display:inline-block;width:10px"></span>
-      <label>payer_phone (SLE):
-        <input type="text" name="phone" value="<?=h($payer_phone)?>">
-      </label>
-      <button class="btn" type="submit" style="margin-left:10px">Send SALE</button>
+    <div class="h">📨 Create SALE</div>
+    <form action="<?=h($self)?>" method="post">
+      <?php if ($errors): ?>
+        <?php foreach ($errors as $e): ?><div class="error">❌ <?=h($e)?></div><?php endforeach; ?>
+      <?php endif; ?>
+      <div style="margin:8px 0;">
+        <label>Phone (payer_phone):</label>
+        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="23233310905">
+      </div>
+      <div style="margin:8px 0;">
+        <label>Amount:</label>
+        <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="100.00">
+      </div>
+      <div style="margin-top:12px;">
+        <button class="btn" type="submit">Send SALE</button>
+      </div>
     </form>
   </div>
+
+  <?php if (!empty($debug)): ?>
+  <div class="panel">
+    <div class="h">🟢 SALE sent</div>
+    <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
+    <div><span class="kv">Client key:</span> <?=h($debug['client_key'] ?? '')?></div>
+    <div><span class="kv">Order ID:</span> <?=h($debug['order_id'] ?? '')?></div>
+    <div><span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?> <span class="kv" style="margin-left:12px;">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s</div>
+    <?php if (!empty($debug['curl_error'])): ?>
+      <div class="error">cURL: <?=h($debug['curl_error'])?></div>
+    <?php endif; ?>
+  </div>
+
+  <div class="panel">
+    <div class="h">➡ Sent form-data</div>
+    <pre><?=pretty($debug['form'] ?? [])?></pre>
+  </div>
+
+  <div class="panel">
+    <div class="h">⬅ Response headers</div>
+    <pre><?=h(trim($resp['headersRaw'] ?? ''))?></pre>
+  </div>
+
+  <div class="panel">
+    <div class="h">⬅ Response body</div>
+    <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
+    <?php if (is_array($resp['json'] ?? null)): ?>
+      <div class="h">Parsed</div>
+      <pre><?=pretty($resp['json'])?></pre>
+      <?php if (!empty($statusLink)): ?>
+        <p><a class="btn" href="<?=h($statusLink)?>" target="_blank">➡ Check status once (trans_id)</a></p>
+      <?php endif; ?>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
+
+</div>
+</body>
+</html>
+<?php
+}
