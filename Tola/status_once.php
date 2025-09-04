@@ -1,0 +1,145 @@
+<?php
+/**
+ * status_once.php — single GET_TRANS_STATUS check (no loops, no sleeps)
+ * Usage: /s2stest/Tola/status_once.php?trans_id=6c8656ce-...
+ */
+
+header('Content-Type: text/html; charset=utf-8');
+
+/* ==== CONFIG (ваші робочі дані) ==== */
+$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+$API_USER    = 'leogc';
+$API_PASS    = 'ORuIO57N6KJyeJ';
+
+$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
+$SECRET      = '554999c284e9f29cf95f090d9a8f3171';
+
+$ACTION      = 'GET_TRANS_STATUS';   // з документів
+$HASH_MODE   = 'v1';                 // за потреби змінити на 'v2' нижче
+
+/* ==== INPUT ==== */
+$trans_id = trim($_GET['trans_id'] ?? '');
+if ($trans_id === '') {
+  http_response_code(400);
+  echo 'Pass ?trans_id=...';
+  exit;
+}
+
+/* ==== HASH (Appendix A for GET_TRANS_STATUS) ==== */
+/* v1: md5( strtoupper( strrev( trans_id + client_key + secret ) ) )
+   v2: md5( strtoupper( strrev( trans_id + secret ) ) )  <-- на випадок іншої інсталяції */
+function build_status_hash_v1($trans_id, $client_key, $secret){
+  $src = $trans_id . $client_key . $secret;
+  return [md5(strtoupper(strrev($src))), $src];
+}
+function build_status_hash_v2($trans_id, $secret){
+  $src = $trans_id . $secret;
+  return [md5(strtoupper(strrev($src))), $src];
+}
+
+if ($HASH_MODE === 'v2') {
+  [$hash, $hashSrc] = build_status_hash_v2($trans_id, $SECRET);
+} else {
+  [$hash, $hashSrc] = build_status_hash_v1($trans_id, $CLIENT_KEY, $SECRET);
+}
+
+/* ==== PAYLOAD ==== */
+$payload = [
+  'action'     => $ACTION,
+  'client_key' => $CLIENT_KEY,
+  'trans_id'   => $trans_id,
+  'hash'       => $hash,
+];
+
+/* ==== REQUEST (ONE SHOT) ==== */
+$ch = curl_init($PAYMENT_URL);
+$body = http_build_query($payload);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST           => true,
+  CURLOPT_POSTFIELDS     => $body,
+  CURLOPT_HTTPHEADER     => [
+    'Content-Type: application/x-www-form-urlencoded',
+    'Content-Length: ' . strlen($body),
+  ],
+  CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS, // Basic Auth
+  CURLOPT_HEADER         => true,                        // щоб розділити заголовки/тіло
+  CURLOPT_TIMEOUT        => 30,
+]);
+$start    = microtime(true);
+$raw      = curl_exec($ch);
+$info     = curl_getinfo($ch);
+$curlErr  = curl_errno($ch) ? curl_error($ch) : '';
+$duration = number_format(microtime(true) - $start, 3, '.', '');
+curl_close($ch);
+
+/* ==== split headers/body ==== */
+$respHeaders = '';
+$respBody    = '';
+if ($raw !== false && isset($info['header_size'])) {
+  $respHeaders = substr($raw, 0, $info['header_size']);
+  $respBody    = substr($raw, $info['header_size']);
+}
+$parsed = json_decode($respBody, true);
+
+/* ==== helpers ==== */
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
+function pretty($v){
+  if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
+  return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
+}
+
+/* ==== RENDER (детальне логування) ==== */
+?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GET_TRANS_STATUS (single)</title>
+<style>
+:root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af}
+html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
+.wrap{max-width:1100px;margin:0 auto;padding:22px}
+.panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
+.kv{color:var(--muted)}
+pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="kv">Endpoint:</div><pre><?=h($PAYMENT_URL)?></pre>
+    <div class="kv">Action / Hash mode:</div><pre><?=h($ACTION)?> / <?=h($HASH_MODE)?></pre>
+    <div class="kv">Duration:</div><pre><?=h($duration)?> s</pre>
+    <div class="kv">HTTP code:</div><pre><?= (int)($info['http_code'] ?? 0) ?></pre>
+    <?php if ($curlErr): ?>
+      <div class="kv">cURL error:</div><pre><?=h($curlErr)?></pre>
+    <?php endif; ?>
+  </div>
+
+  <div class="panel">
+    <div class="kv">Hash source:</div><pre><?=h($hashSrc)?></pre>
+    <div class="kv">Hash:</div><pre><?=h($hash)?></pre>
+  </div>
+
+  <div class="panel">
+    <div class="kv">➡ Payload (urlencoded):</div>
+    <pre><?=pretty($payload)?></pre>
+  </div>
+
+  <div class="panel">
+    <div class="kv">⬅ Response headers:</div>
+    <pre><?=h(trim($respHeaders))?></pre>
+  </div>
+
+  <div class="panel">
+    <div class="kv">⬅ Response body (raw):</div>
+    <pre><?=pretty($respBody)?></pre>
+    <?php if (is_array($parsed)): ?>
+      <div class="kv">Parsed JSON:</div>
+      <pre><?=pretty($parsed))?></pre>
+    <?php endif; ?>
+  </div>
+</div>
+</body>
+</html>
