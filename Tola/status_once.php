@@ -1,47 +1,24 @@
 <?php
-/**
- * status_once.php — single GET_TRANS_STATUS check (no loops, no sleeps)
- * Usage: /s2stest/Tola/status_once.php?trans_id=6c8656ce-...
- */
-
 header('Content-Type: text/html; charset=utf-8');
 
-/* ==== CONFIG (ваші робочі дані) ==== */
+/* ==== CONFIG ==== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 $CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$SECRET      = '554999c284e9f29cf95f090d9a8f3171';
+$PASSWORD    = '554999c284e9f29cf95f090d9a8f3171'; // той самий, що для SALE
 
-$ACTION      = 'GET_TRANS_STATUS';   // з документів
-$HASH_MODE   = 'v1';                 // за потреби змінити на 'v2' нижче
+$ACTION      = 'GET_TRANS_STATUS';
 
 /* ==== INPUT ==== */
 $trans_id = trim($_GET['trans_id'] ?? '');
-if ($trans_id === '') {
-  http_response_code(400);
-  echo 'Pass ?trans_id=...';
-  exit;
-}
+if ($trans_id === '') { http_response_code(400); echo 'Pass ?trans_id=...'; exit; }
 
-/* ==== HASH (Appendix A for GET_TRANS_STATUS) ==== */
-/* v1: md5( strtoupper( strrev( trans_id + client_key + secret ) ) )
-   v2: md5( strtoupper( strrev( trans_id + secret ) ) )  <-- на випадок іншої інсталяції */
-function build_status_hash_v1($trans_id, $client_key, $secret){
-  $src = $trans_id . $client_key . $secret;
-  return [md5(strtoupper(strrev($src))), $src];
-}
-function build_status_hash_v2($trans_id, $secret){
-  $src = $trans_id . $secret;
-  return [md5(strtoupper(strrev($src))), $src];
-}
-
-if ($HASH_MODE === 'v2') {
-  [$hash, $hashSrc] = build_status_hash_v2($trans_id, $SECRET);
-} else {
-  [$hash, $hashSrc] = build_status_hash_v1($trans_id, $CLIENT_KEY, $SECRET);
-}
+/* ==== SIGNATURE (з доків) ==== */
+// $hash = md5(strtoupper(strrev($trans_id)) . $PASSWORD);
+$hash_src = strtoupper(strrev($trans_id)) . $PASSWORD;
+$hash     = md5($hash_src);
 
 /* ==== PAYLOAD ==== */
 $payload = [
@@ -51,7 +28,7 @@ $payload = [
   'hash'       => $hash,
 ];
 
-/* ==== REQUEST (ONE SHOT) ==== */
+/* ==== REQUEST (one shot) ==== */
 $ch = curl_init($PAYMENT_URL);
 $body = http_build_query($payload);
 curl_setopt_array($ch, [
@@ -62,16 +39,16 @@ curl_setopt_array($ch, [
     'Content-Type: application/x-www-form-urlencoded',
     'Content-Length: ' . strlen($body),
   ],
-  CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS, // Basic Auth
-  CURLOPT_HEADER         => true,                        // щоб розділити заголовки/тіло
+  CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
+  CURLOPT_HEADER         => true,
   CURLOPT_TIMEOUT        => 30,
 ]);
-$start    = microtime(true);
-$raw      = curl_exec($ch);
-$info     = curl_getinfo($ch);
-$curlErr  = curl_errno($ch) ? curl_error($ch) : '';
-$duration = number_format(microtime(true) - $start, 3, '.', '');
+$start = microtime(true);
+$raw   = curl_exec($ch);
+$info  = curl_getinfo($ch);
+$err   = curl_errno($ch) ? curl_error($ch) : '';
 curl_close($ch);
+$dur = number_format(microtime(true) - $start, 3, '.', '');
 
 /* ==== split headers/body ==== */
 $respHeaders = '';
@@ -88,8 +65,6 @@ function pretty($v){
   if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
   return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
 }
-
-/* ==== RENDER (детальне логування) ==== */
 ?>
 <!doctype html>
 <html lang="en">
@@ -109,17 +84,15 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
 <div class="wrap">
   <div class="panel">
     <div class="kv">Endpoint:</div><pre><?=h($PAYMENT_URL)?></pre>
-    <div class="kv">Action / Hash mode:</div><pre><?=h($ACTION)?> / <?=h($HASH_MODE)?></pre>
-    <div class="kv">Duration:</div><pre><?=h($duration)?> s</pre>
+    <div class="kv">Action:</div><pre><?=h($ACTION)?></pre>
+    <div class="kv">Duration:</div><pre><?=h($dur)?> s</pre>
     <div class="kv">HTTP code:</div><pre><?= (int)($info['http_code'] ?? 0) ?></pre>
-    <?php if ($curlErr): ?>
-      <div class="kv">cURL error:</div><pre><?=h($curlErr)?></pre>
-    <?php endif; ?>
+    <?php if ($err): ?><div class="kv">cURL error:</div><pre><?=h($err)?></pre><?php endif; ?>
   </div>
 
   <div class="panel">
-    <div class="kv">Hash source:</div><pre><?=h($hashSrc)?></pre>
-    <div class="kv">Hash:</div><pre><?=h($hash)?></pre>
+    <div class="kv">Hash source (strtoupper(strrev(trans_id)) . PASSWORD):</div><pre><?=h($hash_src)?></pre>
+    <div class="kv">Hash (md5):</div><pre><?=h($hash)?></pre>
   </div>
 
   <div class="panel">
