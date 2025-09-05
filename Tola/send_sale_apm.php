@@ -12,7 +12,7 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===================== CONFIG (defaults) ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
-$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';  // current client_key
+$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';  // current client_key
 $SECRET      = '554999c284e9f29cf95f090d9a8f3171';      // password/secret for SALE signature
 
 $API_USER    = 'leogc';
