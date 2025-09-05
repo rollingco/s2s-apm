@@ -24,7 +24,7 @@ $DEFAULTS = [
   'currency'    => 'SLE',            // fixed currency
   'return_url'  => 'https://google.com',
   'phone'       => '23233310905',    // sensible default SLE number
-  'amount'      => '100.00',         // default amount
+  'amount'      => '0.99',         // default amount
 ];
 
 /* ===================== Helpers ===================== */
