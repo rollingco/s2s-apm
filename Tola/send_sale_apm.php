@@ -23,7 +23,7 @@ $DEFAULTS = [
   'identifier'  => '111',            // test preset per connector
   'currency'    => 'SLE',            // fixed currency
   'return_url'  => 'https://google.com',
-  'phone'       => '23233310905',    // sensible default SLE number
+  'phone'       => '254000000000',    // sensible default SLE number
   'amount'      => '100.00',         // default amount
 ];
 
