@@ -1,9 +1,5 @@
 <?php
-/**
- * Create Checkout session (AWCC) — with accountId
- * - Added accountId per AquaNow support
- * - Signature: sha1(md5(strtoupper(order.number + order.amount + order.currency + order.description + merchant_pass)))
- */
+
 
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 //$CHECKOUT_HOST = 'https://api.leogcltd.com/post-va';
@@ -16,7 +12,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 
 // Order
 $orderNumber   = 'order-'.time();
-$orderAmount   = '20.19';
+$orderAmount   = '20.29';
 $orderCurrency = 'USD';
 $orderDesc     = 'Important gift';
 
