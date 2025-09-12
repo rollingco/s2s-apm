@@ -7,7 +7,7 @@
 
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $MERCHANT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
-//$MERCHANT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
+$MERCHANT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 $MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171';
 
 $SUCCESS_URL   = 'https://example.com/success';
@@ -23,14 +23,8 @@ $orderDesc     = 'Important gift';
 $payload = [
     "merchant_key" => $MERCHANT_KEY,
     "operation"    => "purchase",
-    "methods"      => ["awcc"],
-    "parameters"   => [
-        "awcc" => [
-            "network_type" => "eth",
-            "bech32"       => false,
-            "crypto_type"  => "USDT"
-        ]
-    ],
+    "methods"      => ["coinspaid"],
+    
     "order" => [
         "number"      => $orderNumber,
         "amount"      => $orderAmount,
