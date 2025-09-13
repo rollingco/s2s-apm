@@ -1,5 +1,5 @@
 <?php
-//testing replit.com again and again and again ---------------
+//testing replit.com again and again and again 
   
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 //$CHECKOUT_HOST = 'https://api.leogcltd.com/post-va';
