@@ -1,6 +1,6 @@
 <?php
 
-
+  
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 //$CHECKOUT_HOST = 'https://api.leogcltd.com/post-va';
 $MERCHANT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
