@@ -51,7 +51,7 @@ $payload = [
         "zip"     => "123456",
         "phone"   => "347771112233"
     ],
-   // "accountId" => "CA1001161C"   // <--- додали згідно з AquaNow
+   "accountId" => "CA1001161C"   // <--- додали згідно з AquaNow
 ];
 
 // Signature
