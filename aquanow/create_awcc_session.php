@@ -15,7 +15,7 @@ $CANCEL_URL    = 'https://example.com/cancel';
 
 // Order
 $orderNumber   = 'order-'.time();
-$orderAmount   = '0.19';
+$orderAmount   = '0.21';
 $orderCurrency = 'USD';
 $orderDesc     = 'Important gift';
 
