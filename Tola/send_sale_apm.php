@@ -1,22 +1,15 @@
 <?php
 /**
- * S2S APM SALE — minimal form (phone + amount) → full logs + status shortcut
- * - Only uses payer_phone (NO msisdn anywhere)
- * - Body: multipart/form-data
- * - Auth: Basic (username:password)
- * - After SALE, shows link to status_once.php?trans_id=...
- *
- * Modified: removed request header logging / cURL verbose capture
+ * S2S APM SALE — phone + amount → minimal logs
+ * - NO headers logging at all
  */
 
 header('Content-Type: text/html; charset=utf-8');
 
-/* ===================== CONFIG (defaults) ===================== */
+/* ===================== CONFIG ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
-
 $CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 $SECRET      = '554999c284e9f29cf95f090d9a8f3171';
-
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
@@ -35,18 +28,13 @@ function pretty($v){
   if (is_string($v)) { $d = json_decode($v,true); if (json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
   return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
 }
-
-/**
- * SALE signature (Appendix A):
- * md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )
- */
 function build_sale_hash($identifier, $order_id, $amount, $currency, $secret, &$srcOut = null){
   $src = $identifier . $order_id . $amount . $currency . $secret;
   if ($srcOut !== null) $srcOut = $src;
   return md5(strtoupper(strrev($src)));
 }
 
-/* ===================== Read form (POST) ===================== */
+/* ===================== Read form ===================== */
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $submitted = ($method === 'POST');
 
@@ -58,9 +46,8 @@ $return_url  = $DEFAULTS['return_url'];
 if ($submitted) {
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $payer_phone = ltrim($payer_phone, '+');
-
-  $rawAmt = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
-  $order_amt = number_format((float)$rawAmt, 2, '.', '');
+  $rawAmt      = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
+  $order_amt   = number_format((float)$rawAmt, 2, '.', '');
 
   $errors = [];
   if ($payer_phone === '') $errors[] = 'Phone is required.';
@@ -68,28 +55,23 @@ if ($submitted) {
 
   if (!empty($errors)) {
     render_page([
-      'showForm'    => true,
-      'errors'      => $errors,
-      'prefill'     => ['phone' => $_POST['phone'] ?? $DEFAULTS['phone'], 'amount' => $_POST['amount'] ?? $DEFAULTS['amount']],
-      'debug'       => [],
-      'response'    => [],
-      'statusLink'  => '',
+      'showForm'   => true,
+      'errors'     => $errors,
+      'prefill'    => ['phone' => $_POST['phone'] ?? $DEFAULTS['phone'], 'amount' => $_POST['amount'] ?? $DEFAULTS['amount']],
+      'debug'      => [],
+      'response'   => [],
+      'statusLink' => '',
     ]);
     exit;
   }
-
 } else {
   $payer_phone = $DEFAULTS['phone'];
   $order_amt   = $DEFAULTS['amount'];
 }
 
-/* ===================== Build SALE request (only if submitted) ===================== */
+/* ===================== Send SALE ===================== */
 $debug = [];
-$responseBlocks = [
-  'headersRaw' => '',
-  'bodyRaw'    => '',
-  'json'       => null,
-];
+$responseBlocks = ['bodyRaw' => '', 'json' => null];
 $statusLink = '';
 
 if ($submitted) {
@@ -100,7 +82,6 @@ if ($submitted) {
   $hash_src_dbg = '';
   $hash = build_sale_hash($identifier, $order_id, $order_amt, $order_ccy, $SECRET, $hash_src_dbg);
 
-  // multipart/form-data payload (do not set Content-Type manually)
   $form = [
     'action'            => 'SALE',
     'client_key'        => $CLIENT_KEY,
@@ -116,21 +97,21 @@ if ($submitted) {
     'hash'              => $hash,
   ];
 
-  $debug['endpoint']   = $PAYMENT_URL;
-  $debug['client_key'] = $CLIENT_KEY;
-  $debug['order_id']   = $order_id;
-  $debug['form']       = $form;
-  $debug['hash_src']   = $hash_src_dbg;
-  $debug['hash']       = $hash;
+  $debug = [
+    'endpoint'   => $PAYMENT_URL,
+    'client_key' => $CLIENT_KEY,
+    'order_id'   => $order_id,
+    'form'       => $form,
+    'hash_src'   => $hash_src_dbg,
+    'hash'       => $hash,
+  ];
 
-  // SEND (no verbose headers capture)
   $ch = curl_init($PAYMENT_URL);
   curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
     CURLOPT_POSTFIELDS     => $form,
     CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
-    CURLOPT_HEADER         => true,
     CURLOPT_TIMEOUT        => 60,
   ]);
   $start = microtime(true);
@@ -140,17 +121,11 @@ if ($submitted) {
   curl_close($ch);
   $dur = number_format(microtime(true) - $start, 3, '.', '');
 
-  $debug['duration_sec']   = $dur;
-  $debug['http_code']      = (int)($info['http_code'] ?? 0);
+  $debug['duration_sec'] = $dur;
+  $debug['http_code']    = (int)($info['http_code'] ?? 0);
   if ($err) $debug['curl_error'] = $err;
 
-  if ($raw !== false && isset($info['header_size'])) {
-    $responseBlocks['headersRaw'] = substr($raw, 0, $info['header_size']);
-    $responseBlocks['bodyRaw']    = substr($raw, $info['header_size']);
-  } else {
-    $responseBlocks['bodyRaw'] = (string)$raw;
-  }
-
+  $responseBlocks['bodyRaw'] = (string)$raw;
   $json = json_decode($responseBlocks['bodyRaw'], true);
   if (json_last_error() === JSON_ERROR_NONE) {
     $responseBlocks['json'] = $json;
@@ -162,14 +137,14 @@ if ($submitted) {
   }
 }
 
-/* ===================== Render page ===================== */
+/* ===================== Render ===================== */
 render_page([
-  'showForm'    => true,
-  'errors'      => [],
-  'prefill'     => ['phone' => $payer_phone, 'amount' => $order_amt],
-  'debug'       => $debug,
-  'response'    => $responseBlocks,
-  'statusLink'  => $statusLink,
+  'showForm'   => true,
+  'errors'     => [],
+  'prefill'    => ['phone' => $payer_phone, 'amount' => $order_amt],
+  'debug'      => $debug,
+  'response'   => $responseBlocks,
+  'statusLink' => $statusLink,
 ]);
 
 /* ---------------------- View ---------------------- */
@@ -187,9 +162,9 @@ function render_page($ctx){
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SALE — phone+amount → logs</title>
+<title>SALE — phone+amount → minimal</title>
 <style>
-:root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--ok:#2ecc71;--warn:#f1c40f;--err:#ff6b6b;--info:#00d1d1}
+:root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff6b6b}
 html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
 .wrap{padding:22px;max-width:1100px;margin:0 auto}
 .h{font-weight:700;margin:10px 0 6px}
@@ -240,7 +215,7 @@ label{display:inline-block;min-width:120px}
 
   <div class="panel">
     <div class="h">🧮 SALE hash</div>
-    <div class="kv">Formula: md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )</div>
+    <div class="kv">md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )</div>
     <div class="kv">Source string:</div>
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
     <div class="kv">Hash:</div>
@@ -250,11 +225,6 @@ label{display:inline-block;min-width:120px}
   <div class="panel">
     <div class="h">➡ Sent form-data</div>
     <pre><?=pretty($debug['form'] ?? [])?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="h">⬅ Response headers</div>
-    <pre><?=h(trim($resp['headersRaw'] ?? ''))?></pre>
   </div>
 
   <div class="panel">
