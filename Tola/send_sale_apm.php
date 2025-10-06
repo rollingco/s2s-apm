@@ -5,6 +5,8 @@
  * - Body: multipart/form-data
  * - Auth: Basic (username:password)
  * - After SALE, shows link to status_once.php?trans_id=...
+ *
+ * Modified: removed request header logging / cURL verbose capture
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -12,19 +14,19 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===================== CONFIG (defaults) ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
-$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';  // current client_key
-$SECRET      = '554999c284e9f29cf95f090d9a8f3171';      // password/secret for SALE signature
+$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
+$SECRET      = '554999c284e9f29cf95f090d9a8f3171';
 
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 $DEFAULTS = [
-  'brand'       => 'afri-money',     // stays fixed unless you change here
-  'identifier'  => '111',            // test preset per connector
-  'currency'    => 'SLE',            // fixed currency
+  'brand'       => 'afri-money',
+  'identifier'  => '111',
+  'currency'    => 'SLE',
   'return_url'  => 'https://google.com',
-  'phone'       => '23233310905',    // sensible default SLE number
-  'amount'      => '0.99',           // default amount
+  'phone'       => '23233310905',
+  'amount'      => '0.99',
 ];
 
 /* ===================== Helpers ===================== */
@@ -54,11 +56,9 @@ $order_ccy   = $DEFAULTS['currency'];
 $return_url  = $DEFAULTS['return_url'];
 
 if ($submitted) {
-  // sanitize phone: remove spaces, leading '+'
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $payer_phone = ltrim($payer_phone, '+');
 
-  // sanitize amount: keep digits and dot, format to 2 decimals
   $rawAmt = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
   $order_amt = number_format((float)$rawAmt, 2, '.', '');
 
@@ -67,7 +67,6 @@ if ($submitted) {
   if (!is_numeric($order_amt) || (float)$order_amt <= 0) $errors[] = 'Amount must be a positive number.';
 
   if (!empty($errors)) {
-    // render the form with errors; do not send SALE
     render_page([
       'showForm'    => true,
       'errors'      => $errors,
@@ -75,13 +74,11 @@ if ($submitted) {
       'debug'       => [],
       'response'    => [],
       'statusLink'  => '',
-      'incomingHdr' => function_exists('getallheaders') ? getallheaders() : [],
     ]);
     exit;
   }
 
 } else {
-  // initial page load: prefill defaults
   $payer_phone = $DEFAULTS['phone'];
   $order_amt   = $DEFAULTS['amount'];
 }
@@ -94,8 +91,6 @@ $responseBlocks = [
   'json'       => null,
 ];
 $statusLink = '';
-
-$incomingHeaders = function_exists('getallheaders') ? getallheaders() : [];
 
 if ($submitted) {
   $order_id    = 'ORDER_' . time();
@@ -117,7 +112,7 @@ if ($submitted) {
     'identifier'        => $identifier,
     'payer_ip'          => $payer_ip,
     'return_url'        => $return_url,
-    'payer_phone'       => $payer_phone,     // ONLY phone we send
+    'payer_phone'       => $payer_phone,
     'hash'              => $hash,
   ];
 
@@ -128,20 +123,15 @@ if ($submitted) {
   $debug['hash_src']   = $hash_src_dbg;
   $debug['hash']       = $hash;
 
-  // SEND
+  // SEND (no verbose headers capture)
   $ch = curl_init($PAYMENT_URL);
-
-  // capture verbose (outgoing request headers)
-  $vh = fopen('php://temp', 'w+');
   curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => $form,                        // multipart/form-data
-    CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,  // Basic Auth
-    CURLOPT_HEADER         => true,                         // to split response headers/body
+    CURLOPT_POSTFIELDS     => $form,
+    CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
+    CURLOPT_HEADER         => true,
     CURLOPT_TIMEOUT        => 60,
-    CURLOPT_VERBOSE        => true,
-    CURLOPT_STDERR         => $vh,
   ]);
   $start = microtime(true);
   $raw   = curl_exec($ch);
@@ -150,26 +140,9 @@ if ($submitted) {
   curl_close($ch);
   $dur = number_format(microtime(true) - $start, 3, '.', '');
 
-  rewind($vh);
-  $curlVerbose = stream_get_contents($vh);
-  fclose($vh);
-
-  // try to extract request headers from verbose log (lines starting with "> ")
-  $reqHeaders = [];
-  foreach (preg_split('/\r?\n/', $curlVerbose) as $line) {
-    if (strpos($line, '> ') === 0) {
-      $hline = substr($line, 2);
-      if (trim($hline) !== '' && stripos($hline, 'Trying ') !== 0 && stripos($hline, 'Connected ') !== 0) {
-        $reqHeaders[] = $hline;
-      }
-    }
-  }
-
   $debug['duration_sec']   = $dur;
   $debug['http_code']      = (int)($info['http_code'] ?? 0);
   if ($err) $debug['curl_error'] = $err;
-  $debug['request_headers_verbose'] = $curlVerbose;  // повний лог
-  $debug['request_headers'] = $reqHeaders;           // тільки рядки заголовків
 
   if ($raw !== false && isset($info['header_size'])) {
     $responseBlocks['headersRaw'] = substr($raw, 0, $info['header_size']);
@@ -181,7 +154,6 @@ if ($submitted) {
   $json = json_decode($responseBlocks['bodyRaw'], true);
   if (json_last_error() === JSON_ERROR_NONE) {
     $responseBlocks['json'] = $json;
-    // build status_once link if trans_id present
     if (!empty($json['trans_id'])) {
       $basePath   = rtrim(dirname($_SERVER['PHP_SELF']), '/');
       $statusOnce = $basePath . '/status_once.php';
@@ -198,9 +170,7 @@ render_page([
   'debug'       => $debug,
   'response'    => $responseBlocks,
   'statusLink'  => $statusLink,
-  'incomingHdr' => $incomingHeaders,
 ]);
-
 
 /* ---------------------- View ---------------------- */
 function render_page($ctx){
@@ -210,7 +180,6 @@ function render_page($ctx){
   $debug      = $ctx['debug'] ?? [];
   $resp       = $ctx['response'] ?? [];
   $statusLink = $ctx['statusLink'] ?? '';
-  $incoming   = $ctx['incomingHdr'] ?? [];
 
   $self = (isset($_SERVER['HTTPS'])?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
   ?>
@@ -257,11 +226,6 @@ label{display:inline-block;min-width:120px}
     </form>
   </div>
 
-  <div class="panel">
-    <div class="h">🔎 Browser → this page: request headers</div>
-    <pre><?=pretty($incoming)?></pre>
-  </div>
-
   <?php if (!empty($debug)): ?>
   <div class="panel">
     <div class="h">🟢 SALE sent</div>
@@ -286,13 +250,6 @@ label{display:inline-block;min-width:120px}
   <div class="panel">
     <div class="h">➡ Sent form-data</div>
     <pre><?=pretty($debug['form'] ?? [])?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="h">➡ Request headers (cURL → API)</div>
-    <pre><?=pretty($debug['request_headers'] ?? [])?></pre>
-    <div class="h">cURL verbose (raw)</div>
-    <pre><?=h($debug['request_headers_verbose'] ?? '')?></pre>
   </div>
 
   <div class="panel">
