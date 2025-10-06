@@ -8,15 +8,13 @@ $API_PASS    = 'ORuIO57N6KJyeJ';
 
 $CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 $PASSWORD    = '554999c284e9f29cf95f090d9a8f3171'; // той самий, що для SALE
-
 $ACTION      = 'GET_TRANS_STATUS';
 
 /* ==== INPUT ==== */
 $trans_id = trim($_GET['trans_id'] ?? '');
 if ($trans_id === '') { http_response_code(400); echo 'Pass ?trans_id=...'; exit; }
 
-/* ==== SIGNATURE (з доків) ==== */
-// $hash = md5(strtoupper(strrev($trans_id)) . $PASSWORD);
+/* ==== SIGNATURE ==== */
 $hash_src = strtoupper(strrev($trans_id)) . $PASSWORD;
 $hash     = md5($hash_src);
 
@@ -28,7 +26,7 @@ $payload = [
   'hash'       => $hash,
 ];
 
-/* ==== REQUEST (one shot, без логів хедерів) ==== */
+/* ==== REQUEST ==== */
 $ch = curl_init($PAYMENT_URL);
 $body = http_build_query($payload);
 
@@ -42,7 +40,6 @@ curl_setopt_array($ch, [
   ],
   CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
   CURLOPT_TIMEOUT        => 30,
-  // НІЯКИХ: CURLOPT_HEADER / CURLOPT_VERBOSE / CURLOPT_STDERR
 ]);
 
 $start = microtime(true);
@@ -52,7 +49,7 @@ $err   = curl_errno($ch) ? curl_error($ch) : '';
 curl_close($ch);
 $dur = number_format(microtime(true) - $start, 3, '.', '');
 
-/* ==== Відповідь ==== */
+/* ==== RESPONSE ==== */
 $respBody = (string)$raw;
 $parsed   = json_decode($respBody, true);
 
