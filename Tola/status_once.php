@@ -1,6 +1,7 @@
 <?php
 /**
  * STATUS ONCE — check transaction status by trans_id
+ * - action: STATUS_ONCE
  * - No header logs, minimal clean output
  */
 
@@ -14,9 +15,7 @@ $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 $DEFAULTS = [
-  'brand'      => 'afri-money',
   'identifier' => '111',
-  'currency'   => 'SLE',
 ];
 
 /* ===================== Helpers ===================== */
@@ -38,21 +37,17 @@ if ($trans_id === '') {
   exit;
 }
 
-/* ===================== Send STATUS request ===================== */
-$debug = [];
-$responseBlocks = ['bodyRaw' => '', 'json' => null];
-$status = '';
-
-$identifier = $DEFAULTS['identifier'];
+/* ===================== Send STATUS_ONCE ===================== */
+$identifier   = $DEFAULTS['identifier'];
 $hash_src_dbg = '';
-$hash = build_status_hash($identifier, $trans_id, $SECRET, $hash_src_dbg);
+$hash         = build_status_hash($identifier, $trans_id, $SECRET, $hash_src_dbg);
 
 $form = [
-  'action'      => 'STATUS',
-  'client_key'  => $CLIENT_KEY,
-  'identifier'  => $identifier,
-  'trans_id'    => $trans_id,
-  'hash'        => $hash,
+  'action'     => 'STATUS_ONCE',
+  'client_key' => $CLIENT_KEY,
+  'identifier' => $identifier,
+  'trans_id'   => $trans_id,
+  'hash'       => $hash,
 ];
 
 $debug = [
@@ -83,18 +78,14 @@ $debug['duration_sec'] = $dur;
 $debug['http_code']    = (int)($info['http_code'] ?? 0);
 if ($err) $debug['curl_error'] = $err;
 
-$responseBlocks['bodyRaw'] = (string)$raw;
-$json = json_decode($responseBlocks['bodyRaw'], true);
+$responseBlocks = ['bodyRaw' => (string)$raw, 'json' => null];
+$parsed = json_decode($responseBlocks['bodyRaw'], true);
 if (json_last_error() === JSON_ERROR_NONE) {
-  $responseBlocks['json'] = $json;
+  $responseBlocks['json'] = $parsed;
 }
 
 /* ===================== Render ===================== */
-render_page([
-  'error'     => '',
-  'debug'     => $debug,
-  'response'  => $responseBlocks,
-]);
+render_page(['error' => '', 'debug' => $debug, 'response' => $responseBlocks]);
 
 /* ---------------------- View ---------------------- */
 function render_page($ctx){
@@ -128,7 +119,7 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
   <?php endif; ?>
 
   <div class="panel">
-    <div class="h">🔎 STATUS request</div>
+    <div class="h">🔎 STATUS_ONCE request</div>
     <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
     <div><span class="kv">Client key:</span> <?=h($debug['client_key'] ?? '')?></div>
     <div><span class="kv">Transaction ID:</span> <?=h($debug['trans_id'] ?? '')?></div>
@@ -158,8 +149,13 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
     <?php if (is_array($resp['json'] ?? null)): ?>
       <div class="h">Parsed</div>
       <pre><?=pretty($resp['json'])?></pre>
+      <?php if (!empty($resp['json']['status'])): ?>
+        <div class="h">Status: <?=h($resp['json']['status'])?></div>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
+
+  <p><a class="btn" href="javascript:location.reload()">🔁 Reload</a> <a class="btn" href="./send_sale_apm.php">⬅ Back to SALE</a></p>
 
 </div>
 </body>
