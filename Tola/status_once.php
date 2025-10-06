@@ -28,12 +28,9 @@ $payload = [
   'hash'       => $hash,
 ];
 
-/* ==== REQUEST (one shot) ==== */
+/* ==== REQUEST (one shot, без логів хедерів) ==== */
 $ch = curl_init($PAYMENT_URL);
 $body = http_build_query($payload);
-
-// capture verbose (outgoing request headers)
-$vh = fopen('php://temp', 'w+');
 
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
@@ -44,11 +41,10 @@ curl_setopt_array($ch, [
     'Content-Length: ' . strlen($body),
   ],
   CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
-  CURLOPT_HEADER         => true,
   CURLOPT_TIMEOUT        => 30,
-  CURLOPT_VERBOSE        => true,
-  CURLOPT_STDERR         => $vh,
+  // НІЯКИХ: CURLOPT_HEADER / CURLOPT_VERBOSE / CURLOPT_STDERR
 ]);
+
 $start = microtime(true);
 $raw   = curl_exec($ch);
 $info  = curl_getinfo($ch);
@@ -56,29 +52,9 @@ $err   = curl_errno($ch) ? curl_error($ch) : '';
 curl_close($ch);
 $dur = number_format(microtime(true) - $start, 3, '.', '');
 
-// parse verbose for outgoing headers
-rewind($vh);
-$curlVerbose = stream_get_contents($vh);
-fclose($vh);
-
-$reqHeaders = [];
-foreach (preg_split('/\r?\n/', $curlVerbose) as $line) {
-  if (strpos($line, '> ') === 0) {
-    $hline = substr($line, 2);
-    if (trim($hline) !== '' && stripos($hline, 'Trying ') !== 0 && stripos($hline, 'Connected ') !== 0) {
-      $reqHeaders[] = $hline;
-    }
-  }
-}
-
-/* ==== split headers/body ==== */
-$respHeaders = '';
-$respBody    = '';
-if ($raw !== false && isset($info['header_size'])) {
-  $respHeaders = substr($raw, 0, $info['header_size']);
-  $respBody    = substr($raw, $info['header_size']);
-}
-$parsed = json_decode($respBody, true);
+/* ==== Відповідь ==== */
+$respBody = (string)$raw;
+$parsed   = json_decode($respBody, true);
 
 /* ==== helpers ==== */
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
@@ -86,8 +62,6 @@ function pretty($v){
   if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
   return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
 }
-
-$incomingHeaders = function_exists('getallheaders') ? getallheaders() : [];
 ?>
 <!doctype html>
 <html lang="en">
@@ -115,11 +89,6 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
   </div>
 
   <div class="panel">
-    <div class="kv">Browser → this page: request headers</div>
-    <pre><?=pretty($incomingHeaders)?></pre>
-  </div>
-
-  <div class="panel">
     <div class="kv">Hash source (strtoupper(strrev(trans_id)) . PASSWORD):</div><pre><?=h($hash_src)?></pre>
     <div class="kv">Hash (md5):</div><pre><?=h($hash)?></pre>
   </div>
@@ -127,18 +96,6 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
   <div class="panel">
     <div class="kv">➡ Payload (urlencoded):</div>
     <pre><?=pretty($payload)?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="kv">➡ Request headers (cURL → API)</div>
-    <pre><?=pretty($reqHeaders)?></pre>
-    <div class="kv">cURL verbose (raw):</div>
-    <pre><?=h($curlVerbose)?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="kv">⬅ Response headers:</div>
-    <pre><?=h(trim($respHeaders))?></pre>
   </div>
 
   <div class="panel">
