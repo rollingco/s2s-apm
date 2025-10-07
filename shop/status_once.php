@@ -6,8 +6,8 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
-//$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
+$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
+//$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
 $PASSWORD    = '554999c284e9f29cf95f090d9a8f3171'; // той самий, що для SALE
 $ACTION      = 'GET_TRANS_STATUS';
 
