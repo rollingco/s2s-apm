@@ -21,17 +21,18 @@ $BRAND       = 'afri-money'; // change if needed
 
 /* ============ IMAGE SET (safe hotlinks) ============ */
 $IMAGES = [
-  'dog1' => 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'dog2' => 'https://images.pexels.com/photos/4587995/pexels-photo-4587995.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'dog3' => 'https://images.pexels.com/photos/406014/pexels-photo-406014.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'cat1' => 'https://images.pexels.com/photos/104827/pexels-photo-104827.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'cat2' => 'https://images.pexels.com/photos/69932/cat-pet-animal-domestic-69932.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'cat3' => 'https://images.pexels.com/photos/326875/pexels-photo-326875.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'mix1' => 'https://images.pexels.com/photos/573271/pexels-photo-573271.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'mix2' => 'https://images.pexels.com/photos/7210753/pexels-photo-7210753.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'mix3' => 'https://images.pexels.com/photos/1000802/pexels-photo-1000802.jpeg?auto=compress&cs=tinysrgb&w=800',
-  'mix4' => 'https://images.pexels.com/photos/4587952/pexels-photo-4587952.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'dog1' => 'https://cdn.pixabay.com/photo/2017/02/20/18/03/dog-2083492_1280.jpg',
+  'dog2' => 'https://cdn.pixabay.com/photo/2015/03/26/09/54/dog-690176_1280.jpg',
+  'dog3' => 'https://cdn.pixabay.com/photo/2014/12/15/13/40/dog-569173_1280.jpg',
+  'cat1' => 'https://cdn.pixabay.com/photo/2016/02/10/16/37/cat-1192026_1280.jpg',
+  'cat2' => 'https://cdn.pixabay.com/photo/2017/11/09/21/41/cat-2934720_1280.jpg',
+  'cat3' => 'https://cdn.pixabay.com/photo/2018/03/28/12/13/cat-3266673_1280.jpg',
+  'mix1' => 'https://cdn.pixabay.com/photo/2017/12/29/18/22/dog-food-3048771_1280.jpg',
+  'mix2' => 'https://cdn.pixabay.com/photo/2017/08/03/19/15/dog-2579867_1280.jpg',
+  'mix3' => 'https://cdn.pixabay.com/photo/2016/02/19/10/00/dog-biscuits-1209621_1280.jpg',
+  'mix4' => 'https://cdn.pixabay.com/photo/2016/03/27/19/38/cat-food-1285634_1280.jpg',
 ];
+
 
 
 /* ============ PRODUCTS ============ */
