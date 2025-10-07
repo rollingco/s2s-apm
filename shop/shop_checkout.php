@@ -23,13 +23,13 @@ $BRAND       = 'afri-money'; // change if needed
 $IMAGES = [
   'dog1' => 'https://i.pinimg.com/736x/95/a2/b8/95a2b8ba2415aa48565616632ea0d309.jpg',
   'dog2' => 'https://barberpet.com.ua/ua/wp-content/uploads/sites/2/2021/10/what-to-expect-when-adopting-a-puppy-scaled.jpeg',
-  'dog3' => 'https://place-puppy.com/302x200https://ds1.skrami.com/products/p845268_5a762bb23b662.jpg',
+  'dog3' => 'https://ds1.skrami.com/products/p845268_5a762bb23b662.jpg',
   'cat1' => 'https://ipress.ua/media/gallery/full/1/4/14_a8db1.jpg',
   'cat2' => 'https://lh3.googleusercontent.com/proxy/LvHe2Wt4f53Xht0iY-l2uQS3vOwLPsy_SI2OhjyS5RHGTljOjeLElJ9V1RbCcC88BeuS9qGQyI3DNuc4oZuoagO6AuEncG1YssFaWcdh',
   'cat3' => 'https://img.depo.ua/745xX/Aug2017/288072.jpg',
   'mix1' => 'https://st2.depositphotos.com/4683977/8607/i/450/depositphotos_86072750-stock-photo-bone-animal-food.jpghttps://st2.depositphotos.com/4683977/8607/i/450/depositphotos_86072750-stock-photo-bone-animal-food.jpghttps://st2.depositphotos.com/4683977/8607/i/450/depositphotos_86072750-stock-photo-bone-animal-food.jpg',
   'mix2' => 'https://st4.depositphotos.com/1833015/30502/i/1600/depositphotos_305028550-stock-photo-dog-in-the-kitchen-with.jpg',
-  'mix3' => 'https://ukr.media/static/ba/aimg/3/9/7/397723_1.jpg',
+  'mix3' => 'https://st5.depositphotos.com/25936512/62156/i/450/depositphotos_621569014-stock-photo-food-animals-pets-dry-food.jpg',
   'mix4' => 'https://media.istockphoto.com/id/1367839756/uk/%D0%B2%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D0%BD%D1%96-%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%BD%D1%8F/%D0%BA%D0%BE%D1%80%D0%BC-%D0%B4%D0%BB%D1%8F-%D0%BA%D1%96%D1%88%D0%BE%D0%BA-%D1%96-%D1%81%D0%BE%D0%B1%D0%B0%D0%BA-%D0%BC%D1%83%D0%BB%D1%8C%D1%82%D1%8F%D1%88%D0%BD%D1%96-%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%B9%D0%BD%D0%B5%D1%80%D0%B8-%D0%B4%D0%BB%D1%8F-%D0%BA%D0%BE%D1%80%D0%BC%D1%96%D0%B2-%D0%B4%D0%BB%D1%8F-%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D1%96%D1%85-%D1%82%D0%B2%D0%B0%D1%80%D0%B8%D0%BD-%D0%B0%D0%B1%D0%BE.jpg?s=612x612&w=0&k=20&c=PhjWy1AthQBo_o7gP_ZMMbU_wpD0qPOlQxVwNogBcsw=',
 ];
 
