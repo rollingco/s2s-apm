@@ -4,7 +4,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 /*
   PetGoods Market — updated version with stable images
-  - Catalog 10 items → Cart → Checkout (SALE) → link to status_once.php
+  - Catalog (10 items) → Cart → Checkout (SALE) → link to status_once.php
   - No headers logging, simple UI like a real store
 */
 
@@ -35,21 +35,24 @@ $IMAGES = [
 
 /* ============ PRODUCTS ============ */
 $PRODUCTS = [
-  1 => ['title' => 'Premium Dog Food 2kg',  'price' => '12.50', 'img' => $IMAGES['dog1']],
-  2 => ['title' => 'Cat Crunchies 1.5kg',   'price' => '9.40',  'img' => $IMAGES['cat1']],
-  3 => ['title' => 'Puppy Starter Pack 1kg','price' => '7.25',  'img' => $IMAGES['dog2']],
-  4 => ['title' => 'Senior Dog Mix 2kg',    'price' => '11.90', 'img' => $IMAGES['mix2']],
-  5 => ['title' => 'Kitten Growth Mix 1kg', 'price' => '6.80',  'img' => $IMAGES['cat2']],
-  6 => ['title' => 'Grain-Free Dog Jerky',  'price' => '8.60',  'img' => $IMAGES['dog3']],
-  7 => ['title' => 'Cat Tuna Treats 400g',  'price' => '5.90',  'img' => $IMAGES['cat3']],
-  8 => ['title' => 'Dog Biscuits 900g',     'price' => '10.20', 'img' => $IMAGES['mix1']],
-  9 => ['title' => 'Dental Chews (M) 10pcs','price' => '4.75',  'img' => $IMAGES['mix3']],
- 10 => ['title' => 'Cat Chicken Bites 500g','price' => '7.99',  'img' => $IMAGES['mix4']],
+  1 => ['title' => 'Premium Dog Food 2kg',   'price' => '12.50', 'img' => $IMAGES['dog1']],
+  2 => ['title' => 'Cat Crunchies 1.5kg',    'price' => '9.40',  'img' => $IMAGES['cat1']],
+  3 => ['title' => 'Puppy Starter Pack 1kg', 'price' => '7.25',  'img' => $IMAGES['dog2']],
+  4 => ['title' => 'Senior Dog Mix 2kg',     'price' => '11.90', 'img' => $IMAGES['mix2']],
+  5 => ['title' => 'Kitten Growth Mix 1kg',  'price' => '6.80',  'img' => $IMAGES['cat2']],
+  6 => ['title' => 'Grain-Free Dog Jerky',   'price' => '8.60',  'img' => $IMAGES['dog3']],
+  7 => ['title' => 'Cat Tuna Treats 400g',   'price' => '5.90',  'img' => $IMAGES['cat3']],
+  8 => ['title' => 'Dog Biscuits 900g',      'price' => '10.20', 'img' => $IMAGES['mix1']],
+  9 => ['title' => 'Dental Chews (M) 10pcs', 'price' => '4.75',  'img' => $IMAGES['mix3']],
+ 10 => ['title' => 'Cat Chicken Bites 500g', 'price' => '7.99',  'img' => $IMAGES['mix4']],
 ];
 
 /* ============ helpers ============ */
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
-function pretty($v){ if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v);} return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)); }
+function pretty($v){
+  if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
+  return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
+}
 function build_sale_hash($identifier, $order_id, $amount, $currency, $secret, &$srcOut=null){
   $src = $identifier . $order_id . $amount . $currency . $secret;
   if ($srcOut !== null) $srcOut = $src;
@@ -126,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     curl_setopt_array($ch, [
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_POST           => true,
-      CURLOPT_POSTFIELDS     => $form,
+      CURLOPT_POSTFIELDS     => $form, // multipart/form-data
       CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
       CURLOPT_TIMEOUT        => 60,
     ]);
@@ -295,4 +298,43 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
         <h3 style="margin:0 0 10px 0">SALE result</h3>
         <div class="small">Endpoint: <?=h($checkoutDebug['endpoint'] ?? '')?></div>
         <div class="small">Order ID: <?=h($checkoutDebug['order_id'] ?? '')?></div>
-        <div class="small">HTTP: <?=h($checkoutDebug
+        <div class="small">HTTP: <?=h($checkoutDebug['http_code'] ?? '')?></div>
+        <?php if (!empty($checkoutDebug['curl_error'])): ?>
+          <div class="small" style="color:#ff6b6b">cURL: <?=h($checkoutDebug['curl_error'])?></div>
+        <?php endif; ?>
+
+        <div style="margin-top:10px"><strong>Sent form-data</strong></div>
+        <div class="pre"><?=pretty($checkoutDebug['form'] ?? [])?></div>
+
+        <div style="margin-top:10px"><strong>Response body</strong></div>
+        <div class="pre"><?=pretty($checkoutResp['bodyRaw'] ?? '')?></div>
+
+        <?php if (is_array($checkoutResp['json'] ?? null)): ?>
+          <div style="margin-top:10px"><strong>Parsed JSON</strong></div>
+          <div class="pre"><?=pretty($checkoutResp['json'])?></div>
+          <?php if (!empty($checkoutResp['json']['trans_id'])): ?>
+            <div style="margin-top:10px">
+              <a class="btn" href="status_once.php?trans_id=<?=urlencode($checkoutResp['json']['trans_id'])?>" target="_blank">
+                Check status once (trans_id)
+              </a>
+            </div>
+          <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if (!empty($checkoutDebug['errors'])): ?>
+          <div style="margin-top:10px;color:#ff6b6b"><strong>Errors:</strong>
+            <ul><?php foreach($checkoutDebug['errors'] as $e): ?><li><?=h($e)?></li><?php endforeach; ?></ul>
+          </div>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
+  <?php endif; ?>
+
+  <div style="margin:10px 0">
+    <span class="small">Demo UI for recording the real APM flow (SALE → STATUS). Images: placekitten / placedog / picsum.</span>
+  </div>
+
+</div>
+</body>
+</html>
