@@ -21,12 +21,12 @@ $BRAND       = 'afri-money'; // change if needed
 
 /* ============ IMAGE SET (safe hotlinks) ============ */
 $IMAGES = [
-  'dog1' => 'https://place-puppy.com/300x200',
+  'dog1' => 'https://i.pinimg.com/736x/95/a2/b8/95a2b8ba2415aa48565616632ea0d309.jpg',
   'dog2' => 'https://place-puppy.com/301x200',
   'dog3' => 'https://place-puppy.com/302x200',
   'cat1' => 'https://ipress.ua/media/gallery/full/1/4/14_a8db1.jpg',
-  'cat2' => 'https://placekitten.com/301/200',
-  'cat3' => 'https://placekitten.com/302/200',
+  'cat2' => 'https://lh3.googleusercontent.com/proxy/LvHe2Wt4f53Xht0iY-l2uQS3vOwLPsy_SI2OhjyS5RHGTljOjeLElJ9V1RbCcC88BeuS9qGQyI3DNuc4oZuoagO6AuEncG1YssFaWcdh',
+  'cat3' => 'https://img.depo.ua/745xX/Aug2017/288072.jpg',
   'mix1' => 'https://place-puppy.com/303x200',
   'mix2' => 'https://place-puppy.com/304x200',
   'mix3' => 'https://placekitten.com/303/200',
