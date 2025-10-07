@@ -21,17 +21,18 @@ $BRAND       = 'afri-money'; // change if needed
 
 /* ============ IMAGE SET (safe hotlinks) ============ */
 $IMAGES = [
-  'dog1' => 'https://placedog.net/800/600?id=1',
-  'dog2' => 'https://placedog.net/800/600?id=2',
-  'dog3' => 'https://placedog.net/800/600?id=3',
-  'cat1' => 'https://placekitten.com/800/600',
-  'cat2' => 'https://placekitten.com/801/600',
-  'cat3' => 'https://placekitten.com/802/600',
-  'mix1' => 'https://picsum.photos/id/237/800/600',
-  'mix2' => 'https://picsum.photos/id/1025/800/600',
-  'mix3' => 'https://picsum.photos/id/1074/800/600',
-  'mix4' => 'https://picsum.photos/id/1084/800/600',
+  'dog1' => 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'dog2' => 'https://images.pexels.com/photos/4587995/pexels-photo-4587995.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'dog3' => 'https://images.pexels.com/photos/406014/pexels-photo-406014.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'cat1' => 'https://images.pexels.com/photos/104827/pexels-photo-104827.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'cat2' => 'https://images.pexels.com/photos/69932/cat-pet-animal-domestic-69932.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'cat3' => 'https://images.pexels.com/photos/326875/pexels-photo-326875.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'mix1' => 'https://images.pexels.com/photos/573271/pexels-photo-573271.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'mix2' => 'https://images.pexels.com/photos/7210753/pexels-photo-7210753.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'mix3' => 'https://images.pexels.com/photos/1000802/pexels-photo-1000802.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'mix4' => 'https://images.pexels.com/photos/4587952/pexels-photo-4587952.jpeg?auto=compress&cs=tinysrgb&w=800',
 ];
+
 
 /* ============ PRODUCTS ============ */
 $PRODUCTS = [
