@@ -1,4 +1,5 @@
 <?php
+session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /* ==== CONFIG ==== */
@@ -60,6 +61,19 @@ function pretty($v){
   if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
   return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
 }
+
+/* ==== SUCCESS REDIRECT LOGIC ==== */
+$result = strtoupper(trim($parsed['result']  ?? ''));
+$status = strtoupper(trim($parsed['status']  ?? ''));
+$tid    = (string)($parsed['trans_id'] ?? $trans_id);
+$oid    = (string)($parsed['order_id'] ?? ($_SESSION['orders_by_tid'][$tid] ?? ''));
+
+// Якщо успішно — редіректимо на success.php
+if ($result === 'SUCCESS' && in_array($status, ['SETTLED','APPROVED','SUCCESS'], true)) {
+  if ($oid === '' && isset($_SESSION['orders_by_tid'][$tid])) $oid = $_SESSION['orders_by_tid'][$tid];
+  header('Location: success.php?order_id=' . urlencode($oid) . '&trans_id=' . urlencode($tid));
+  exit;
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -73,6 +87,7 @@ html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-mono
 .panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
 .kv{color:var(--muted)}
 pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
+.btn{display:inline-block;padding:8px 12px;border-radius:8px;background:#2b7cff;color:#fff;text-decoration:none;border:0;cursor:pointer}
 </style>
 </head>
 <body>
@@ -102,6 +117,13 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
     <?php if (is_array($parsed)): ?>
       <div class="kv">Parsed JSON:</div>
       <pre><?=pretty($parsed)?></pre>
+      <?php
+        // Якщо відповідь успішна, ми вже зробили редірект вище.
+        // Якщо тут неуспіх — дамо кнопку для manual переходу на success (раптом статус змінився щойно).
+        if ($oid !== '' && $tid !== ''):
+      ?>
+      <a class="btn" href="success.php?order_id=<?=urlencode($oid)?>&trans_id=<?=urlencode($tid)?>">Open success page (if now approved)</a>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
 

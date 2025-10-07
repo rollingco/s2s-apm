@@ -3,9 +3,9 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /*
-  PetGoods Market — updated version with stable images
+  PetGoods Market — updated version with success redirect support
   - Catalog (10 items) → Cart → Checkout (SALE) → link to status_once.php
-  - No headers logging, simple UI like a real store
+  - On SALE: save order details in session to use on success.php
 */
 
 /* ============ CONFIG ============ */
@@ -32,9 +32,6 @@ $IMAGES = [
   'mix3' => 'https://st5.depositphotos.com/25936512/62156/i/450/depositphotos_621569014-stock-photo-food-animals-pets-dry-food.jpg',
   'mix4' => 'https://media.istockphoto.com/id/1367839756/uk/%D0%B2%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D0%BD%D1%96-%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%BD%D1%8F/%D0%BA%D0%BE%D1%80%D0%BC-%D0%B4%D0%BB%D1%8F-%D0%BA%D1%96%D1%88%D0%BE%D0%BA-%D1%96-%D1%81%D0%BE%D0%B1%D0%B0%D0%BA-%D0%BC%D1%83%D0%BB%D1%8C%D1%82%D1%8F%D1%88%D0%BD%D1%96-%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%B9%D0%BD%D0%B5%D1%80%D0%B8-%D0%B4%D0%BB%D1%8F-%D0%BA%D0%BE%D1%80%D0%BC%D1%96%D0%B2-%D0%B4%D0%BB%D1%8F-%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D1%96%D1%85-%D1%82%D0%B2%D0%B0%D1%80%D0%B8%D0%BD-%D0%B0%D0%B1%D0%BE.jpg?s=612x612&w=0&k=20&c=PhjWy1AthQBo_o7gP_ZMMbU_wpD0qPOlQxVwNogBcsw=',
 ];
-
-
-
 
 /* ============ PRODUCTS ============ */
 $PRODUCTS = [
@@ -119,6 +116,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       'hash'              => $hash,
     ];
 
+    // Save order in session for later success page
+    if (!isset($_SESSION['orders'])) $_SESSION['orders'] = [];
+    $_SESSION['orders'][$order_id] = [
+      'order_id'   => $order_id,
+      'cart'       => $_SESSION['cart'],
+      'amount'     => $order_amt,
+      'currency'   => $CURRENCY,
+      'phone'      => $payer_phone,
+      'brand'      => $BRAND,
+      'created_at' => time(),
+    ];
+
     $checkoutDebug = [
       'endpoint'   => $PAYMENT_URL,
       'client_key' => $CLIENT_KEY,
@@ -146,7 +155,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
 
     $checkoutResp['bodyRaw'] = (string)$raw;
     $json = json_decode($checkoutResp['bodyRaw'], true);
-    if (json_last_error() === JSON_ERROR_NONE) $checkoutResp['json'] = $json;
+    if (json_last_error() === JSON_ERROR_NONE) {
+      $checkoutResp['json'] = $json;
+
+      // Link trans_id → order_id for success redirect later
+      if (!empty($json['trans_id'])) {
+        $tid = (string)$json['trans_id'];
+        $_SESSION['orders'][$order_id]['trans_id'] = $tid;
+        if (!isset($_SESSION['orders_by_tid'])) $_SESSION['orders_by_tid'] = [];
+        $_SESSION['orders_by_tid'][$tid] = $order_id;
+      }
+    }
   } else {
     $checkoutDebug['errors'] = $errors;
   }
@@ -277,7 +296,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
       <h3 style="margin:0 0 12px 0">Checkout</h3>
       <?php if (empty($_SESSION['cart'])): ?>
         <div class="small">Cart is empty. <a href="?view=catalog">Go shopping</a></div>
-      <?php else: 
+      <?php else:
         $total = cart_total($_SESSION['cart'], $PRODUCTS);
         ?>
         <form method="post">
@@ -316,9 +335,17 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
           <div style="margin-top:10px"><strong>Parsed JSON</strong></div>
           <div class="pre"><?=pretty($checkoutResp['json'])?></div>
           <?php if (!empty($checkoutResp['json']['trans_id'])): ?>
-            <div style="margin-top:10px">
+            <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
               <a class="btn" href="status_once.php?trans_id=<?=urlencode($checkoutResp['json']['trans_id'])?>" target="_blank">
                 Check status once (trans_id)
+              </a>
+              <?php
+                // Quick link to success (useful if status already SETTLED by provider)
+                $oid_link = urlencode($checkoutDebug['order_id']);
+                $tid_link = urlencode($checkoutResp['json']['trans_id']);
+              ?>
+              <a class="btn" href="success.php?order_id=<?=$oid_link?>&trans_id=<?=$tid_link?>" target="_blank">
+                Open success page (if approved)
               </a>
             </div>
           <?php endif; ?>
