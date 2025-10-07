@@ -3,9 +3,9 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /*
-  Demo Pet Shop — wraps the existing SALE flow
-  - Catalog (10 items with images) → Cart → Checkout (SALE) → link to status_once.php
-  - No headers logging, only essential debug
+  PetGoods Market — updated version with stable images
+  - Catalog 10 items → Cart → Checkout (SALE) → link to status_once.php
+  - No headers logging, simple UI like a real store
 */
 
 /* ============ CONFIG ============ */
@@ -19,18 +19,32 @@ $CURRENCY    = 'SLE';
 $RETURN_URL  = 'https://google.com';
 $BRAND       = 'afri-money'; // change if needed
 
-/* ============ PRODUCTS (10 items) ============ */
+/* ============ IMAGE SET (safe hotlinks) ============ */
+$IMAGES = [
+  'dog1' => 'https://placedog.net/800/600?id=1',
+  'dog2' => 'https://placedog.net/800/600?id=2',
+  'dog3' => 'https://placedog.net/800/600?id=3',
+  'cat1' => 'https://placekitten.com/800/600',
+  'cat2' => 'https://placekitten.com/801/600',
+  'cat3' => 'https://placekitten.com/802/600',
+  'mix1' => 'https://picsum.photos/id/237/800/600',
+  'mix2' => 'https://picsum.photos/id/1025/800/600',
+  'mix3' => 'https://picsum.photos/id/1074/800/600',
+  'mix4' => 'https://picsum.photos/id/1084/800/600',
+];
+
+/* ============ PRODUCTS ============ */
 $PRODUCTS = [
-  1 => ['title' => 'Premium Dog Food 2kg',        'price' => '12.50', 'img' => 'https://images.unsplash.com/photo-1534361960057-19889db9621e?w=800&q=80'],
-  2 => ['title' => 'Cat Crunchies 1.5kg',         'price' => '9.40',  'img' => 'https://images.unsplash.com/photo-1619983081563-430f63602796?w=800&q=80'],
-  3 => ['title' => 'Puppy Starter Pack 1kg',      'price' => '7.25',  'img' => 'https://images.unsplash.com/photo-1558944351-c97e1330b9b6?w=800&q=80'],
-  4 => ['title' => 'Senior Dog Mix 2kg',          'price' => '11.90', 'img' => 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=800&q=80'],
-  5 => ['title' => 'Kitten Growth Mix 1kg',       'price' => '6.80',  'img' => 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&q=80'],
-  6 => ['title' => 'Grain-Free Dog Jerky 500g',   'price' => '8.60',  'img' => 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800&q=80'],
-  7 => ['title' => 'Cat Tuna Treats 400g',        'price' => '5.90',  'img' => 'https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?w=800&q=80'],
-  8 => ['title' => 'Dog Biscuits 900g',           'price' => '10.20', 'img' => 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80'],
-  9 => ['title' => 'Dental Chews (M) 10pcs',      'price' => '4.75',  'img' => 'https://images.unsplash.com/photo-1547483238-2cbf1aabfb54?w=800&q=80'],
- 10 => ['title' => 'Cat Chicken Bites 500g',      'price' => '7.99',  'img' => 'https://images.unsplash.com/photo-1596495578065-8c15fce736d7?w=800&q=80'],
+  1 => ['title' => 'Premium Dog Food 2kg',  'price' => '12.50', 'img' => $IMAGES['dog1']],
+  2 => ['title' => 'Cat Crunchies 1.5kg',   'price' => '9.40',  'img' => $IMAGES['cat1']],
+  3 => ['title' => 'Puppy Starter Pack 1kg','price' => '7.25',  'img' => $IMAGES['dog2']],
+  4 => ['title' => 'Senior Dog Mix 2kg',    'price' => '11.90', 'img' => $IMAGES['mix2']],
+  5 => ['title' => 'Kitten Growth Mix 1kg', 'price' => '6.80',  'img' => $IMAGES['cat2']],
+  6 => ['title' => 'Grain-Free Dog Jerky',  'price' => '8.60',  'img' => $IMAGES['dog3']],
+  7 => ['title' => 'Cat Tuna Treats 400g',  'price' => '5.90',  'img' => $IMAGES['cat3']],
+  8 => ['title' => 'Dog Biscuits 900g',     'price' => '10.20', 'img' => $IMAGES['mix1']],
+  9 => ['title' => 'Dental Chews (M) 10pcs','price' => '4.75',  'img' => $IMAGES['mix3']],
+ 10 => ['title' => 'Cat Chicken Bites 500g','price' => '7.99',  'img' => $IMAGES['mix4']],
 ];
 
 /* ============ helpers ============ */
@@ -112,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     curl_setopt_array($ch, [
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_POST           => true,
-      CURLOPT_POSTFIELDS     => $form, // multipart/form-data
+      CURLOPT_POSTFIELDS     => $form,
       CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
       CURLOPT_TIMEOUT        => 60,
     ]);
@@ -176,7 +190,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 <body>
 <div class="wrap">
 
-  <!-- Header / Shop-like top bar -->
+  <!-- Header -->
   <div class="header">
     <div class="brand">
       <div class="logo"></div>
@@ -281,41 +295,4 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
         <h3 style="margin:0 0 10px 0">SALE result</h3>
         <div class="small">Endpoint: <?=h($checkoutDebug['endpoint'] ?? '')?></div>
         <div class="small">Order ID: <?=h($checkoutDebug['order_id'] ?? '')?></div>
-        <div class="small">HTTP: <?=h($checkoutDebug['http_code'] ?? '')?></div>
-        <?php if (!empty($checkoutDebug['curl_error'])): ?><div class="small" style="color:#ff6b6b">cURL: <?=h($checkoutDebug['curl_error'])?></div><?php endif; ?>
-
-        <div style="margin-top:10px"><strong>Sent form-data</strong></div>
-        <div class="pre"><?=pretty($checkoutDebug['form'] ?? [])?></div>
-
-        <div style="margin-top:10px"><strong>Response body</strong></div>
-        <div class="pre"><?=pretty($checkoutResp['bodyRaw'] ?? '')?></div>
-
-        <?php if (is_array($checkoutResp['json'] ?? null)): ?>
-          <div style="margin-top:10px"><strong>Parsed JSON</strong></div>
-          <div class="pre"><?=pretty($checkoutResp['json'])?></div>
-          <?php if (!empty($checkoutResp['json']['trans_id'])): ?>
-            <div style="margin-top:10px">
-              <a class="btn" href="status_once.php?trans_id=<?=urlencode($checkoutResp['json']['trans_id'])?>" target="_blank">
-                Check status once (trans_id)
-              </a>
-            </div>
-          <?php endif; ?>
-        <?php endif; ?>
-
-        <?php if (!empty($checkoutDebug['errors'])): ?>
-          <div style="margin-top:10px;color:#ff6b6b"><strong>Errors:</strong>
-            <ul><?php foreach($checkoutDebug['errors'] as $e): ?><li><?=h($e)?></li><?php endforeach; ?></ul>
-          </div>
-        <?php endif; ?>
-      </div>
-    <?php endif; ?>
-
-  <?php endif; ?>
-
-  <div style="margin:10px 0">
-    <span class="small">Demo UI for recording the real APM flow (SALE → STATUS). Images sourced from Unsplash.</span>
-  </div>
-
-</div>
-</body>
-</html>
+        <div class="small">HTTP: <?=h($checkoutDebug
