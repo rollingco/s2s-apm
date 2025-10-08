@@ -6,8 +6,8 @@ header('Content-Type: text/html; charset=utf-8');
   PetGoods Market — APM demo with COUNTRY + BRAND selector
   - Country:
       SL  → real SALE (Orange Money / AfriMoney)
-      KE  → mock Web Checkout (Mobile Money / Card)
-      NG  → mock Web Checkout (Mobile Money / Card)
+      KE  → mock Web Checkout (M-Pesa / Airtel Money)
+      NG  → mock Web Checkout (MTN MoMo)
   - For mock flow we redirect to webcheckout.php
 */
 
@@ -30,6 +30,7 @@ $CURRENCY_BY_COUNTRY = [
 /* Brand meta (also used for UI) */
 $ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
 $BRANDS_ALL = [
+  // SL (real)
   'orange-money' => [
     'title' => 'Orange Money',
     'logo'  => $ASSET_URL.'Orange_Money-Logo.wine.png',
@@ -40,25 +41,30 @@ $BRANDS_ALL = [
     'logo'  => $ASSET_URL.'afrimoney.png',
     'hint'  => 'Sierra Leone • AfriCell',
   ],
-  // KE/NG (mock)
-  'mobile-money' => [
-    'title' => 'Mobile Money (M-Pesa)',
-    'logo'  => $ASSET_URL.'mpesa-logo.png', // ← твоє лого
-    'hint'  => 'Web checkout demo',
+  // KE (mock)
+  'm-pesa' => [
+    'title' => 'M-Pesa',
+    'logo'  => $ASSET_URL.'mpesa-logo.png',
+    'hint'  => 'Kenya • Safaricom',
   ],
-  'card' => [
-    'title' => 'Card',
-    'logo'  => $ASSET_URL.'card-logo-png-transparent-png.png', // ← твоє лого
-    'hint'  => 'Web checkout demo',
+  'airtel-money' => [
+    'title' => 'Airtel Money',
+    'logo'  => '', // поставлю без логотипа, щоб не було 404; дай файл — додам
+    'hint'  => 'Kenya • Airtel',
+  ],
+  // NG (mock)
+  'mtn-momo' => [
+    'title' => 'MTN MoMo',
+    'logo'  => $ASSET_URL.'mtn-logo-new.webp', // твій логотип
+    'hint'  => 'Nigeria • MTN',
   ],
 ];
-
 
 /* Available brands per country */
 $BRANDS_BY_COUNTRY = [
   'sl' => ['orange-money','afri-money'],
-  'ke' => ['mobile-money','card'],
-  'ng' => ['mobile-money','card'],
+  'ke' => ['m-pesa','airtel-money'],
+  'ng' => ['mtn-momo'],
 ];
 
 /* ================= CATALOG IMAGES/PRODUCTS ================= */
@@ -305,7 +311,6 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
   .pm-logo{height:88px;max-width:200px}
   .pm-opt{flex-direction:column;align-items:flex-start}
 }
-
 </style>
 </head>
 <body>
@@ -393,12 +398,17 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
                 $meta = $BRANDS_ALL[$b]; ?>
                 <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
                   <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
-                  <?php if ($meta['logo']): ?>
+                  <?php if (!empty($meta['logo'])): ?>
                     <img class="pm-logo" src="<?=h($meta['logo'])?>" alt="<?=h($meta['title'])?>">
                   <?php else: ?>
-                    <strong><?=h($meta['title'])?></strong>
+                    <div class="pm-meta">
+                      <div class="pm-title"><?=h($meta['title'])?></div>
+                      <div class="pm-hint"><?=h($meta['hint'])?></div>
+                    </div>
                   <?php endif; ?>
-                  <span class="small"><?=h($meta['hint'])?></span>
+                  <?php if (!empty($meta['logo'])): ?>
+                    <span class="small"><?=h($meta['hint'])?></span>
+                  <?php endif; ?>
                 </label>
               <?php endforeach; ?>
             </div>
@@ -444,7 +454,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
             <input type="hidden" name="brand"   value="<?=h($selectedBrand)?>">
             <div style="margin:8px 0;">
               <label>Phone (payer_phone):</label><br>
-              <input class="input" type="text" name="phone" value="<?=h($_POST['phone'] ?? '')?>" placeholder="254700000000">
+              <input class="input" type="text" name="phone" value="<?=h($_POST['phone'] ?? '')?>" placeholder="<?= $country==='ke' ? '254700000000' : '234700000000' ?>">
             </div>
             <div style="margin:8px 0;">
               <label>Amount:</label><br>
