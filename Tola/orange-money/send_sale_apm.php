@@ -15,7 +15,7 @@ $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 $DEFAULTS = [
-  'brand'       => 'orange-money',
+  'brand'       => 'mnt-mobile-money',
   'identifier'  => '111',
   'currency'    => 'SLE',
   'return_url'  => 'https://google.com',
