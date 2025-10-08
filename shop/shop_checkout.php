@@ -49,13 +49,13 @@ $BRANDS_ALL = [
   ],
   'airtel-money' => [
     'title' => 'Airtel Money',
-    'logo'  => '', // поставлю без логотипа, щоб не було 404; дай файл — додам
+    'logo'  => $ASSET_URL.'airtel-money-logo-sim-company-icon-transparent-background-free-png.webp', // ← твій файл
     'hint'  => 'Kenya • Airtel',
   ],
   // NG (mock)
   'mtn-momo' => [
     'title' => 'MTN MoMo',
-    'logo'  => $ASSET_URL.'mtn-logo-new.webp', // твій логотип
+    'logo'  => $ASSET_URL.'mtn-logo-new.webp', // ← твій файл
     'hint'  => 'Nigeria • MTN',
   ],
 ];
@@ -295,18 +295,18 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 
 /* BIG logos everywhere */
 .pm-logo{
-  height:126px;            /* ~122–128px як просив */
+  height:126px;            /* ~122–128px */
   width:auto;
-  max-width:260px;         /* щоб не розлазилось */
+  max-width:260px;
   object-fit:contain;
 }
 
-/* щоб картки з великими лого виглядали гарно */
+/* help text layout when no image */
 .pm-meta{display:flex;flex-direction:column}
 .pm-title{font-weight:700}
 .pm-hint{font-size:12px;color:#9aa4af;margin-top:2px}
 
-/* на вузьких екранах трохи зменшимо */
+/* mobile */
 @media (max-width:640px){
   .pm-logo{height:88px;max-width:200px}
   .pm-opt{flex-direction:column;align-items:flex-start}
@@ -400,14 +400,12 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
                   <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
                   <?php if (!empty($meta['logo'])): ?>
                     <img class="pm-logo" src="<?=h($meta['logo'])?>" alt="<?=h($meta['title'])?>">
+                    <span class="small"><?=h($meta['hint'])?></span>
                   <?php else: ?>
                     <div class="pm-meta">
                       <div class="pm-title"><?=h($meta['title'])?></div>
                       <div class="pm-hint"><?=h($meta['hint'])?></div>
                     </div>
-                  <?php endif; ?>
-                  <?php if (!empty($meta['logo'])): ?>
-                    <span class="small"><?=h($meta['hint'])?></span>
                   <?php endif; ?>
                 </label>
               <?php endforeach; ?>
