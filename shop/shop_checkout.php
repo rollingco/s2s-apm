@@ -3,9 +3,10 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /*
-  PetGoods Market — updated version with success redirect support
-  - Catalog (10 items) → Cart → Checkout (SALE) → link to status_once.php
-  - On SALE: save order details in session to use on success.php
+  PetGoods Market — APM demo with BRAND selector
+  - Catalog → Cart (choose brand with logos) → Checkout (SALE) → status link
+  - The only difference between methods is 'brand':
+      'orange-money' or 'afri-money'
 */
 
 /* ============ CONFIG ============ */
@@ -17,7 +18,27 @@ $SECRET      = '554999c284e9f29cf95f090d9a8f3171';
 $IDENTIFIER  = '111';
 $CURRENCY    = 'SLE';
 $RETURN_URL  = 'https://google.com';
-$BRAND       = 'afri-money'; // change if needed
+
+/* ============ BRAND definitions (with inline SVG logos) ============ */
+$BRANDS = [
+  'orange-money' => [
+    'title' => 'Orange Money',
+    'badge' => '<span class="badge" style="background:#11131a;border:1px solid #3a2a12">
+      <svg width="16" height="16" viewBox="0 0 16 16" style="margin-right:6px">
+        <rect x="1" y="1" width="14" height="14" fill="#f97316" rx="3" />
+        <path d="M4 6h8M4 9h5" stroke="#11131a" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>Orange Money</span>',
+  ],
+  'afri-money' => [
+    'title' => 'AfriMoney',
+    'badge' => '<span class="badge" style="background:#11131a;border:1px solid #15381f">
+      <svg width="16" height="16" viewBox="0 0 16 16" style="margin-right:6px">
+        <circle cx="8" cy="8" r="7" fill="#16a34a"/>
+        <path d="M5 8l2 2 4-4" stroke="#0b441f" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>AfriMoney</span>',
+  ],
+];
+$ALLOWED_BRANDS = array_keys($BRANDS);
 
 /* ============ IMAGE SET (safe hotlinks) ============ */
 $IMAGES = [
@@ -64,9 +85,13 @@ function cart_total($cart, $products){
   return number_format($sum, 2, '.', '');
 }
 
-/* ============ CART actions ============ */
+/* ============ INIT session ============ */
 if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
+if (!isset($_SESSION['brand']) || !in_array($_SESSION['brand'], $ALLOWED_BRANDS, true)) {
+  $_SESSION['brand'] = 'afri-money'; // default
+}
 
+/* ============ CART actions ============ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
   $pid = (int)($_POST['product_id'] ?? 0);
   if ($pid && isset($PRODUCTS[$pid])) $_SESSION['cart'][$pid] = ($_SESSION['cart'][$pid] ?? 0) + 1;
@@ -79,6 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) 
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_cart'])) {
   $_SESSION['cart'] = []; header('Location: ' . $_SERVER['PHP_SELF'] . '?view=cart'); exit;
+}
+/* BRAND select (from Cart or Checkout) */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_brand'])) {
+  $b = $_POST['brand'] ?? '';
+  if (in_array($b, $ALLOWED_BRANDS, true)) $_SESSION['brand'] = $b;
+  // redirect back to the page we were on
+  $back = $_POST['back'] ?? 'cart';
+  header('Location: ' . $_SERVER['PHP_SELF'] . '?view=' . urlencode($back)); exit;
 }
 
 /* ============ Checkout (SALE) ============ */
@@ -93,6 +126,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
   if ($payer_phone === '') $errors[] = 'Phone is required.';
   if (!is_numeric($order_amt) || (float)$order_amt <= 0) $errors[] = 'Amount must be a positive number.';
 
+  $selectedBrand = $_SESSION['brand'] ?? 'afri-money';
+  if (!in_array($selectedBrand, $ALLOWED_BRANDS, true)) $selectedBrand = 'afri-money';
+
   if (empty($errors)) {
     $order_id   = 'ORDER_' . time();
     $order_desc = 'Purchase from PetGoods Market';
@@ -104,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     $form = [
       'action'            => 'SALE',
       'client_key'        => $CLIENT_KEY,
-      'brand'             => $BRAND,
+      'brand'             => $selectedBrand, // <— ONLY difference
       'order_id'          => $order_id,
       'order_amount'      => $order_amt,
       'order_currency'    => $CURRENCY,
@@ -124,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       'amount'     => $order_amt,
       'currency'   => $CURRENCY,
       'phone'      => $payer_phone,
-      'brand'      => $BRAND,
+      'brand'      => $selectedBrand,
       'created_at' => time(),
     ];
 
@@ -132,6 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       'endpoint'   => $PAYMENT_URL,
       'client_key' => $CLIENT_KEY,
       'order_id'   => $order_id,
+      'brand'      => $selectedBrand,
       'form'       => $form,
       'hash_src'   => $hash_src_dbg,
       'hash'       => $hash,
@@ -173,6 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
 
 /* ============ view ============ */
 $view = $_GET['view'] ?? 'catalog';
+$selectedBrand = $_SESSION['brand'] ?? 'afri-money';
 ?>
 <!doctype html>
 <html lang="en">
@@ -210,6 +248,12 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .line{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.06);padding:8px 0}
 .pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
 .input{padding:8px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:var(--text);width:260px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;font-size:12px}
+.pm-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.pm-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #2a2f3a;border-radius:10px;background:#10131a;cursor:pointer}
+.pm-opt input{accent-color:#2b7cff}
+.pm-selected{box-shadow:0 0 0 2px #2b7cff44 inset;border-color:#2b7cff}
+.header-badge{opacity:.85}
 </style>
 </head>
 <body>
@@ -232,9 +276,12 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
   <div class="hero">
     <div>
       <h2>Healthy food for happy pets</h2>
-      <p>Choose items, add to cart, and complete a demo checkout using APM (SALE + STATUS).</p>
+      <p>Choose items, add to cart, pick a payment brand, then complete SALE → STATUS.</p>
     </div>
-    <a class="btn" href="?view=catalog">Shop now</a>
+    <div class="header-badge">
+      <span class="small">Selected brand:&nbsp;</span>
+      <?= $BRANDS[$selectedBrand]['badge'] ?>
+    </div>
   </div>
 
   <?php if ($view === 'catalog'): ?>
@@ -284,7 +331,28 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
           <strong>Total:</strong>
           <strong><?=h(cart_total($_SESSION['cart'], $PRODUCTS))?> <?=h($CURRENCY)?></strong>
         </div>
-        <div style="margin-top:12px;display:flex;gap:8px">
+
+        <!-- Payment brand selector -->
+        <div style="margin-top:16px">
+          <div style="margin-bottom:6px"><strong>Payment method</strong> <span class="small">(brand)</span></div>
+          <form method="post">
+            <input type="hidden" name="set_brand" value="1">
+            <input type="hidden" name="back" value="cart">
+            <div class="pm-row">
+              <?php foreach ($ALLOWED_BRANDS as $b): ?>
+                <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
+                  <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
+                  <?= $BRANDS[$b]['badge'] ?>
+                </label>
+              <?php endforeach; ?>
+            </div>
+            <div style="margin-top:10px">
+              <button class="btn" type="submit">Save payment method</button>
+            </div>
+          </form>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:8px">
           <a class="btn" href="?view=checkout">Proceed to checkout</a>
           <form method="post"><button class="btn sec" name="clear_cart" type="submit">Clear cart</button></form>
         </div>
@@ -299,6 +367,22 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
       <?php else:
         $total = cart_total($_SESSION['cart'], $PRODUCTS);
         ?>
+        <!-- Quick switch (optional) -->
+        <form method="post" style="margin:0 0 14px 0">
+          <input type="hidden" name="set_brand" value="1">
+          <input type="hidden" name="back" value="checkout">
+          <div class="small" style="margin-bottom:6px">Payment method (brand):</div>
+          <div class="pm-row">
+            <?php foreach ($ALLOWED_BRANDS as $b): ?>
+              <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
+                <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
+                <?= $BRANDS[$b]['badge'] ?>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <div style="margin-top:8px"><button class="btn sec" type="submit">Change</button></div>
+        </form>
+
         <form method="post">
           <div style="margin:8px 0;">
             <label>Phone (payer_phone):</label><br>
@@ -320,6 +404,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
         <h3 style="margin:0 0 10px 0">SALE result</h3>
         <div class="small">Endpoint: <?=h($checkoutDebug['endpoint'] ?? '')?></div>
         <div class="small">Order ID: <?=h($checkoutDebug['order_id'] ?? '')?></div>
+        <div class="small">Brand: <?=h($checkoutDebug['brand'] ?? '')?></div>
         <div class="small">HTTP: <?=h($checkoutDebug['http_code'] ?? '')?></div>
         <?php if (!empty($checkoutDebug['curl_error'])): ?>
           <div class="small" style="color:#ff6b6b">cURL: <?=h($checkoutDebug['curl_error'])?></div>
@@ -340,7 +425,6 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
                 Check status once (trans_id)
               </a>
               <?php
-                // Quick link to success (useful if status already SETTLED by provider)
                 $oid_link = urlencode($checkoutDebug['order_id']);
                 $tid_link = urlencode($checkoutResp['json']['trans_id']);
               ?>
@@ -362,7 +446,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
   <?php endif; ?>
 
   <div style="margin:10px 0">
-    <span class="small">Demo UI for recording the real APM flow (SALE → STATUS). Images: placekitten / placedog / picsum.</span>
+    <span class="small">Demo UI for recording the real APM flow (SALE → STATUS). Brand selector persists in session.</span>
   </div>
 
 </div>
