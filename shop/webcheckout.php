@@ -7,10 +7,9 @@ header('Content-Type: text/html; charset=utf-8');
   - Accepts POST from shop_checkout.php with: country, brand, phone, amount
   - Shows brand logo/title (M-Pesa, Airtel Money, MTN MoMo)
   - Simulates outcomes: Approved / Pending / Failed
-  - On Approved -> provides link to success.php?order_id=...&trans_id=...
+  - On Approved -> saves order to $_SESSION (like real SALE) + link to success.php
 */
 
-/* ===== Brand meta (match shop_checkout.php) ===== */
 $ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
 $BRANDS_ALL = [
   'm-pesa' => [
@@ -30,19 +29,22 @@ $BRANDS_ALL = [
   ],
 ];
 
-/* Country → allowed brands (no CARD anywhere) */
 $ALLOWED = [
   'ke' => ['m-pesa','airtel-money'],
   'ng' => ['mtn-momo'],
 ];
 
-/* ===== Helpers ===== */
+/* Currency by country (for success page pretty view) */
+$CURRENCY_BY_COUNTRY = [
+  'ke' => 'KES',
+  'ng' => 'NGN',
+];
+
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
 function err($m){ return '<div class="alert alert-err">'.$m.'</div>'; }
 function ok($m){ return '<div class="alert alert-ok">'.$m.'</div>'; }
 function warn($m){ return '<div class="alert alert-warn">'.$m.'</div>'; }
 
-/* ===== Read input (first visit via POST from shop) or self-POST for simulate ===== */
 $country = strtolower(trim($_REQUEST['country'] ?? ''));
 $brand   = strtolower(trim($_REQUEST['brand'] ?? ''));
 $phone   = preg_replace('/\s+/', '', (string)($_REQUEST['phone'] ?? ''));
@@ -56,13 +58,12 @@ if (!isset($BRANDS_ALL[$brand])) $errors[] = 'Unknown brand meta.';
 if ($amount <= 0) $errors[] = 'Amount must be positive.';
 if ($phone === '') $errors[] = 'Phone is required.';
 
-$simulate = $_POST['simulate'] ?? ''; // '', 'approved', 'pending', 'failed'
+$simulate = $_POST['simulate'] ?? '';
 
-/* Prepare mock ids (only when needed) */
+/* Prepare mock ids */
 $order_id = 'ORDER_' . time();
 $trans_id = 'T' . time() . rand(100,999);
 
-/* ===== HTML starts ===== */
 ?>
 <!doctype html>
 <html lang="en">
@@ -137,17 +138,31 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
       </div>
 
       <div class="kv">
-        <div class="small">Amount</div><div><strong><?=h($amount)?></strong></div>
+        <div class="small">Amount</div><div><strong><?=h($amount)?></strong> <?=h($CURRENCY_BY_COUNTRY[$country] ?? '')?></div>
         <div class="small">Phone</div><div><?=h($phone)?></div>
         <div class="small">Brand</div><div><?=h($meta['title'])?></div>
       </div>
 
       <?php
         if ($simulate === 'approved') {
+          // ✅ Save minimal order into session so success.php can show details
+          if (!isset($_SESSION['orders'])) $_SESSION['orders'] = [];
+          if (!isset($_SESSION['orders_by_tid'])) $_SESSION['orders_by_tid'] = [];
+
+          $_SESSION['orders'][$order_id] = [
+            'order_id'   => $order_id,
+            'cart'       => $_SESSION['cart'] ?? [],
+            'amount'     => $amount,
+            'currency'   => $CURRENCY_BY_COUNTRY[$country] ?? '',
+            'phone'      => $phone,
+            'brand'      => $brand,          // key (m-pesa / airtel-money / mtn-momo)
+            'created_at' => time(),
+            'trans_id'   => $trans_id,
+          ];
+          $_SESSION['orders_by_tid'][$trans_id] = $order_id;
+
           echo ok('Payment approved (mock).');
-          $oid = $order_id;
-          $tid = $trans_id;
-          $success_link = 'success.php?order_id='.urlencode($oid).'&trans_id='.urlencode($tid);
+          $success_link = 'success.php?order_id='.urlencode($order_id).'&trans_id='.urlencode($trans_id);
           echo '<div class="row" style="margin-top:10px">';
           echo '<a class="btn ok" href="'.h($success_link).'" target="_blank">Open success page</a>';
           echo '<a class="btn sec" href="shop_checkout.php?view=catalog">Continue shopping</a>';
