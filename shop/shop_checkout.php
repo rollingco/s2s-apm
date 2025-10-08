@@ -30,7 +30,6 @@ $CURRENCY_BY_COUNTRY = [
 /* Brand meta (also used for UI) */
 $ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
 $BRANDS_ALL = [
-  // Sierra Leone (real)
   'orange-money' => [
     'title' => 'Orange Money',
     'logo'  => $ASSET_URL.'Orange_Money-Logo.wine.png',
@@ -41,18 +40,19 @@ $BRANDS_ALL = [
     'logo'  => $ASSET_URL.'afrimoney.png',
     'hint'  => 'Sierra Leone • AfriCell',
   ],
-  // Kenya/Nigeria (mock)
+  // KE/NG (mock)
   'mobile-money' => [
-    'title' => 'Mobile Money',
-    'logo'  => null, // no file → text badge
-    'hint'  => 'Operator wallet',
+    'title' => 'Mobile Money (M-Pesa)',
+    'logo'  => $ASSET_URL.'mpesa-logo.png', // ← твоє лого
+    'hint'  => 'Web checkout demo',
   ],
   'card' => [
     'title' => 'Card',
-    'logo'  => null,
-    'hint'  => 'Web card payment',
+    'logo'  => $ASSET_URL.'card-logo-png-transparent-png.png', // ← твоє лого
+    'hint'  => 'Web checkout demo',
   ],
 ];
+
 
 /* Available brands per country */
 $BRANDS_BY_COUNTRY = [
@@ -282,10 +282,30 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .line{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.06);padding:8px 0}
 .pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
 .input{padding:8px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:var(--text);width:260px}
+/* payment logos */
 .pm-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
-.pm-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#10131a;cursor:pointer}
+.pm-opt{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid #2a2f3a;border-radius:16px;background:#10131a;cursor:pointer}
 .pm-opt.pm-selected{box-shadow:0 0 0 2px #2b7cff55 inset;border-color:#2b7cff}
-.pm-logo{width:120px;height:28px;object-fit:contain}
+
+/* BIG logos everywhere */
+.pm-logo{
+  height:126px;            /* ~122–128px як просив */
+  width:auto;
+  max-width:260px;         /* щоб не розлазилось */
+  object-fit:contain;
+}
+
+/* щоб картки з великими лого виглядали гарно */
+.pm-meta{display:flex;flex-direction:column}
+.pm-title{font-weight:700}
+.pm-hint{font-size:12px;color:#9aa4af;margin-top:2px}
+
+/* на вузьких екранах трохи зменшимо */
+@media (max-width:640px){
+  .pm-logo{height:88px;max-width:200px}
+  .pm-opt{flex-direction:column;align-items:flex-start}
+}
+
 </style>
 </head>
 <body>

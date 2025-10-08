@@ -28,20 +28,13 @@ function money2($n){ return number_format((float)$n, 2, '.', ''); }
 
 /* Build asset base URL for this folder (e.g. /s2stest/shop/) */
 $ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
-
-/* Known brands with logos (same folder as this file) */
 $BRANDS = [
-  'orange-money' => [
-    'title' => 'Orange Money',
-    'logo'  => $ASSET_URL . 'Orange_Money-Logo.wine.png',
-    'hint'  => 'Sierra Leone • Orange',
-  ],
-  'afri-money' => [
-    'title' => 'AfriMoney',
-    'logo'  => $ASSET_URL . 'afrimoney.png',
-    'hint'  => 'Sierra Leone • AfriCell',
-  ],
+  'orange-money' => ['title'=>'Orange Money','logo'=>$ASSET_URL.'Orange_Money-Logo.wine.png','hint'=>'Sierra Leone • Orange'],
+  'afri-money'   => ['title'=>'AfriMoney','logo'=>$ASSET_URL.'afrimoney.png','hint'=>'Sierra Leone • AfriCell'],
+  'mobile-money' => ['title'=>'Mobile Money (M-Pesa)','logo'=>$ASSET_URL.'mpesa-logo.png','hint'=>'Web checkout demo'],
+  'card'         => ['title'=>'Card','logo'=>$ASSET_URL.'card-logo-png-transparent-png.png','hint'=>'Web checkout demo'],
 ];
+
 
 $oid   = $_GET['order_id'] ?? '';
 $tid   = $_GET['trans_id'] ?? '';
@@ -97,11 +90,22 @@ h2{font-size:16px;margin:16px 0 6px 0}
 .note{margin-top:12px}
 
 /* brand pill */
-.brand-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#11131a}
-.brand-pill img{width:120px;height:128px;object-fit:contain}
+/* brand pill */
+.brand-pill{display:inline-flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid #2a2f3a;border-radius:16px;background:#11131a}
+.brand-pill img{
+  height:126px;   /* велике лого */
+  width:auto;
+  max-width:260px;
+  object-fit:contain;
+}
 .brand-meta{display:flex;flex-direction:column}
 .brand-title{font-weight:700}
-.brand-hint{font-size:11px;color:var(--muted);margin-top:2px}
+.brand-hint{font-size:12px;color:var(--muted);margin-top:2px}
+
+@media (max-width:640px){
+  .brand-pill img{height:88px;max-width:200px}
+}
+
 </style>
 </head>
 <body>
