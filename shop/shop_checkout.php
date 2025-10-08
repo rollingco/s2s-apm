@@ -3,40 +3,65 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /*
-  PetGoods Market — APM demo with BRAND selector (logos from /shop/)
-  - Catalog → Cart (choose brand with logos) → Checkout (SALE) → status link
-  - The only request difference is 'brand': 'orange-money' or 'afri-money'
+  PetGoods Market — APM demo with COUNTRY + BRAND selector
+  - Country:
+      SL  → real SALE (Orange Money / AfriMoney)
+      KE  → mock Web Checkout (Mobile Money / Card)
+      NG  → mock Web Checkout (Mobile Money / Card)
+  - For mock flow we redirect to webcheckout.php
 */
 
-/* ============ CONFIG ============ */
+/* ================= CONFIG (real SALE for SL only) ================= */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 $CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 $SECRET      = '554999c284e9f29cf95f090d9a8f3171';
 $IDENTIFIER  = '111';
-$CURRENCY    = 'SLE';
 $RETURN_URL  = 'https://google.com';
 
-/* Asset base URL for this folder (e.g. /s2stest/shop/) */
-$ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
+/* Country → currency map */
+$CURRENCY_BY_COUNTRY = [
+  'sl' => 'SLE', // Sierra Leone
+  'ke' => 'KES', // Kenya
+  'ng' => 'NGN', // Nigeria
+];
 
-/* ============ BRANDS (with real logos) ============ */
-$BRANDS = [
+/* Brand meta (also used for UI) */
+$ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
+$BRANDS_ALL = [
+  // Sierra Leone (real)
   'orange-money' => [
     'title' => 'Orange Money',
-    'logo'  => $ASSET_URL . 'Orange_Money-Logo.wine.png',
+    'logo'  => $ASSET_URL.'Orange_Money-Logo.wine.png',
     'hint'  => 'Sierra Leone • Orange',
   ],
   'afri-money' => [
     'title' => 'AfriMoney',
-    'logo'  => $ASSET_URL . 'afrimoney.png',
+    'logo'  => $ASSET_URL.'afrimoney.png',
     'hint'  => 'Sierra Leone • AfriCell',
   ],
+  // Kenya/Nigeria (mock)
+  'mobile-money' => [
+    'title' => 'Mobile Money',
+    'logo'  => null, // no file → text badge
+    'hint'  => 'Operator wallet',
+  ],
+  'card' => [
+    'title' => 'Card',
+    'logo'  => null,
+    'hint'  => 'Web card payment',
+  ],
 ];
-$ALLOWED_BRANDS = array_keys($BRANDS);
 
-/* ============ IMAGE SET (safe hotlinks) ============ */
+/* Available brands per country */
+$BRANDS_BY_COUNTRY = [
+  'sl' => ['orange-money','afri-money'],
+  'ke' => ['mobile-money','card'],
+  'ng' => ['mobile-money','card'],
+];
+
+/* ================= CATALOG IMAGES/PRODUCTS ================= */
 $IMAGES = [
   'dog1' => 'https://i.pinimg.com/736x/95/a2/b8/95a2b8ba2415aa48565616632ea0d309.jpg',
   'dog2' => 'https://barberpet.com.ua/ua/wp-content/uploads/sites/2/2021/10/what-to-expect-when-adopting-a-puppy-scaled.jpeg',
@@ -49,8 +74,6 @@ $IMAGES = [
   'mix3' => 'https://st5.depositphotos.com/25936512/62156/i/450/depositphotos_621569014-stock-photo-food-animals-pets-dry-food.jpg',
   'mix4' => 'https://media.istockphoto.com/id/1367839756/uk/%D0%B2%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D0%BD%D1%96-%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%BD%D1%8F/%D0%BA%D0%BE%D1%80%D0%BC-%D0%B4%D0%BB%D1%8F-%D0%BA%D1%96%D1%88%D0%BE%D0%BA-%D1%96-%D1%81%D0%BE%D0%B1%D0%B0%D0%BA-%D0%BC%D1%83%D0%BB%D1%8C%D1%82%D1%8F%D1%88%D0%BD%D1%96-%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%B9%D0%BD%D0%B5%D1%80%D0%B8-%D0%B4%D0%BB%D1%8F-%D0%BA%D0%BE%D1%80%D0%BC%D1%96%D0%B2-%D0%B4%D0%BB%D1%8F-%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D1%96%D1%85-%D1%82%D0%B2%D0%B0%D1%80%D0%B8%D0%BD-%D0%B0%D0%B1%D0%BE.jpg?s=612x612&w=0&k=20&c=PhjWy1AthQBo_o7gP_ZMMbU_wpD0qPOlQxVwNogBcsw=',
 ];
-
-/* ============ PRODUCTS ============ */
 $PRODUCTS = [
   1 => ['title' => 'Premium Dog Food 2kg',   'price' => '12.50', 'img' => $IMAGES['dog1']],
   2 => ['title' => 'Cat Crunchies 1.5kg',    'price' => '9.40',  'img' => $IMAGES['cat1']],
@@ -64,7 +87,7 @@ $PRODUCTS = [
  10 => ['title' => 'Cat Chicken Bites 500g', 'price' => '7.99',  'img' => $IMAGES['mix4']],
 ];
 
-/* ============ helpers ============ */
+/* ================= helpers ================= */
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
 function pretty($v){
   if (is_string($v)) { $d=json_decode($v,true); if(json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
@@ -81,13 +104,12 @@ function cart_total($cart, $products){
   return number_format($sum, 2, '.', '');
 }
 
-/* ============ INIT session ============ */
+/* ================= session init ================= */
 if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
-if (!isset($_SESSION['brand']) || !in_array($_SESSION['brand'], $ALLOWED_BRANDS, true)) {
-  $_SESSION['brand'] = 'afri-money'; // default
-}
+if (empty($_SESSION['country']) || !in_array($_SESSION['country'], ['sl','ke','ng'], true)) $_SESSION['country'] = 'sl';
+if (empty($_SESSION['brand'])) $_SESSION['brand'] = $BRANDS_BY_COUNTRY[$_SESSION['country']][0];
 
-/* ============ CART actions ============ */
+/* ================= actions ================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
   $pid = (int)($_POST['product_id'] ?? 0);
   if ($pid && isset($PRODUCTS[$pid])) $_SESSION['cart'][$pid] = ($_SESSION['cart'][$pid] ?? 0) + 1;
@@ -101,28 +123,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_cart'])) {
   $_SESSION['cart'] = []; header('Location: ' . $_SERVER['PHP_SELF'] . '?view=cart'); exit;
 }
-/* BRAND select (Cart / Checkout) */
+/* Change country */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_country'])) {
+  $c = $_POST['country'] ?? 'sl';
+  if (in_array($c, ['sl','ke','ng'], true)) {
+    $_SESSION['country'] = $c;
+    // reset brand to first available for this country
+    $_SESSION['brand'] = $BRANDS_BY_COUNTRY[$c][0];
+  }
+  $back = $_POST['back'] ?? 'cart';
+  header('Location: ' . $_SERVER['PHP_SELF'] . '?view=' . urlencode($back)); exit;
+}
+/* Change brand */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_brand'])) {
   $b = $_POST['brand'] ?? '';
-  if (in_array($b, $ALLOWED_BRANDS, true)) $_SESSION['brand'] = $b;
+  $country = $_SESSION['country'];
+  if (in_array($b, $BRANDS_BY_COUNTRY[$country], true)) $_SESSION['brand'] = $b;
   $back = $_POST['back'] ?? 'cart';
   header('Location: ' . $_SERVER['PHP_SELF'] . '?view=' . urlencode($back)); exit;
 }
 
-/* ============ Checkout (SALE) ============ */
+/* ================= real SALE (SL only) ================= */
 $checkoutDebug = [];
 $checkoutResp = ['bodyRaw' => '', 'json' => null];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
+  $country = $_SESSION['country'];
+  $currency = $CURRENCY_BY_COUNTRY[$country] ?? 'SLE';
   $payer_phone = ltrim(preg_replace('/\s+/', '', $_POST['phone'] ?? ''), '+');
   $rawAmt      = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '0');
   $order_amt   = number_format((float)$rawAmt, 2, '.', '');
+  $selectedBrand = $_SESSION['brand'];
 
   $errors = [];
+  if ($country !== 'sl') $errors[] = 'For KE/NG use Web Checkout (demo).';
   if ($payer_phone === '') $errors[] = 'Phone is required.';
   if (!is_numeric($order_amt) || (float)$order_amt <= 0) $errors[] = 'Amount must be a positive number.';
-
-  $selectedBrand = $_SESSION['brand'] ?? 'afri-money';
-  if (!in_array($selectedBrand, $ALLOWED_BRANDS, true)) $selectedBrand = 'afri-money';
+  if (!in_array($selectedBrand, $BRANDS_BY_COUNTRY[$country], true)) $errors[] = 'Unsupported brand for selected country.';
 
   if (empty($errors)) {
     $order_id   = 'ORDER_' . time();
@@ -130,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     $payer_ip   = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
     $hash_src_dbg = '';
-    $hash = build_sale_hash($IDENTIFIER, $order_id, $order_amt, $CURRENCY, $SECRET, $hash_src_dbg);
+    $hash = build_sale_hash($IDENTIFIER, $order_id, $order_amt, $currency, $SECRET, $hash_src_dbg);
 
     $form = [
       'action'            => 'SALE',
@@ -138,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       'brand'             => $selectedBrand,
       'order_id'          => $order_id,
       'order_amount'      => $order_amt,
-      'order_currency'    => $CURRENCY,
+      'order_currency'    => $currency,
       'order_description' => $order_desc,
       'identifier'        => $IDENTIFIER,
       'payer_ip'          => $payer_ip,
@@ -147,12 +183,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       'hash'              => $hash,
     ];
 
+    // Save order for success page later
     if (!isset($_SESSION['orders'])) $_SESSION['orders'] = [];
     $_SESSION['orders'][$order_id] = [
       'order_id'   => $order_id,
       'cart'       => $_SESSION['cart'],
       'amount'     => $order_amt,
-      'currency'   => $CURRENCY,
+      'currency'   => $currency,
       'phone'      => $payer_phone,
       'brand'      => $selectedBrand,
       'created_at' => time(),
@@ -188,6 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     $json = json_decode($checkoutResp['bodyRaw'], true);
     if (json_last_error() === JSON_ERROR_NONE) {
       $checkoutResp['json'] = $json;
+
       if (!empty($json['trans_id'])) {
         $tid = (string)$json['trans_id'];
         $_SESSION['orders'][$order_id]['trans_id'] = $tid;
@@ -200,15 +238,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
   }
 }
 
-/* ============ view ============ */
+/* ================= view ================= */
 $view = $_GET['view'] ?? 'catalog';
-$selectedBrand = $_SESSION['brand'] ?? 'afri-money';
+$country = $_SESSION['country'];
+$currency = $CURRENCY_BY_COUNTRY[$country] ?? 'SLE';
+$allowedBrands = $BRANDS_BY_COUNTRY[$country];
+$selectedBrand = in_array($_SESSION['brand'], $allowedBrands, true) ? $_SESSION['brand'] : $allowedBrands[0];
+$_SESSION['brand'] = $selectedBrand;
 ?>
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>PetGoods Market — APM Checkout Demo</title>
+<title>PetGoods Market — APM Demo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--accent:#2b7cff}
@@ -240,24 +282,15 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .line{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.06);padding:8px 0}
 .pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
 .input{padding:8px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:var(--text);width:260px}
-
-/* payment logos */
 .pm-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
-.pm-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#10131a;cursor:pointer;transition:all .15s ease}
-.pm-opt:hover{border-color:#3a4456}
+.pm-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#10131a;cursor:pointer}
 .pm-opt.pm-selected{box-shadow:0 0 0 2px #2b7cff55 inset;border-color:#2b7cff}
-.pm-logo{width:120px;height:128px;object-fit:contain;filter:drop-shadow(0 0 0 rgba(0,0,0,0.0))}
-.pm-meta{display:flex;flex-direction:column}
-.pm-title{font-weight:700}
-.pm-hint{font-size:11px;color:#9aa4af;margin-top:2px}
-.header-badge{display:flex;align-items:center;gap:8px;opacity:.9}
-.header-badge img{width:86px;height:122px;object-fit:contain;vertical-align:middle}
+.pm-logo{width:120px;height:28px;object-fit:contain}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- Header -->
   <div class="header">
     <div class="brand">
       <div class="logo"></div>
@@ -270,16 +303,12 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
     </div>
   </div>
 
-  <!-- Hero banner -->
   <div class="hero">
     <div>
       <h2>Healthy food for happy pets</h2>
-      <p>Choose items, add to cart, pick a payment brand, then complete SALE → STATUS.</p>
+      <p>Country-aware payment demo: SL (real) • KE/NG (web checkout demo).</p>
     </div>
-    <div class="header-badge">
-      <span class="small">Selected:</span>
-      <img src="<?=h($BRANDS[$selectedBrand]['logo'])?>" alt="<?=h($BRANDS[$selectedBrand]['title'])?>">
-    </div>
+    <div class="small">Country: <strong><?=strtoupper($country)?></strong> • Currency: <strong><?=h($currency)?></strong></div>
   </div>
 
   <?php if ($view === 'catalog'): ?>
@@ -290,7 +319,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
             <img src="<?=h($p['img'])?>" alt="<?=h($p['title'])?>">
             <div class="body">
               <h3><?=h($p['title'])?></h3>
-              <div class="price"><?=h($p['price'])?> <?=h($CURRENCY)?></div>
+              <div class="price"><?=h($p['price'])?> <?=h($currency)?></div>
               <div class="actions">
                 <form method="post">
                   <input type="hidden" name="product_id" value="<?=h($id)?>">
@@ -312,45 +341,48 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
       <?php else: ?>
         <?php foreach ($_SESSION['cart'] as $pid => $qty): if (!isset($PRODUCTS[$pid])) continue; $p = $PRODUCTS[$pid]; ?>
           <div class="line">
-            <div>
-              <strong><?=h($p['title'])?></strong>
-              <span class="small"> × <?=h($qty)?></span>
-            </div>
-            <div>
-              <span class="small"><?=h($p['price'])?> <?=h($CURRENCY)?></span>
-              <form method="post" style="display:inline;margin-left:8px">
-                <input type="hidden" name="product_id" value="<?=h($pid)?>">
-                <button class="btn sec" name="remove_from_cart" type="submit">Remove</button>
-              </form>
-            </div>
+            <div><strong><?=h($p['title'])?></strong> <span class="small">× <?=h($qty)?></span></div>
+            <div class="small"><?=h($p['price'])?> <?=h($currency)?></div>
           </div>
         <?php endforeach; ?>
-        <div class="line" style="border-bottom:0;margin-top:8px">
-          <strong>Total:</strong>
-          <strong><?=h(cart_total($_SESSION['cart'], $PRODUCTS))?> <?=h($CURRENCY)?></strong>
-        </div>
+        <div class="line" style="border-bottom:0;margin-top:8px"><strong>Total:</strong><strong><?=h(cart_total($_SESSION['cart'],$PRODUCTS))?> <?=h($currency)?></strong></div>
 
-        <!-- Payment brand selector with real logos -->
+        <!-- Country selector -->
+        <form method="post" style="margin-top:14px">
+          <input type="hidden" name="set_country" value="1">
+          <input type="hidden" name="back" value="cart">
+          <div class="small" style="margin-bottom:6px"><strong>Country</strong></div>
+          <div class="pm-row">
+            <?php foreach (['sl'=>'Sierra Leone','ke'=>'Kenya','ng'=>'Nigeria'] as $code=>$title): ?>
+              <label class="pm-opt <?= $country===$code?'pm-selected':'' ?>">
+                <input type="radio" name="country" value="<?=$code?>" <?= $country===$code?'checked':'' ?>> <?=$title?>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <div style="margin-top:8px"><button class="btn sec" type="submit">Save country</button></div>
+        </form>
+
+        <!-- Brand selector -->
         <div style="margin-top:16px">
           <div style="margin-bottom:6px"><strong>Payment method</strong> <span class="small">(brand)</span></div>
           <form method="post">
             <input type="hidden" name="set_brand" value="1">
             <input type="hidden" name="back" value="cart">
             <div class="pm-row">
-              <?php foreach ($ALLOWED_BRANDS as $b): $meta = $BRANDS[$b]; ?>
+              <?php foreach ($allowedBrands as $b):
+                $meta = $BRANDS_ALL[$b]; ?>
                 <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
-                  <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?> style="transform:scale(1.1)">
-                  <img class="pm-logo" src="<?=h($meta['logo'])?>" alt="<?=h($meta['title'])?>">
-                  <div class="pm-meta">
-                    <span class="pm-title"><?=h($meta['title'])?></span>
-                    <span class="pm-hint"><?=h($meta['hint'])?></span>
-                  </div>
+                  <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
+                  <?php if ($meta['logo']): ?>
+                    <img class="pm-logo" src="<?=h($meta['logo'])?>" alt="<?=h($meta['title'])?>">
+                  <?php else: ?>
+                    <strong><?=h($meta['title'])?></strong>
+                  <?php endif; ?>
+                  <span class="small"><?=h($meta['hint'])?></span>
                 </label>
               <?php endforeach; ?>
             </div>
-            <div style="margin-top:10px">
-              <button class="btn" type="submit">Save payment method</button>
-            </div>
+            <div style="margin-top:10px"><button class="btn" type="submit">Save payment method</button></div>
           </form>
         </div>
 
@@ -368,38 +400,44 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
         <div class="small">Cart is empty. <a href="?view=catalog">Go shopping</a></div>
       <?php else:
         $total = cart_total($_SESSION['cart'], $PRODUCTS);
-        $meta = $BRANDS[$selectedBrand];
         ?>
-        <!-- Quick switch (optional) -->
-        <form method="post" style="margin:0 0 14px 0">
-          <input type="hidden" name="set_brand" value="1">
-          <input type="hidden" name="back" value="checkout">
-          <div class="small" style="margin-bottom:6px">Payment method (brand):</div>
-          <div class="pm-row">
-            <?php foreach ($ALLOWED_BRANDS as $b): $m = $BRANDS[$b]; ?>
-              <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
-                <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
-                <img class="pm-logo" src="<?=h($m['logo'])?>" alt="<?=h($m['title'])?>">
-                <span class="pm-title"><?=h($m['title'])?></span>
-              </label>
-            <?php endforeach; ?>
-          </div>
-          <div style="margin-top:8px"><button class="btn sec" type="submit">Change</button></div>
-        </form>
-
-        <form method="post">
-          <div style="margin:8px 0;">
-            <label>Phone (payer_phone):</label><br>
-            <input class="input" type="text" name="phone" value="<?=h($_POST['phone'] ?? '')?>" placeholder="23233310905">
-          </div>
-          <div style="margin:8px 0;">
-            <label>Amount (auto-filled):</label><br>
-            <input class="input" type="text" name="amount" value="<?=h($total)?>" readonly>
-          </div>
-          <div style="margin-top:12px;">
-            <button class="btn" name="checkout" type="submit">Send SALE</button>
-          </div>
-        </form>
+        <?php if ($country === 'sl'): ?>
+          <!-- REAL SALE (Sierra Leone) -->
+          <form method="post">
+            <div style="margin:8px 0;">
+              <label>Phone (payer_phone):</label><br>
+              <input class="input" type="text" name="phone" value="<?=h($_POST['phone'] ?? '')?>" placeholder="23233310905">
+            </div>
+            <div style="margin:8px 0;">
+              <label>Amount:</label><br>
+              <input class="input" type="text" name="amount" value="<?=h($total)?>" readonly>
+            </div>
+            <div class="small" style="margin:6px 0">Brand: <strong><?=h($BRANDS_ALL[$selectedBrand]['title'])?></strong></div>
+            <div style="margin-top:12px;">
+              <button class="btn" name="checkout" type="submit">Send SALE</button>
+            </div>
+          </form>
+        <?php else: ?>
+          <!-- MOCK WEB CHECKOUT (KE/NG) -->
+          <form method="post" action="webcheckout.php">
+            <input type="hidden" name="country" value="<?=h($country)?>">
+            <input type="hidden" name="brand"   value="<?=h($selectedBrand)?>">
+            <div style="margin:8px 0;">
+              <label>Phone (payer_phone):</label><br>
+              <input class="input" type="text" name="phone" value="<?=h($_POST['phone'] ?? '')?>" placeholder="254700000000">
+            </div>
+            <div style="margin:8px 0;">
+              <label>Amount:</label><br>
+              <input class="input" type="text" name="amount" value="<?=h($total)?>" readonly>
+            </div>
+            <div class="small" style="margin:6px 0">
+              Method: <strong><?=h($BRANDS_ALL[$selectedBrand]['title'])?></strong> • Country: <strong><?=strtoupper($country)?></strong>
+            </div>
+            <div style="margin-top:12px;">
+              <button class="btn" type="submit">Continue to Web Checkout (demo)</button>
+            </div>
+          </form>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
 
@@ -450,7 +488,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
   <?php endif; ?>
 
   <div style="margin:10px 0">
-    <span class="small">Demo UI for recording the real APM flow (SALE → STATUS). Brand selector persists in session.</span>
+    <span class="small">SL uses real SALE; KE/NG use Web Checkout demo (UI only).</span>
   </div>
 
 </div>
