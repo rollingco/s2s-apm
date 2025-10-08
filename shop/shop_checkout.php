@@ -246,7 +246,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .pm-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#10131a;cursor:pointer;transition:all .15s ease}
 .pm-opt:hover{border-color:#3a4456}
 .pm-opt.pm-selected{box-shadow:0 0 0 2px #2b7cff55 inset;border-color:#2b7cff}
-.pm-logo{width:120px;height:28px;object-fit:contain;filter:drop-shadow(0 0 0 rgba(0,0,0,0.0))}
+.pm-logo{width:120px;height:128px;object-fit:contain;filter:drop-shadow(0 0 0 rgba(0,0,0,0.0))}
 .pm-meta{display:flex;flex-direction:column}
 .pm-title{font-weight:700}
 .pm-hint{font-size:11px;color:#9aa4af;margin-top:2px}
