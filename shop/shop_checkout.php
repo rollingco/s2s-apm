@@ -3,10 +3,9 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /*
-  PetGoods Market — APM demo with BRAND selector
+  PetGoods Market — APM demo with BRAND selector (logos from /shop/)
   - Catalog → Cart (choose brand with logos) → Checkout (SALE) → status link
-  - The only difference between methods is 'brand':
-      'orange-money' or 'afri-money'
+  - The only request difference is 'brand': 'orange-money' or 'afri-money'
 */
 
 /* ============ CONFIG ============ */
@@ -19,23 +18,20 @@ $IDENTIFIER  = '111';
 $CURRENCY    = 'SLE';
 $RETURN_URL  = 'https://google.com';
 
-/* ============ BRAND definitions (with inline SVG logos) ============ */
+/* Asset base URL for this folder (e.g. /s2stest/shop/) */
+$ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
+
+/* ============ BRANDS (with real logos) ============ */
 $BRANDS = [
   'orange-money' => [
     'title' => 'Orange Money',
-    'badge' => '<span class="badge" style="background:#11131a;border:1px solid #3a2a12">
-      <svg width="16" height="16" viewBox="0 0 16 16" style="margin-right:6px">
-        <rect x="1" y="1" width="14" height="14" fill="#f97316" rx="3" />
-        <path d="M4 6h8M4 9h5" stroke="#11131a" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>Orange Money</span>',
+    'logo'  => $ASSET_URL . 'Orange_Money-Logo.wine.png',
+    'hint'  => 'Sierra Leone • Orange',
   ],
   'afri-money' => [
     'title' => 'AfriMoney',
-    'badge' => '<span class="badge" style="background:#11131a;border:1px solid #15381f">
-      <svg width="16" height="16" viewBox="0 0 16 16" style="margin-right:6px">
-        <circle cx="8" cy="8" r="7" fill="#16a34a"/>
-        <path d="M5 8l2 2 4-4" stroke="#0b441f" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>AfriMoney</span>',
+    'logo'  => $ASSET_URL . 'afrimoney.png',
+    'hint'  => 'Sierra Leone • AfriCell',
   ],
 ];
 $ALLOWED_BRANDS = array_keys($BRANDS);
@@ -105,11 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_cart'])) {
   $_SESSION['cart'] = []; header('Location: ' . $_SERVER['PHP_SELF'] . '?view=cart'); exit;
 }
-/* BRAND select (from Cart or Checkout) */
+/* BRAND select (Cart / Checkout) */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_brand'])) {
   $b = $_POST['brand'] ?? '';
   if (in_array($b, $ALLOWED_BRANDS, true)) $_SESSION['brand'] = $b;
-  // redirect back to the page we were on
   $back = $_POST['back'] ?? 'cart';
   header('Location: ' . $_SERVER['PHP_SELF'] . '?view=' . urlencode($back)); exit;
 }
@@ -140,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     $form = [
       'action'            => 'SALE',
       'client_key'        => $CLIENT_KEY,
-      'brand'             => $selectedBrand, // <— ONLY difference
+      'brand'             => $selectedBrand,
       'order_id'          => $order_id,
       'order_amount'      => $order_amt,
       'order_currency'    => $CURRENCY,
@@ -152,7 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       'hash'              => $hash,
     ];
 
-    // Save order in session for later success page
     if (!isset($_SESSION['orders'])) $_SESSION['orders'] = [];
     $_SESSION['orders'][$order_id] = [
       'order_id'   => $order_id,
@@ -194,8 +188,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     $json = json_decode($checkoutResp['bodyRaw'], true);
     if (json_last_error() === JSON_ERROR_NONE) {
       $checkoutResp['json'] = $json;
-
-      // Link trans_id → order_id for success redirect later
       if (!empty($json['trans_id'])) {
         $tid = (string)$json['trans_id'];
         $_SESSION['orders'][$order_id]['trans_id'] = $tid;
@@ -244,16 +236,22 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 .btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;border:0;cursor:pointer}
 .btn.sec{background:#2f3543}
-.small{color:var(--muted);font-size:12px}
+.small{color:#9aa4af;font-size:12px}
 .line{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.06);padding:8px 0}
 .pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
 .input{padding:8px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:var(--text);width:260px}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;font-size:12px}
+
+/* payment logos */
 .pm-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
-.pm-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #2a2f3a;border-radius:10px;background:#10131a;cursor:pointer}
-.pm-opt input{accent-color:#2b7cff}
-.pm-selected{box-shadow:0 0 0 2px #2b7cff44 inset;border-color:#2b7cff}
-.header-badge{opacity:.85}
+.pm-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#10131a;cursor:pointer;transition:all .15s ease}
+.pm-opt:hover{border-color:#3a4456}
+.pm-opt.pm-selected{box-shadow:0 0 0 2px #2b7cff55 inset;border-color:#2b7cff}
+.pm-logo{width:120px;height:28px;object-fit:contain;filter:drop-shadow(0 0 0 rgba(0,0,0,0.0))}
+.pm-meta{display:flex;flex-direction:column}
+.pm-title{font-weight:700}
+.pm-hint{font-size:11px;color:#9aa4af;margin-top:2px}
+.header-badge{display:flex;align-items:center;gap:8px;opacity:.9}
+.header-badge img{width:86px;height:22px;object-fit:contain;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -279,8 +277,8 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
       <p>Choose items, add to cart, pick a payment brand, then complete SALE → STATUS.</p>
     </div>
     <div class="header-badge">
-      <span class="small">Selected brand:&nbsp;</span>
-      <?= $BRANDS[$selectedBrand]['badge'] ?>
+      <span class="small">Selected:</span>
+      <img src="<?=h($BRANDS[$selectedBrand]['logo'])?>" alt="<?=h($BRANDS[$selectedBrand]['title'])?>">
     </div>
   </div>
 
@@ -332,17 +330,21 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
           <strong><?=h(cart_total($_SESSION['cart'], $PRODUCTS))?> <?=h($CURRENCY)?></strong>
         </div>
 
-        <!-- Payment brand selector -->
+        <!-- Payment brand selector with real logos -->
         <div style="margin-top:16px">
           <div style="margin-bottom:6px"><strong>Payment method</strong> <span class="small">(brand)</span></div>
           <form method="post">
             <input type="hidden" name="set_brand" value="1">
             <input type="hidden" name="back" value="cart">
             <div class="pm-row">
-              <?php foreach ($ALLOWED_BRANDS as $b): ?>
+              <?php foreach ($ALLOWED_BRANDS as $b): $meta = $BRANDS[$b]; ?>
                 <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
-                  <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
-                  <?= $BRANDS[$b]['badge'] ?>
+                  <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?> style="transform:scale(1.1)">
+                  <img class="pm-logo" src="<?=h($meta['logo'])?>" alt="<?=h($meta['title'])?>">
+                  <div class="pm-meta">
+                    <span class="pm-title"><?=h($meta['title'])?></span>
+                    <span class="pm-hint"><?=h($meta['hint'])?></span>
+                  </div>
                 </label>
               <?php endforeach; ?>
             </div>
@@ -366,6 +368,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
         <div class="small">Cart is empty. <a href="?view=catalog">Go shopping</a></div>
       <?php else:
         $total = cart_total($_SESSION['cart'], $PRODUCTS);
+        $meta = $BRANDS[$selectedBrand];
         ?>
         <!-- Quick switch (optional) -->
         <form method="post" style="margin:0 0 14px 0">
@@ -373,10 +376,11 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
           <input type="hidden" name="back" value="checkout">
           <div class="small" style="margin-bottom:6px">Payment method (brand):</div>
           <div class="pm-row">
-            <?php foreach ($ALLOWED_BRANDS as $b): ?>
+            <?php foreach ($ALLOWED_BRANDS as $b): $m = $BRANDS[$b]; ?>
               <label class="pm-opt <?= $selectedBrand===$b?'pm-selected':'' ?>">
                 <input type="radio" name="brand" value="<?=h($b)?>" <?= $selectedBrand===$b?'checked':'' ?>>
-                <?= $BRANDS[$b]['badge'] ?>
+                <img class="pm-logo" src="<?=h($m['logo'])?>" alt="<?=h($m['title'])?>">
+                <span class="pm-title"><?=h($m['title'])?></span>
               </label>
             <?php endforeach; ?>
           </div>

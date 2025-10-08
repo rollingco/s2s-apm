@@ -3,14 +3,13 @@ session_start();
 header('Content-Type: text/html; charset=utf-8');
 
 /*
-  Payment success page — shows confirmation and order details
+  Payment success page — shows confirmation and order details + PAYMENT BRAND
   - Reads order_id & trans_id from query
   - Fetches order from session (saved in shop_checkout.php at SALE time)
-  - Displays cart lines using the same PRODUCTS list (for titles/prices)
+  - Shows selected brand with logo (orange-money / afri-money)
 */
 
-/* (Опційно) — дублюємо каталог для відображення назв/цін у деталях */
-$IMAGES = []; // не потрібні тут, але змінна лишена для сумісності
+/* Catalog (titles/prices for rendering lines) */
 $PRODUCTS = [
   1 => ['title' => 'Premium Dog Food 2kg',   'price' => '12.50'],
   2 => ['title' => 'Cat Crunchies 1.5kg',    'price' => '9.40' ],
@@ -27,11 +26,28 @@ $PRODUCTS = [
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
 function money2($n){ return number_format((float)$n, 2, '.', ''); }
 
-$oid = $_GET['order_id'] ?? '';
-$tid = $_GET['trans_id'] ?? '';
+/* Build asset base URL for this folder (e.g. /s2stest/shop/) */
+$ASSET_URL = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/').'/';
+
+/* Known brands with logos (same folder as this file) */
+$BRANDS = [
+  'orange-money' => [
+    'title' => 'Orange Money',
+    'logo'  => $ASSET_URL . 'Orange_Money-Logo.wine.png',
+    'hint'  => 'Sierra Leone • Orange',
+  ],
+  'afri-money' => [
+    'title' => 'AfriMoney',
+    'logo'  => $ASSET_URL . 'afrimoney.png',
+    'hint'  => 'Sierra Leone • AfriCell',
+  ],
+];
+
+$oid   = $_GET['order_id'] ?? '';
+$tid   = $_GET['trans_id'] ?? '';
 $order = $oid && isset($_SESSION['orders'][$oid]) ? $_SESSION['orders'][$oid] : null;
 
-// Порахувати суму по позиціях (для відображення)
+/* Calculate cart lines */
 $lines = [];
 $sumCalc = 0.00;
 if ($order && !empty($order['cart']) && is_array($order['cart'])) {
@@ -50,9 +66,12 @@ if ($order && !empty($order['cart']) && is_array($order['cart'])) {
     ];
   }
 }
-$sumCalc = money2($sumCalc);
-$amountShown = $order['amount'] ?? $sumCalc;
-$currency = $order['currency'] ?? 'SLE';
+$sumCalc      = money2($sumCalc);
+$amountShown  = $order['amount']   ?? $sumCalc;
+$currency     = $order['currency'] ?? 'SLE';
+$brandKey     = $order['brand']    ?? '';
+$brandMeta    = $BRANDS[$brandKey] ?? null;
+$createdAt    = !empty($order['created_at']) ? date('Y-m-d H:i:s', (int)$order['created_at']) : '-';
 ?>
 <!doctype html>
 <html lang="en">
@@ -67,14 +86,22 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .wrap{max-width:900px;margin:0 auto;padding:22px}
 .panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:16px;margin:16px 0}
 h1{font-size:18px;margin:0 0 10px}
+h2{font-size:16px;margin:16px 0 6px 0}
 .small{color:var(--muted)}
 .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--accent);color:#06281d;font-weight:700}
-.line{display:flex;justify-content:space-between;border-bottom:1px dashed rgba(255,255,255,.06);padding:8px 0}
+.line{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.06);padding:8px 0}
 .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:var(--accent2);color:#fff;text-decoration:none;margin-right:8px}
 .table{width:100%;border-collapse:collapse;margin-top:10px}
 .table th,.table td{padding:8px;border-bottom:1px dashed rgba(255,255,255,.08);text-align:left}
 .totalRow td{font-weight:700}
 .note{margin-top:12px}
+
+/* brand pill */
+.brand-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#11131a}
+.brand-pill img{width:120px;height:28px;object-fit:contain}
+.brand-meta{display:flex;flex-direction:column}
+.brand-title{font-weight:700}
+.brand-hint{font-size:11px;color:var(--muted);margin-top:2px}
 </style>
 </head>
 <body>
@@ -87,11 +114,29 @@ h1{font-size:18px;margin:0 0 10px}
       <div class="line"><div>Order ID</div><div><?=h($order['order_id'])?></div></div>
       <div class="line"><div>Transaction ID</div><div><?=h($tid)?></div></div>
       <div class="line"><div>Amount</div><div><?=h($amountShown . ' ' . $currency)?></div></div>
-      <div class="line"><div>Payer phone</div><div><?=h($order['phone'])?></div></div>
-      <div class="line" style="border-bottom:0"><div>Created at</div><div><?=date('Y-m-d H:i:s', $order['created_at'])?></div></div>
+      <div class="line"><div>Payer phone</div><div><?=h($order['phone'] ?? '')?></div></div>
+      <div class="line"><div>Created at</div><div><?=h($createdAt)?></div></div>
+
+      <!-- Payment brand -->
+      <div class="line" style="border-bottom:0">
+        <div>Payment method</div>
+        <div>
+          <?php if ($brandMeta): ?>
+            <span class="brand-pill">
+              <img src="<?=h($brandMeta['logo'])?>" alt="<?=h($brandMeta['title'])?>">
+              <span class="brand-meta">
+                <span class="brand-title"><?=h($brandMeta['title'])?></span>
+                <span class="brand-hint"><?=h($brandMeta['hint'])?></span>
+              </span>
+            </span>
+          <?php else: ?>
+            <span class="small"><?=h($brandKey !== '' ? $brandKey : 'Unknown')?></span>
+          <?php endif; ?>
+        </div>
+      </div>
 
       <?php if (!empty($lines)): ?>
-        <h2 style="font-size:16px;margin:16px 0 6px 0">Order items</h2>
+        <h2>Order items</h2>
         <table class="table">
           <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
           <tbody>
@@ -117,15 +162,15 @@ h1{font-size:18px;margin:0 0 10px}
       </div>
 
       <div class="note small">
-        Save these details for your records. If you need a downloadable invoice/receipt — скажи, згенеруємо PDF.
+        Save these details for your records. If a downloadable invoice is needed — say, and a PDF will be generated.
       </div>
     <?php else: ?>
-      <div class="small">Sorry, we couldn’t find order details in this session.</div>
+      <div class="small">Sorry, order details were not found in this session.</div>
       <div style="margin-top:12px">
         <a class="btn" href="shop_checkout.php?view=catalog">Back to shop</a>
       </div>
       <div class="panel small" style="margin-top:12px">
-        order_id: <?=h($oid)?> <br>
+        order_id: <?=h($oid)?><br>
         trans_id: <?=h($tid)?>
       </div>
     <?php endif; ?>
