@@ -251,7 +251,7 @@ body{background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Con
 .pm-title{font-weight:700}
 .pm-hint{font-size:11px;color:#9aa4af;margin-top:2px}
 .header-badge{display:flex;align-items:center;gap:8px;opacity:.9}
-.header-badge img{width:86px;height:22px;object-fit:contain;vertical-align:middle}
+.header-badge img{width:86px;height:122px;object-fit:contain;vertical-align:middle}
 </style>
 </head>
 <body>

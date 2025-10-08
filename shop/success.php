@@ -98,7 +98,7 @@ h2{font-size:16px;margin:16px 0 6px 0}
 
 /* brand pill */
 .brand-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #2a2f3a;border-radius:12px;background:#11131a}
-.brand-pill img{width:120px;height:28px;object-fit:contain}
+.brand-pill img{width:120px;height:128px;object-fit:contain}
 .brand-meta{display:flex;flex-direction:column}
 .brand-title{font-weight:700}
 .brand-hint{font-size:11px;color:var(--muted);margin-top:2px}
