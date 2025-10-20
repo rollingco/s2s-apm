@@ -3,7 +3,7 @@
  * S2S APM SALE — phone + amount → minimal logs
  * - NO headers logging at all
  */
-1111
+//Fucking new change
 header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
