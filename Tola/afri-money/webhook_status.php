@@ -17,8 +17,8 @@ header('Content-Type: text/plain; charset=utf-8');
 
 /* ========================= CONFIG ========================= */
 // Use your real secret here (or a dedicated “webhook secret” if provided).
-$WEBHOOK_SECRET = 'REPLACE_WITH_YOUR_SECRET';
-
+//$WEBHOOK_SECRET = 'REPLACE_WITH_YOUR_SECRET';
+$WEBHOOK_SECRET = 'a9375384-26f2-11f0-877d-022c42254708';
 
 // Directory for simple file logs and idempotency flags.
 // Make sure the web server user can write here.
