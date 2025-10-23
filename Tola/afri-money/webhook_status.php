@@ -128,10 +128,12 @@ if (is_file($flag)) {
  */
 try {
   // Example mapping (adjust as needed):
-  $final =
-      ($status === 'SUCCESS') ? 'paid' :
-      (($status === 'DECLINE' || $status === 'FAILED') ? 'failed' :
-      (($status === 'EXPIRED') ? 'expired' : 'pending'));
+// Example mapping (adjust as needed):
+    $final =
+        (in_array($status, ['SUCCESS', 'SETTLED'])) ? 'paid' :
+        (in_array($status, ['DECLINE', 'FAILED']))   ? 'failed' :
+        ($status === 'EXPIRED' ? 'expired' : 'pending');
+
 
   // update_order_status($orderId, $final); // ← your function
   log_line("Handled: order_id=$orderId trans_id=$transId status=$status → $final amount=$amount $currency");
