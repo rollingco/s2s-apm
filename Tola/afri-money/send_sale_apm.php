@@ -112,7 +112,7 @@ if ($submitted) {
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
     CURLOPT_POSTFIELDS     => $form,
-    CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
+    //CURLOPT_USERPWD        => $API_USER . ':' . $API_PASS,
     CURLOPT_TIMEOUT        => 60,
   ]);
   $start = microtime(true);
