@@ -88,7 +88,6 @@ if ($submitted) {
 
   $form = [
     'action'            => 'SALE',
-    //'action'            => 'CREDIT',
     'client_key'        => $CLIENT_KEY,
     'brand'             => $brand,
     'order_id'          => $order_id,
