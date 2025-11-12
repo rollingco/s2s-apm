@@ -87,8 +87,8 @@ if ($submitted) {
   $hash = build_sale_hash($identifier, $order_id, $order_amt, $order_ccy, $SECRET, $hash_src_dbg);
 
   $form = [
-    //'action'            => 'SALE',
-    'action'            => 'CREDIT',
+    'action'            => 'SALE',
+    //'action'            => 'CREDIT',
     'client_key'        => $CLIENT_KEY,
     'brand'             => $brand,
     'order_id'          => $order_id,
