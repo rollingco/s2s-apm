@@ -50,7 +50,7 @@ if ($submitted) {
   $payer_phone = ltrim($payer_phone, '+');
   $rawAmt      = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
   //$order_amt   = number_format((float)$rawAmt, 2, '.', '');
-  $order_amt = 10;
+  $order_amt = 10.00;
 
 
   $errors = [];
