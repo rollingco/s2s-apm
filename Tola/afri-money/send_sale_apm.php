@@ -49,7 +49,9 @@ if ($submitted) {
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $payer_phone = ltrim($payer_phone, '+');
   $rawAmt      = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
-  $order_amt   = number_format((float)$rawAmt, 2, '.', '');
+  //$order_amt   = number_format((float)$rawAmt, 2, '.', '');
+  $order_amt = rtrim(rtrim($rawAmt, '0'), '.');
+
 
   $errors = [];
   if ($payer_phone === '') $errors[] = 'Phone is required.';
