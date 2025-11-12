@@ -2,7 +2,7 @@
 /**
  * S2S CREDITVOID — refund (full / partial) by trans_id → minimal logs
  * - signature: md5( strtoupper( strrev( trans_id + SECRET ) ) )
- * - amount is optional; if empty => full refund. We never auto-append zeros.
+ * - amount is optional; if present — нормалізуємо до 2 знаків (1 -> 1.00, 1.5 -> 1.50)
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -14,9 +14,10 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 $CLIENT_KEY  = '01158d9a-9de6-11f0-ac32-ca759a298692';
 $SECRET      = '4b486f4c7bee7cb42ccca2a5a980910e';
 
+/* Prefill from GET (автономний режим, без лінків з SALE) */
 $DEFAULTS = [
-  'trans_id' => '',
-  'amount'   => '', // keep raw; leave empty for full refund
+  'trans_id' => isset($_GET['trans_id']) ? (string)$_GET['trans_id'] : '',
+  'amount'   => '',
 ];
 
 /* ===================== Helpers ===================== */
@@ -25,13 +26,36 @@ function pretty($v){
   if (is_string($v)) { $d = json_decode($v,true); if (json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v); }
   return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
 }
-
-/* Appendix A: Creditvoid signature */
 function build_creditvoid_hash($trans_id, $secret, &$srcOut = null){
-  // SRC: trans_id + PASSWORD
-  $src = $trans_id . $secret;
+  $src = $trans_id . $secret; // Appendix A
   if ($srcOut !== null) $srcOut = $src;
   return md5(strtoupper(strrev($src)));
+}
+/**
+ * Нормалізація amount до 2 знаків після крапки:
+ * - видаляємо пробіли й зайві символи
+ * - одна крапка максимум
+ * - якщо немає дробової частини → додаємо .00
+ * - якщо 1 знак → додаємо 0
+ * - якщо 2+ знаків → залишаємо як є (під 3/4-exponent теж ок)
+ */
+function normalize_amount_2dec(string $raw): string {
+  $s = preg_replace('/[^0-9.]/', '', $raw);
+  if ($s === '') return '';
+
+  // лишаємо лише першу крапку
+  if (substr_count($s, '.') > 1) {
+    $parts = explode('.', $s);
+    $s = array_shift($parts) . '.' . implode('', $parts); // зліпити, щоб була одна дробова частина
+  }
+
+  if (strpos($s, '.') === false) {
+    return $s . '.00';
+  }
+  list($int, $dec) = array_pad(explode('.', $s, 2), 2, '');
+  if ($dec === '') return $int . '.00';
+  if (strlen($dec) === 1) return $int . '.' . $dec . '0';
+  return $int . '.' . $dec; // 2+ знаків — не чіпаємо
 }
 
 /* ===================== Read form ===================== */
@@ -40,18 +64,21 @@ $submitted = ($method === 'POST');
 
 if ($submitted) {
   $trans_id = trim((string)($_POST['trans_id'] ?? ''));
-  $amount   = preg_replace('/\s+/', '', (string)($_POST['amount'] ?? '')); // keep raw, just remove spaces
+  $amount_in = (string)($_POST['amount'] ?? '');
+
+  // Нормалізуємо лише якщо користувач щось ввів
+  $amount = trim($amount_in) === '' ? '' : normalize_amount_2dec($amount_in);
 
   $errors = [];
   if ($trans_id === '') $errors[] = 'trans_id is required.';
-  if ($amount !== '' && !preg_match('/^\d+(\.\d+)?$/', $amount)) {
-    $errors[] = 'Amount format looks invalid. Use digits and optional dot (e.g., 100 or 100.99).';
+  if ($amount !== '' && !preg_match('/^\d+\.\d+$/', $amount)) {
+    $errors[] = 'Amount wrong format. Use e.g. 1.00, 10.50, 100.00';
   }
 
   if ($errors) {
     render_page([
       'errors'   => $errors,
-      'prefill'  => ['trans_id'=>$trans_id, 'amount'=>$_POST['amount'] ?? ''],
+      'prefill'  => ['trans_id'=>$trans_id, 'amount'=>$amount_in],
       'debug'    => [],
       'response' => [],
     ]);
@@ -76,7 +103,7 @@ if ($submitted) {
     'trans_id'   => $trans_id,
     'hash'       => $hash,
   ];
-  if ($amount !== '') $form['amount'] = $amount; // partial refund
+  if ($amount !== '') $form['amount'] = $amount;
 
   $debug = [
     'endpoint'   => $PAYMENT_URL,
@@ -114,7 +141,7 @@ if ($submitted) {
 /* ===================== Render ===================== */
 render_page([
   'errors'   => [],
-  'prefill'  => ['trans_id'=>$trans_id, 'amount'=>$amount],
+  'prefill'  => ['trans_id'=>$trans_id, 'amount'=>isset($amount_in)?$amount_in:$amount],
   'debug'    => $debug,
   'response' => $responseBlocks,
 ]);
@@ -163,8 +190,8 @@ label{display:inline-block;min-width:150px}
       </div>
       <div style="margin:8px 0;">
         <label>amount (optional):</label>
-        <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="leave empty for full refund">
-        <div class="small">Keep the exponent format of original SALE currency. We don’t auto-append zeros.</div>
+        <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="1.00, 10.50, 100.00">
+        <div class="small">If provided, it will be sent as XX.XX (1 → 1.00, 1.5 → 1.50).</div>
       </div>
       <div style="margin-top:12px;">
         <button class="btn" type="submit">Send CREDITVOID</button>
@@ -185,7 +212,7 @@ label{display:inline-block;min-width:150px}
 
   <div class="panel">
     <div class="h">🧮 CREDITVOID hash</div>
-    <div class="kv">Formula: md5( strtoupper( strrev( trans_id + PASSWORD ) ) )</div>
+    <div class="kv">md5( strtoupper( strrev( trans_id + PASSWORD ) ) )</div>
     <div class="kv">Source string:</div>
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
     <div class="kv">Hash:</div>
@@ -203,9 +230,6 @@ label{display:inline-block;min-width:150px}
     <?php if (is_array($resp['json'] ?? null)): ?>
       <div class="h">Parsed</div>
       <pre><?=pretty($resp['json'])?></pre>
-      <div class="small">
-        Success callback (per docs): action=CREDITVOID, result=SUCCESS, status=REFUND (full) / SETTLED (partial), etc.
-      </div>
     <?php endif; ?>
   </div>
   <?php endif; ?>
