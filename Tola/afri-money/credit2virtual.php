@@ -1,69 +1,70 @@
 <?php
-// Endpoint Akurateco
-$endpoint = 'https://api.leogcltd.com/post';
 
-// Твої ключі
-$clientKey = 'YOUR_CLIENT_KEY_HERE';
-$secretKey = 'YOUR_SECRET_KEY_HERE'; // для підпису (див. Appendix A)
+// ----------------------
+// CONFIG
+// ----------------------
+$CLIENT_KEY  = '01158d9a-9de6-11f0-ac32-ca759a298692';
+$SECRET      = '4b486f4c7bee7cb42ccca2a5a980910e';
+$ENDPOINT    = 'https://api.leogcltd.com/post';
 
-$orderId = 'afrimoney-payout-' . time();
+// ----------------------
+// ORDER DATA
+// ----------------------
+$order_id       = 'afrimoney-' . time();
+$order_amount   = '10.00';
+$order_currency = 'SLE';
 
+// ----------------------
+// SIGNATURE (exact formula)
+// md5(strtoupper(strrev(order_id + amount + currency)) + SECRET)
+// ----------------------
+$hash = md5(
+    strtoupper(
+        strrev($order_id . $order_amount . $order_currency)
+    ) . $SECRET
+);
+
+// ----------------------
+// BUILD REQUEST
+// ----------------------
 $data = [
-    'action'           => 'CREDIT2VIRTUAL',
-    'client_key'       => $clientKey,
-    // !!! заміни значення brand на ТОЧНУ назву для AfriMoney, яку дала Akurateco
-    'brand'            => 'afrimoney-dbm',   // <-- приклад / плейсхолдер
-    'order_id'         => $orderId,
-    'order_amount'     => '10.00',           // сума виплати
-    'order_currency'   => 'SLE',             // валюта, як у вас в MID
-    'order_description'=> 'Test AfriMoney payout',
+    'action'            => 'CREDIT2VIRTUAL',
+    'client_key'        => $CLIENT_KEY,
+    'brand'             => 'afri-money-dbm',   // Brand for AfriMoney
+    'order_id'          => $order_id,
+    'order_amount'      => $order_amount,
+    'order_currency'    => $order_currency,
+    'order_description' => 'AfriMoney payout test',
+    'hash'              => $hash
 ];
 
-// Підпис (приклад — ЗАМІНИ формулу на ту, що в Appendix A)
-$signatureString = $data['action']
-                 . $data['client_key']
-                 . $data['order_id']
-                 . $data['order_amount']
-                 . $data['order_currency']
-                 . $secretKey;
-
-$data['hash'] = md5($signatureString);
-
-// ---- CURL запит ----
-$ch = curl_init($endpoint);
-
-curl_setopt_array($ch, [
-    CURLOPT_POST           => true,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER     => [
-        'Content-Type: application/x-www-form-urlencoded',
-    ],
-    CURLOPT_POSTFIELDS     => http_build_query($data),
+// ----------------------
+// SEND REQUEST
+// ----------------------
+$ch = curl_init($ENDPOINT);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/x-www-form-urlencoded'
 ]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 
 $responseRaw = curl_exec($ch);
-
-if ($responseRaw === false) {
-    die('cURL error: ' . curl_error($ch));
-}
-
 curl_close($ch);
 
-// ---- Обробка відповіді ----
+// ----------------------
+// OUTPUT
+// ----------------------
+echo "REQUEST:\n";
+print_r($data);
+
+echo "\n\nRESPONSE:\n";
+echo $responseRaw . "\n\n";
+
 $response = json_decode($responseRaw, true);
 
-echo "RAW RESPONSE:\n" . $responseRaw . "\n\n";
-
-if (!is_array($response)) {
-    die("Cannot decode JSON response\n");
-}
-
 if (!empty($response['status']) && $response['status'] === 'REDIRECT') {
-    $redirectUrl = $response['redirect_url'] ?? null;
-    echo "Status: {$response['status']}\n";
-    echo "Redirect URL: {$redirectUrl}\n";
-    echo "Open this URL in browser – the recipient will enter MSISDN there.\n";
-} else {
-    // інші варіанти відповіді (SUCCESS / DECLINED і т.д.)
-    print_r($response);
+    echo "REDIRECT URL:\n";
+    echo $response['redirect_url'] . "\n";
+    echo "Open this URL — the recipient will enter the MSISDN manually.\n";
 }
