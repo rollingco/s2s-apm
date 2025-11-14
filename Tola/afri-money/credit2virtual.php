@@ -2,9 +2,11 @@
 /**
  * S2S CREDIT2VIRTUAL — AfriMoney payout by order_id → minimal logs
  *
- * - signature: md5( strtoupper( strrev( order_id + amount + currency ) ) . SECRET )
+ * - endpoint: https://api.leogcltd.com/post
+ * - brand: afri-money-dbm
+ * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  * - amount нормалізуємо до 2 знаків (1 -> 1.00, 1.5 -> 1.50)
- * - MSISDN не передаємо — отримувач вводить його на redirect_url стороні Tola
+ * - MSISDN НЕ передаємо — отримувач вводить його на redirect_url
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -16,13 +18,13 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post';
 $CLIENT_KEY  = '01158d9a-9de6-11f0-ac32-ca759a298692';
 $SECRET      = '4b486f4c7bee7cb42ccca2a5a980910e';
 
-/* Prefill from GET / defaults */
+/* Prefill from GET (автономний режим) */
 $DEFAULTS = [
-  'order_id'   => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('afrimoney-' . time()),
-  'amount'     => isset($_GET['amount']) ? (string)$_GET['amount'] : '10.00',
-  'currency'   => isset($_GET['currency']) ? (string)$_GET['currency'] : 'SLE',
-  'brand'      => isset($_GET['brand']) ? (string)$_GET['brand'] : 'afri-money-dbm',
-  'desc'       => isset($_GET['desc']) ? (string)$_GET['desc'] : 'AfriMoney payout test',
+  'order_id' => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('afrimoney-' . time()),
+  'amount'   => isset($_GET['amount'])   ? (string)$_GET['amount']   : '10.00',
+  'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'SLE',
+  'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'afri-money-dbm',
+  'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'AfriMoney payout test',
 ];
 
 /* ===================== Helpers ===================== */
@@ -37,22 +39,16 @@ function pretty($v){
 
 /**
  * CREDIT2VIRTUAL hash:
- * md5( strtoupper( strrev( order_id + amount + currency ) ) . SECRET )
+ * md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  */
 function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$srcOut = null){
-  $src = $order_id . $amount . $currency;
-  if ($srcOut !== null) $srcOut = $src . ' + SECRET(' . $secret . ')';
-  return md5(strtoupper(strrev($order_id . $amount . $currency)) . $secret);
+  $inner = $order_id . $amount . $currency;
+  $src   = strtoupper(strrev($inner)) . $secret;
+  if ($srcOut !== null) $srcOut = $src;
+  return md5($src);
 }
 
-/**
- * Нормалізація amount до 2 знаків після крапки:
- * - видаляємо все, окрім цифр і крапки
- * - лише одна крапка
- * - 0 дробової частини → .00
- * - 1 знак → додаємо 0
- * - 2+ знаків — залишаємо як є
- */
+/** Нормалізація суми до формату XX.XX */
 function normalize_amount_2dec(string $raw): string {
   $s = preg_replace('/[^0-9.]/', '', $raw);
   if ($s === '') return '';
@@ -66,7 +62,7 @@ function normalize_amount_2dec(string $raw): string {
     return $s . '.00';
   }
   list($int, $dec) = array_pad(explode('.', $s, 2), 2, '');
-  if ($dec === '') return $int . '.00';
+  if ($dec === '')        return $int . '.00';
   if (strlen($dec) === 1) return $int . '.' . $dec . '0';
   return $int . '.' . $dec;
 }
@@ -90,7 +86,7 @@ if ($submitted) {
     $errors[] = 'Amount wrong format. Use e.g. 1.00, 10.50, 100.00';
   }
   if ($currency === '') $errors[] = 'Currency is required.';
-  if ($brand === '') $brand = 'afri-money-dbm'; // за замовчуванням AfriMoney
+  if ($brand === '') $brand = 'afri-money-dbm';
 
   if ($errors) {
     render_page([
@@ -204,7 +200,7 @@ html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-mono
 .panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
 .kv{color:var(--muted)}
 pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
-.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none}
+.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none;cursor:pointer}
 .error{color:var(--err);margin:6px 0}
 input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6}
 label{display:inline-block;min-width:150px}
@@ -224,7 +220,7 @@ label{display:inline-block;min-width:150px}
         <label>order_id:</label>
         <input type="text" name="order_id" value="<?=h($prefill['order_id'])?>" placeholder="e.g. afrimoney-123456">
       </div>
-      <div style="margin:8px 0;">
+      <div style="margin:8px 0%;">
         <label>amount:</label>
         <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="1.00, 10.50, 100.00">
         <div class="small">Will be normalized to XX.XX (1 → 1.00, 1.5 → 1.50).</div>
@@ -236,7 +232,7 @@ label{display:inline-block;min-width:150px}
       <div style="margin:8px 0;">
         <label>brand:</label>
         <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="afri-money-dbm">
-        <div class="small">AfriMoney payout brand from MID (default: afri-money-dbm).</div>
+        <div class="small">AfriMoney payout brand (default: afri-money-dbm).</div>
       </div>
       <div style="margin:8px 0;">
         <label>description:</label>
@@ -261,8 +257,8 @@ label{display:inline-block;min-width:150px}
 
   <div class="panel">
     <div class="h">🧮 CREDIT2VIRTUAL hash</div>
-    <div class="kv">md5( strtoupper( strrev( order_id + amount + currency ) ) . SECRET )</div>
-    <div class="kv">Source (debug):</div>
+    <div class="kv">md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )</div>
+    <div class="kv">Source string (debug):</div>
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
     <div class="kv">Hash:</div>
     <pre><?=h($debug['hash'] ?? '')?></pre>
@@ -280,8 +276,35 @@ label{display:inline-block;min-width:150px}
       <div class="h">Parsed</div>
       <pre><?=pretty($resp['json'])?></pre>
       <?php
-        if (!empty($resp['json']['status']) && $resp['json']['status'] === 'REDIRECT') {
-          echo '<div class="h">🔗 Redirect URL</div><pre>' . h($resp['json']['redirect_url'] ?? '') . "</pre>";
+        $parsed = $resp['json'];
+
+        // Якщо це REDIRECT з методом POST — малюємо форму
+        if (
+          !empty($parsed['status']) &&
+          $parsed['status'] === 'REDIRECT' &&
+          !empty($parsed['redirect_method']) &&
+          strtoupper($parsed['redirect_method']) === 'POST' &&
+          !empty($parsed['redirect_url'])
+        ) {
+          $redirectUrl    = $parsed['redirect_url'];
+          $redirectParams = isset($parsed['redirect_params']) && is_array($parsed['redirect_params'])
+            ? $parsed['redirect_params']
+            : [];
+          ?>
+          <div class="h">🔗 Redirect form (POST)</div>
+          <div class="small">
+            Click the button below to send a POST request to the payout page with the required parameters.
+          </div>
+          <form action="<?=h($redirectUrl)?>" method="post" target="_blank" style="margin-top:10px;">
+            <?php foreach ($redirectParams as $name => $value): ?>
+              <input type="hidden" name="<?=h($name)?>" value="<?=h($value)?>">
+            <?php endforeach; ?>
+            <button type="submit" class="btn">Open payout page (POST)</button>
+          </form>
+          <?php
+        } elseif (!empty($parsed['status']) && $parsed['status'] === 'REDIRECT') {
+          // Fallback: просто показати URL, якщо раптом без params або не POST
+          echo '<div class="h">🔗 Redirect URL</div><pre>' . h($parsed['redirect_url'] ?? '') . "</pre>";
           echo '<div class="small">Open this URL in browser — recipient will enter MSISDN there.</div>';
         }
       ?>
