@@ -10,7 +10,7 @@
 header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
-$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+$PAYMENT_URL = 'https://api.leogcltd.com/post';
 //$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 //$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
 $CLIENT_KEY  = '01158d9a-9de6-11f0-ac32-ca759a298692';
