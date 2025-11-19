@@ -25,7 +25,7 @@ $DEFAULTS = [
   'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'SLE',
   'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'afri-money-dbm',
   'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'AfriMoney payout test',
-  'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '',
+  'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '23280855053',
 ];
 
 /* ===================== Helpers ===================== */
