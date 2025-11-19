@@ -6,7 +6,7 @@
  * - brand: afri-money-dbm
  * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  * - amount нормалізуємо до 2 знаків (1 -> 1.00, 1.5 -> 1.50)
- * - MSISDN НЕ передаємо — отримувач вводить його на redirect_url
+ * - phone (MSISDN) тепер передаємо у реквесті як обов'язковий параметр
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -25,6 +25,7 @@ $DEFAULTS = [
   'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'SLE',
   'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'afri-money-dbm',
   'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'AfriMoney payout test',
+  'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '',
 ];
 
 /* ===================== Helpers ===================== */
@@ -77,6 +78,7 @@ if ($submitted) {
   $currency    = strtoupper(trim((string)($_POST['currency'] ?? '')));
   $brand       = trim((string)($_POST['brand'] ?? ''));
   $desc        = trim((string)($_POST['desc'] ?? ''));
+  $phone       = trim((string)($_POST['phone'] ?? ''));
 
   $amount = trim($amount_in) === '' ? '' : normalize_amount_2dec($amount_in);
 
@@ -86,6 +88,9 @@ if ($submitted) {
     $errors[] = 'Amount wrong format. Use e.g. 1.00, 10.50, 100.00';
   }
   if ($currency === '') $errors[] = 'Currency is required.';
+  if ($phone === '') $errors[] = 'Phone is required.';
+  // Якщо хочеш, можна додати просту валідацію номера:
+  // if ($phone !== '' && !preg_match('/^\+?\d{6,20}$/', $phone)) $errors[] = 'Phone wrong format.';
   if ($brand === '') $brand = 'afri-money-dbm';
 
   if ($errors) {
@@ -97,6 +102,7 @@ if ($submitted) {
         'currency' => $currency ?: $DEFAULTS['currency'],
         'brand'    => $brand,
         'desc'     => $desc,
+        'phone'    => $phone,
       ],
       'debug'    => [],
       'response' => [],
@@ -110,6 +116,7 @@ if ($submitted) {
   $currency    = $DEFAULTS['currency'];
   $brand       = $DEFAULTS['brand'];
   $desc        = $DEFAULTS['desc'];
+  $phone       = $DEFAULTS['phone'];
 }
 
 /* ===================== Send CREDIT2VIRTUAL ===================== */
@@ -128,6 +135,7 @@ if ($submitted) {
     'order_amount'      => $amount,
     'order_currency'    => $currency,
     'order_description' => $desc,
+    'phone'             => $phone, // новий обов'язковий параметр
     'hash'              => $hash,
   ];
 
@@ -173,6 +181,7 @@ render_page([
     'currency' => $currency,
     'brand'    => $brand,
     'desc'     => $desc,
+    'phone'    => $phone,
   ],
   'debug'    => $debug,
   'response' => $responseBlocks,
@@ -181,7 +190,7 @@ render_page([
 /* ---------------------- View ---------------------- */
 function render_page($ctx){
   $errors = $ctx['errors'] ?? [];
-  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'SLE','brand'=>'afri-money-dbm','desc'=>''];
+  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'SLE','brand'=>'afri-money-dbm','desc'=>'','phone'=>''];
   $debug  = $ctx['debug'] ?? [];
   $resp   = $ctx['response'] ?? [];
 
@@ -216,28 +225,40 @@ label{display:inline-block;min-width:150px}
       <?php if ($errors): foreach ($errors as $e): ?>
         <div class="error">❌ <?=h($e)?></div>
       <?php endforeach; endif; ?>
+
       <div style="margin:8px 0;">
         <label>order_id:</label>
         <input type="text" name="order_id" value="<?=h($prefill['order_id'])?>" placeholder="e.g. afrimoney-123456">
       </div>
+
       <div style="margin:8px 0%;">
         <label>amount:</label>
         <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="1.00, 10.50, 100.00">
         <div class="small">Will be normalized to XX.XX (1 → 1.00, 1.5 → 1.50).</div>
       </div>
+
       <div style="margin:8px 0;">
         <label>currency:</label>
         <input type="text" name="currency" value="<?=h($prefill['currency'])?>" placeholder="SLE">
       </div>
+
       <div style="margin:8px 0;">
         <label>brand:</label>
         <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="afri-money-dbm">
         <div class="small">AfriMoney payout brand (default: afri-money-dbm).</div>
       </div>
+
       <div style="margin:8px 0;">
         <label>description:</label>
         <input type="text" name="desc" value="<?=h($prefill['desc'])?>" placeholder="AfriMoney payout test">
       </div>
+
+      <div style="margin:8px 0;">
+        <label>phone (MSISDN):</label>
+        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="+2327XXXXXXX">
+        <div class="small">Recipient phone number (required).</div>
+      </div>
+
       <div style="margin-top:12px;">
         <button class="btn" type="submit">Send CREDIT2VIRTUAL</button>
       </div>
@@ -249,7 +270,10 @@ label{display:inline-block;min-width:150px}
     <div class="h">🟢 CREDIT2VIRTUAL sent</div>
     <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
     <div><span class="kv">Client key:</span> <?=h($debug['client_key'] ?? '')?></div>
-    <div><span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?> <span class="kv" style="margin-left:12px;">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s</div>
+    <div>
+      <span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?>
+      <span class="kv" style="margin-left:12px;">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s
+    </div>
     <?php if (!empty($debug['curl_error'])): ?>
       <div class="error">cURL: <?=h($debug['curl_error'])?></div>
     <?php endif; ?>
@@ -278,7 +302,6 @@ label{display:inline-block;min-width:150px}
       <?php
         $parsed = $resp['json'];
 
-        // Якщо це REDIRECT з методом POST — малюємо форму
         if (
           !empty($parsed['status']) &&
           $parsed['status'] === 'REDIRECT' &&
@@ -303,7 +326,6 @@ label{display:inline-block;min-width:150px}
           </form>
           <?php
         } elseif (!empty($parsed['status']) && $parsed['status'] === 'REDIRECT') {
-          // Fallback: просто показати URL, якщо раптом без params або не POST
           echo '<div class="h">🔗 Redirect URL</div><pre>' . h($parsed['redirect_url'] ?? '') . "</pre>";
           echo '<div class="small">Open this URL in browser — recipient will enter MSISDN there.</div>';
         }
