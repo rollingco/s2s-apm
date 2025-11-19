@@ -97,11 +97,7 @@ if ($submitted) {
     'identifier'        => $identifier,
     'payer_ip'          => $payer_ip,
     'return_url'        => $return_url,
-
-    // MSISDN from form:
-    'payer_phone'       => $payer_phone, // старий параметр
-    'phone'             => $payer_phone, // новий обов'язковий параметр
-
+    'payer_phone'       => $payer_phone,
     'hash'              => $hash,
   ];
 
