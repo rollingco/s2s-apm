@@ -136,6 +136,7 @@ if ($submitted) {
     'order_currency'    => $currency,
     'order_description' => $desc,
     'phone'             => $phone, // новий обов'язковий параметр
+    'MSISDN'            => $phone, // старий параметр для сумісності
     'hash'              => $hash,
   ];
 
