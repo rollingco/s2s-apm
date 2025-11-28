@@ -6,7 +6,8 @@
  * - brand: afri-money-dbm
  * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  * - amount нормалізуємо до 2 знаків (1 -> 1.00, 1.5 -> 1.50)
- * - phone (MSISDN) тепер передаємо у реквесті як обов'язковий параметр
+ * - phone (MSISDN) тепер відправляємо як parameters[msisdn]
+ * - можна додатково передавати parameters[email]
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -18,6 +19,12 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post';
 $CLIENT_KEY  = '01158d9a-9de6-11f0-ac32-ca759a298692';
 $SECRET      = '4b486f4c7bee7cb42ccca2a5a980910e';
 
+/**
+ * channel_id — якщо його потрібно передавати, вкажи тут значення.
+ * Якщо не потрібно — залиш порожнім рядком.
+ */
+$CHANNEL_ID  = ''; // наприклад: '12345' або UUID, якщо дасть Тола
+
 /* Prefill from GET (автономний режим) */
 $DEFAULTS = [
   'order_id' => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('afrimoney-' . time()),
@@ -26,6 +33,7 @@ $DEFAULTS = [
   'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'afri-money-dbm',
   'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'AfriMoney payout test',
   'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '23280855053',
+  'email'    => isset($_GET['email'])    ? (string)$_GET['email']    : 'success@gmail.com',
 ];
 
 /* ===================== Helpers ===================== */
@@ -79,6 +87,7 @@ if ($submitted) {
   $brand       = trim((string)($_POST['brand'] ?? ''));
   $desc        = trim((string)($_POST['desc'] ?? ''));
   $phone       = trim((string)($_POST['phone'] ?? ''));
+  $email       = trim((string)($_POST['email'] ?? ''));
 
   $amount = trim($amount_in) === '' ? '' : normalize_amount_2dec($amount_in);
 
@@ -88,9 +97,11 @@ if ($submitted) {
     $errors[] = 'Amount wrong format. Use e.g. 1.00, 10.50, 100.00';
   }
   if ($currency === '') $errors[] = 'Currency is required.';
-  if ($phone === '') $errors[] = 'Phone is required.';
-  // Якщо хочеш, можна додати просту валідацію номера:
-  // if ($phone !== '' && !preg_match('/^\+?\d{6,20}$/', $phone)) $errors[] = 'Phone wrong format.';
+  if ($phone === '') $errors[] = 'Phone (MSISDN) is required.';
+  // Email не обовʼязковий, але можна додати просту перевірку, якщо ввели щось
+  if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'Email format looks wrong.';
+  }
   if ($brand === '') $brand = 'afri-money-dbm';
 
   if ($errors) {
@@ -103,6 +114,7 @@ if ($submitted) {
         'brand'    => $brand,
         'desc'     => $desc,
         'phone'    => $phone,
+        'email'    => $email,
       ],
       'debug'    => [],
       'response' => [],
@@ -117,6 +129,7 @@ if ($submitted) {
   $brand       = $DEFAULTS['brand'];
   $desc        = $DEFAULTS['desc'];
   $phone       = $DEFAULTS['phone'];
+  $email       = $DEFAULTS['email'];
 }
 
 /*  ===================== Send CREDIT2VIRTUAL ===================== */
@@ -130,15 +143,27 @@ if ($submitted) {
   $form = [
     'action'            => 'CREDIT2VIRTUAL',
     'client_key'        => $CLIENT_KEY,
-    'brand'             => $brand,
     'order_id'          => $order_id_in,
     'order_amount'      => $amount,
     'order_currency'    => $currency,
     'order_description' => $desc,
-    'phone'             => $phone, // новий обов'язковий параметр
-    'MSISDN'            => $phone, // старий параметр для сумісності
-    'hash'              => $hash,
+    'brand'             => $brand,
+    // Нові параметри у форматі parameters[...]
+    'parameters[msisdn]' => $phone,
   ];
+
+  // channel_id додаємо тільки якщо заповнений у конфігу
+  if ($CHANNEL_ID !== '') {
+    $form['channel_id'] = $CHANNEL_ID;
+  }
+
+  // Email додаємо тільки якщо щось ввели
+  if ($email !== '') {
+    $form['parameters[email]'] = $email;
+  }
+
+  // Hash обовʼязково вкінці
+  $form['hash'] = $hash;
 
   $debug = [
     'endpoint'   => $PAYMENT_URL,
@@ -183,6 +208,7 @@ render_page([
     'brand'    => $brand,
     'desc'     => $desc,
     'phone'    => $phone,
+    'email'    => $email,
   ],
   'debug'    => $debug,
   'response' => $responseBlocks,
@@ -191,7 +217,7 @@ render_page([
 /* ---------------------- View ---------------------- */
 function render_page($ctx){
   $errors = $ctx['errors'] ?? [];
-  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'SLE','brand'=>'afri-money-dbm','desc'=>'','phone'=>''];
+  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'SLE','brand'=>'afri-money-dbm','desc'=>'','phone'=>'','email'=>''];
   $debug  = $ctx['debug'] ?? [];
   $resp   = $ctx['response'] ?? [];
 
@@ -257,7 +283,13 @@ label{display:inline-block;min-width:150px}
       <div style="margin:8px 0;">
         <label>phone (MSISDN):</label>
         <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="+2327XXXXXXX">
-        <div class="small">Recipient phone number (required).</div>
+        <div class="small">Will be sent as parameters[msisdn] (required).</div>
+      </div>
+
+      <div style="margin:8px 0;">
+        <label>email (optional):</label>
+        <input type="text" name="email" value="<?=h($prefill['email'])?>" placeholder="success@gmail.com">
+        <div class="small">If filled, will be sent as parameters[email].</div>
       </div>
 
       <div style="margin-top:12px;">
