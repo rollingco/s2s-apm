@@ -25,6 +25,12 @@ $SECRET      = '4b486f4c7bee7cb42ccca2a5a980910e';
  */
 $CHANNEL_ID  = ''; // наприклад: '12345' або UUID, якщо дасть Тола
 
+/**
+ * Хелпер для перевірки статусу за trans_id (GET_TRANS_STATUS).
+ * Він буде відкриватися у новій вкладці з параметром ?trans_id=...
+ */
+$STATUS_HELPER_URL = 'status_credit2virtual.php';
+
 /* Prefill from GET (автономний режим) */
 $DEFAULTS = [
   'order_id' => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('afrimoney-' . time()),
@@ -216,6 +222,8 @@ render_page([
 
 /* ---------------------- View ---------------------- */
 function render_page($ctx){
+  global $STATUS_HELPER_URL;
+
   $errors = $ctx['errors'] ?? [];
   $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'SLE','brand'=>'afri-money-dbm','desc'=>'','phone'=>'','email'=>''];
   $debug  = $ctx['debug'] ?? [];
@@ -264,29 +272,29 @@ label{display:inline-block;min-width:150px}
         <div class="small">Will be normalized to XX.XX (1 → 1.00, 1.5 → 1.50).</div>
       </div>
 
-      <div style="margin:8px 0;">
+      <div style="margin:8px 0%;">
         <label>currency:</label>
         <input type="text" name="currency" value="<?=h($prefill['currency'])?>" placeholder="SLE">
       </div>
 
-      <div style="margin:8px 0;">
+      <div style="margin:8px 0%;">
         <label>brand:</label>
         <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="afri-money-dbm">
         <div class="small">AfriMoney payout brand (default: afri-money-dbm).</div>
       </div>
 
-      <div style="margin:8px 0;">
+      <div style="margin:8px 0%;">
         <label>description:</label>
         <input type="text" name="desc" value="<?=h($prefill['desc'])?>" placeholder="AfriMoney payout test">
       </div>
 
-      <div style="margin:8px 0;">
+      <div style="margin:8px 0%;">
         <label>phone (MSISDN):</label>
         <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="+2327XXXXXXX">
         <div class="small">Will be sent as parameters[msisdn] (required).</div>
       </div>
 
-      <div style="margin:8px 0;">
+      <div style="margin:8px 0%;">
         <label>email (optional):</label>
         <input type="text" name="email" value="<?=h($prefill['email'])?>" placeholder="success@gmail.com">
         <div class="small">If filled, will be sent as parameters[email].</div>
@@ -335,6 +343,7 @@ label{display:inline-block;min-width:150px}
       <?php
         $parsed = $resp['json'];
 
+        // Якщо статус REDIRECT — показуємо або форму POST, або просто URL
         if (
           !empty($parsed['status']) &&
           $parsed['status'] === 'REDIRECT' &&
@@ -361,6 +370,19 @@ label{display:inline-block;min-width:150px}
         } elseif (!empty($parsed['status']) && $parsed['status'] === 'REDIRECT') {
           echo '<div class="h">🔗 Redirect URL</div><pre>' . h($parsed['redirect_url'] ?? '') . "</pre>";
           echo '<div class="small">Open this URL in browser — recipient will enter MSISDN there.</div>';
+        }
+
+        // Кнопка для GET_TRANS_STATUS, якщо у відповіді є trans_id
+        if (!empty($parsed['trans_id'])) {
+          ?>
+          <div class="h" style="margin-top:16px;">🕒 Check transaction status (GET_TRANS_STATUS)</div>
+          <a
+            class="btn"
+            target="_blank"
+            href="<?=h($STATUS_HELPER_URL)?>?trans_id=<?=h($parsed['trans_id'])?>">
+            Open status helper for this trans_id
+          </a>
+          <?php
         }
       ?>
     <?php endif; ?>
