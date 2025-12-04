@@ -1,10 +1,11 @@
 <?php
 /**
- * S2S APM SALE — Callback receiver + logger + hash checker
+ * Universal callback receiver for LeoGC (current merchant)
  *
- * - Logs callback in a clean, human-readable format
- * - Validates callback signature using “Sale callback signature” formula
- * - Displays callback info in HTML for quick debugging
+ * - Logs incoming callbacks в читабельному вигляді
+ * - Пробує 2 алгоритми:
+ *     1) APM SALE callback signature (all params except hash, ksort, reverse each value)
+ *     2) Credit2Virtual callback signature (trans_id + order_id + status)
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -13,12 +14,12 @@ header('Content-Type: text/html; charset=utf-8');
    CONFIG
    ======================================================= */
 
-// PASSWORD (SECRET) for this merchant (1X example)
-$PASSWORD = '4b486f4c7bee7cb42ccca2a5a980910e';
+// СЕКРЕТ САМЕ ТОГО МЕРЧАНТА, ЯКИЙ ТИ ЗАРАЗ ТЕСТИШ
+$PASSWORD = '554999c284e9f29cf95f090d9a8f3171';
 
-// Folder for logs
+// Папка та файл логів
 $LOG_DIR  = __DIR__ . '/logs';
-$LOG_FILE = $LOG_DIR . '/callback_sale_' . date('Y-m-d') . '.log';
+$LOG_FILE = $LOG_DIR . '/callback_universal_' . date('Y-m-d') . '.log';
 
 
 /* =======================================================
@@ -42,17 +43,16 @@ function pretty($v) {
 }
 
 /**
- * SALE callback signature calculation per doc:
- *
- * - Use all callback fields except "hash"
- * - Sort fields by name
- * - Reverse each value individually (strrev)
- * - Concatenate all reversed values
+ * APM SALE callback signature:
+ * - Use all parameters except 'hash'
+ * - Sort keys (ksort)
+ * - Reverse each value
+ * - Join
  * - Uppercase
- * - Append PASSWORD (UPPERCASE)
+ * - Append PASSWORD (uppercase)
  * - md5()
  */
-function calc_sale_callback_hash(array $params, string $password, ?string &$fullSrc = null): string
+function calc_hash_apm_sale(array $params, string $password, ?string &$srcOut = null): string
 {
     if (isset($params['hash'])) {
         unset($params['hash']);
@@ -67,8 +67,29 @@ function calc_sale_callback_hash(array $params, string $password, ?string &$full
     $src = implode('', $params);
     $prepared = strtoupper($src) . strtoupper($password);
 
-    if ($fullSrc !== null) {
-        $fullSrc = $prepared;
+    if ($srcOut !== null) {
+        $srcOut = $prepared;
+    }
+
+    return md5($prepared);
+}
+
+/**
+ * Credit2Virtual callback signature:
+ * md5(strtoupper(strrev(trans_id . order_id . status)) . PASSWORD)
+ */
+function calc_hash_credit2virtual(array $params, string $password, ?string &$srcOut = null): ?string
+{
+    if (!isset($params['trans_id'], $params['order_id'], $params['status'])) {
+        return null;
+    }
+
+    $src = (string)$params['trans_id'] . (string)$params['order_id'] . (string)$params['status'];
+    $rev = strrev($src);
+    $prepared = strtoupper($rev) . strtoupper($password);
+
+    if ($srcOut !== null) {
+        $srcOut = $prepared;
     }
 
     return md5($prepared);
@@ -84,15 +105,28 @@ $remoteIp  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 $rawBody   = file_get_contents('php://input');
 $post      = $_POST;
 
-$receivedHash  = $post['hash'] ?? '';
-$calcHash      = '';
-$calcHashSrc   = '';
-$hashMatchFlag = null;
+$receivedHash = $post['hash'] ?? '';
+
+$calcSale    = '';
+$calcSaleSrc = '';
+$matchSale   = null;
+
+$calcC2V     = null;
+$calcC2VSrc  = '';
+$matchC2V    = null;
 
 if (!empty($post)) {
-    $calcHash = calc_sale_callback_hash($post, $PASSWORD, $calcHashSrc);
+
+    // Алгоритм 1: APM SALE
+    $calcSale = calc_hash_apm_sale($post, $PASSWORD, $calcSaleSrc);
     if ($receivedHash !== '') {
-        $hashMatchFlag = hash_equals($calcHash, $receivedHash);
+        $matchSale = hash_equals($calcSale, $receivedHash);
+    }
+
+    // Алгоритм 2: Credit2Virtual
+    $calcC2V = calc_hash_credit2virtual($post, $PASSWORD, $calcC2VSrc);
+    if ($calcC2V !== null && $receivedHash !== '') {
+        $matchC2V = hash_equals($calcC2V, $receivedHash);
     }
 }
 
@@ -101,12 +135,10 @@ if (!empty($post)) {
    LOGGING
    ======================================================= */
 
-// Ensure logs folder exists
 if (!is_dir($LOG_DIR)) {
     @mkdir($LOG_DIR, 0777, true);
 }
 
-// Pretty log entry
 $log  = "============================================================\n";
 $log .= "📅 " . date('Y-m-d H:i:s') . "\n";
 $log .= "🌐 IP:       {$remoteIp}\n";
@@ -131,18 +163,21 @@ $log .= "🧾 Raw body:\n";
 $log .= $rawBody !== '' ? "  {$rawBody}\n" : "  (empty)\n";
 
 $log .= "------------------------------------------------------------\n";
-$log .= "🔐 Hash verification:\n";
-$log .= "  Received:   " . ($receivedHash ?: '(none)') . "\n";
-$log .= "  Calculated: " . ($calcHash ?: '(none)') . "\n";
-$log .= "  Match:      ";
-
-if ($hashMatchFlag === true)  $log .= "YES\n";
-elseif ($hashMatchFlag === false) $log .= "NO\n";
-else $log .= "N/A\n";
+$log .= "🔐 Hash from callback:\n";
+$log .= "  Received: " . ($receivedHash ?: '(none)') . "\n";
 
 $log .= "------------------------------------------------------------\n";
-$log .= "🔣 Prepared string used for md5():\n";
-$log .= "  " . ($calcHashSrc ?: '(empty)') . "\n";
+$log .= "🧮 Algorithm #1: APM SALE\n";
+$log .= "  Calculated: " . ($calcSale ?: '(none)') . "\n";
+$log .= "  Match:      " . ($matchSale === null ? 'N/A' : ($matchSale ? 'YES' : 'NO')) . "\n";
+$log .= "  SRC:        " . ($calcSaleSrc ?: '(empty)') . "\n";
+
+$log .= "------------------------------------------------------------\n";
+$log .= "🧮 Algorithm #2: Credit2Virtual\n";
+$log .= "  Calculated: " . ($calcC2V ?? '(not applicable)') . "\n";
+$log .= "  Match:      " . ($matchC2V === null ? 'N/A' : ($matchC2V ? 'YES' : 'NO')) . "\n";
+$log .= "  SRC:        " . ($calcC2VSrc ?: '(empty or not applicable)') . "\n";
+
 $log .= "============================================================\n\n";
 
 @file_put_contents($LOG_FILE, $log, FILE_APPEND);
@@ -156,7 +191,7 @@ $log .= "============================================================\n\n";
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SALE Callback Inspector</title>
+<title>Universal Callback Inspector</title>
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--ok:#2ecc71;--bad:#ff6b6b}
 html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 monospace}
@@ -173,7 +208,7 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
 <div class="wrap">
 
   <div class="panel">
-    <div class="h">📥 SALE Callback Received</div>
+    <div class="h">📥 Callback Received</div>
     <div><span class="kv">Method:</span> <?=h($method)?></div>
     <div><span class="kv">Remote IP:</span> <?=h($remoteIp)?></div>
   </div>
@@ -189,30 +224,42 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
   </div>
 
   <div class="panel">
-    <div class="h">🔐 Hash Verification</div>
-
-    <div class="kv">Received hash:</div>
+    <div class="h">🔐 Hash from Callback</div>
     <pre><?=h($receivedHash)?></pre>
+  </div>
 
+  <div class="panel">
+    <div class="h">🧮 Algorithm #1: APM SALE</div>
     <div class="kv">Calculated hash:</div>
-    <pre><?=h($calcHash)?></pre>
-
-    <?php if ($hashMatchFlag !== null): ?>
-      <div class="<?= $hashMatchFlag ? 'ok' : 'bad' ?>">
-        <?= $hashMatchFlag ? '✅ Hash is valid (MATCH)' : '❌ Hash mismatch' ?>
+    <pre><?=h($calcSale)?></pre>
+    <?php if ($matchSale !== null): ?>
+      <div class="<?= $matchSale ? 'ok' : 'bad' ?>">
+        <?= $matchSale ? '✅ MATCH' : '❌ MISMATCH' ?>
       </div>
     <?php else: ?>
-      <div class="kv">(Callback did not contain a 'hash' field)</div>
+      <div class="kv">N/A</div>
     <?php endif; ?>
+    <div class="kv">Src:</div>
+    <pre><?=h($calcSaleSrc)?></pre>
   </div>
 
   <div class="panel">
-    <div class="h">🔣 Prepared String (UPPERCASE + PASSWORD)</div>
-    <pre><?=h($calcHashSrc)?></pre>
+    <div class="h">🧮 Algorithm #2: Credit2Virtual</div>
+    <div class="kv">Calculated hash:</div>
+    <pre><?=h($calcC2V ?? '')?></pre>
+    <?php if ($matchC2V !== null): ?>
+      <div class="<?= $matchC2V ? 'ok' : 'bad' ?>">
+        <?= $matchC2V ? '✅ MATCH' : '❌ MISMATCH' ?>
+      </div>
+    <?php else: ?>
+      <div class="kv">N/A (not applicable)</div>
+    <?php endif; ?>
+    <div class="kv">Src:</div>
+    <pre><?=h($calcC2VSrc)?></pre>
   </div>
 
   <div class="panel">
-    <div class="h">📁 Log File</div>
+    <div class="h">📁 Log file</div>
     <div class="kv"><?=h($LOG_FILE)?></div>
   </div>
 
