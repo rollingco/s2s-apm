@@ -21,7 +21,7 @@ $DEFAULTS = [
   'identifier'  => '111',
   'currency'    => 'SLE',
   'return_url'  => 'https://google.com',
-  'phone'       => '23233310905',
+  'phone'       => '23274221777',
   'amount'      => '0.99',
 ];
 
