@@ -157,7 +157,7 @@ pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;
     <pre><?=pretty($rawBody)?></pre>
   </div>
 
-  <div class="panel">
+  <div  class="panel">
     <div class="h">🔐 Hash verification (Sale callback signature)</div>
     <div class="kv">Received hash (from callback):</div>
     <pre><?=h($receivedHash)?></pre>
