@@ -18,9 +18,14 @@ header('Content-Type: text/html; charset=utf-8');
 $STATUS_URL = 'https://api.leogcltd.com/post-va';
 
 /** Ті ж ключі, що й у твоїх APM/CREDIT2VIRTUAL скриптах */
-$CLIENT_KEY = '01158d9a-9de6-11f0-ac32-ca759a298692';
-$SECRET     = '4b486f4c7bee7cb42ccca2a5a980910e';
 
+//1x credentials
+/*
+  $CLIENT_KEY = '01158d9a-9de6-11f0-ac32-ca759a298692';
+  $SECRET     = '4b486f4c7bee7cb42ccca2a5a980910e';
+*/
+$CLIENT_KEY = 'a9375384-26f2-11f0-877d-022c42254708';
+  $SECRET     = '554999c284e9f29cf95f090d9a8f3171';
 /**
  * Якщо в доках PASSWORD збігається з SECRET — використовуємо той самий.
  * Якщо ні — сюди впиши окремий пароль з доки.
