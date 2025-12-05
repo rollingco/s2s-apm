@@ -13,8 +13,8 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
   $CLIENT_KEY = '01158d9a-9de6-11f0-ac32-ca759a298692';
   $SECRET     = '4b486f4c7bee7cb42ccca2a5a980910e';
 */
-$CLIENT_KEY = 'a9375384-26f2-11f0-877d-022c42254708';
-  $SECRET     = '554999c284e9f29cf95f090d9a8f3171';
+$CLIENT_KEY = '01158d9a-9de6-11f0-ac32-ca759a298692';
+  $SECRET     = '4b486f4c7bee7cb42ccca2a5a980910e';
 
 $DEFAULTS = [
   'brand'       => 'orange-money',

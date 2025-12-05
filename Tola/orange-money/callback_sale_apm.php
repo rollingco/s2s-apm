@@ -37,7 +37,9 @@ header('Content-Type: text/html; charset=utf-8');
  *   - Replace "PUT_YOUR_PASSWORD_HERE" with your real password
  *     only on your secure server.
  */
-$PASSWORD = '554999c284e9f29cf95f090d9a8f3171';
+//$PASSWORD = '554999c284e9f29cf95f090d9a8f3171';
+$PASSWORD = '4b486f4c7bee7cb42ccca2a5a980910e';
+
 
 /**
  * Directory and file path for log output.
