@@ -1,15 +1,16 @@
 <?php
-/**
- * MPESA CHECKOUT SESSION WITH FULL LOGGING
- */
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 $checkoutHost = 'https://api.leogcltd.com';
 $sessionUrl   = $checkoutHost . '/api/v1/session';
 
-// YOUR CREDENTIALS (sandbox or prod)
+// ✅ ТВОЇ ДАНІ
 $merchantKey   = 'a9375384-26f2-11f0-877d-022c42254708';
 $merchantPass  = '554999c284e9f29cf95f090d9a8f3171';
 
+// ✅ ORDER
 $orderNumber   = 'mpesa-checkout-' . time();
 $orderAmount   = '10.00';
 $orderCurrency = 'KES';
@@ -18,15 +19,11 @@ $orderDescr    = 'Test Mpesa checkout payment';
 $successUrl = 'https://zal25.pp.ua/success.php';
 $cancelUrl  = 'https://zal25.pp.ua/cancel.php';
 
-$logFile = __DIR__ . '/logs/mpesa_checkout_session.log';
-
-// ===================================
-// HASH (sha1(md5(strtoupper(...))))
-// ===================================
-
+// ✅ HASH
 $toMd5 = $orderNumber . $orderAmount . $orderCurrency . $orderDescr . $merchantPass;
 $hash  = sha1(md5(strtoupper($toMd5)));
 
+// ✅ PAYLOAD
 $payload = [
     'merchant_key' => $merchantKey,
     'operation'    => 'purchase',
@@ -42,17 +39,21 @@ $payload = [
     'hash'        => $hash,
 ];
 
-// LOG REQUEST
-file_put_contents($logFile,
-    "\n====================\n" .
-    "DATE: " . date('c') . "\n" .
-    "REQUEST:\n" . json_encode($payload, JSON_PRETTY_PRINT) . "\n",
-    FILE_APPEND
-);
+// =======================
+// ✅ DEBUG: REQUEST
+// =======================
 
-// ===================================
-// CURL REQUEST
-// ===================================
+echo "<pre>";
+echo "==================== REQUEST ====================\n";
+echo "URL:\n$sessionUrl\n\n";
+echo "HASH BASE STRING:\n$toMd5\n\n";
+echo "FINAL HASH:\n$hash\n\n";
+echo "JSON PAYLOAD:\n";
+print_r($payload);
+
+// =======================
+// ✅ CURL
+// =======================
 
 $ch = curl_init($sessionUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -66,25 +67,27 @@ $error    = curl_error($ch);
 
 curl_close($ch);
 
-// LOG RESPONSE
-file_put_contents($logFile,
-    "HTTP CODE: {$httpCode}\n" .
-    "RESPONSE:\n" . $response . "\n" .
-    "CURL ERROR:\n" . $error . "\n",
-    FILE_APPEND
-);
+// =======================
+// ✅ DEBUG: RESPONSE
+// =======================
 
-// ===================================
-// HANDLE RESULT
-// ===================================
+echo "\n==================== RESPONSE ====================\n";
+echo "HTTP CODE:\n$httpCode\n\n";
+echo "RAW RESPONSE:\n$response\n\n";
+echo "CURL ERROR:\n$error\n\n";
+
+// =======================
+// ✅ REDIRECT CHECK
+// =======================
 
 $data = json_decode($response, true);
 
 if (!empty($data['redirect_url'])) {
+    echo "✅ REDIRECT URL FOUND:\n" . $data['redirect_url'] . "\n";
+    echo "</pre>";
     header('Location: ' . $data['redirect_url']);
     exit;
 }
 
-header('Content-Type: text/plain; charset=utf-8');
-echo "NO redirect_url FOUND\n\n";
-echo $response;
+echo "❌ NO redirect_url FOUND\n";
+echo "</pre>";
