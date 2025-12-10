@@ -1,52 +1,65 @@
 <?php
 /**
- * MPESA CHECKOUT via /api/v1/session
- *
- * - merchant_key  = your test/live merchant key
- * - merchant_pass = your password from back-office
+ * MPESA CHECKOUT SESSION WITH FULL LOGGING
  */
 
-$checkoutHost   = 'https://api.leogcltd.com';
-$sessionUrl     = $checkoutHost . '/api/v1/session';
+$checkoutHost = 'https://api.leogcltd.com';
+$sessionUrl   = $checkoutHost . '/api/v1/session';
 
-$merchantKey    = 'a9375384-26f2-11f0-877d-022c42254708';   // твій мерчант-кій
-$merchantPass   = '554999c284e9f29cf95f090d9a8f3171';       // твій пароль
+$merchantKey  = 'PUT_YOUR_MERCHANT_KEY';
+$merchantPass = 'PUT_YOUR_MERCHANT_PASSWORD';
 
-$orderNumber    = 'mpesa-checkout-' . time();
-$orderAmount    = '10.00';
-$orderCurrency  = 'KES';
-$orderDescr     = 'Test Mpesa payment';
+$orderNumber   = 'mpesa-checkout-' . time();
+$orderAmount   = '10.00';
+$orderCurrency = 'KES';
+$orderDescr    = 'Test Mpesa payment';
 
-$successUrl     = 'https://yourdomain.com/success.php';
-$cancelUrl      = 'https://yourdomain.com/cancel.php';
+$successUrl = 'https://yourdomain.com/success.php';
+$cancelUrl  = 'https://yourdomain.com/cancel.php';
 
-// ---------------------
-// HASH (auth signature)
-// sha1(md5(strtoupper(number.amount.currency.description.PASSWORD)))
-// ---------------------
+$logFile = __DIR__ . '/logs/mpesa_checkout_session.log';
 
-$toMd5   = $orderNumber . $orderAmount . $orderCurrency . $orderDescr . $merchantPass;
-$hash    = sha1(md5(strtoupper($toMd5)));
+// ================================
+// HASH
+// ================================
 
-// ---------------------
-// Build auth request
-// ---------------------
+$toMd5 = $orderNumber . $orderAmount . $orderCurrency . $orderDescr . $merchantPass;
+$hash  = sha1(md5(strtoupper($toMd5)));
+
+// ================================
+// PAYLOAD
+// ================================
 
 $payload = [
     'merchant_key' => $merchantKey,
     'operation'    => 'purchase',
-    'methods'      => ['mpesa'],                 // показати Mpesa на checkout
+    'methods'      => ['mpesa'],
     'order'        => [
         'number'      => $orderNumber,
         'amount'      => $orderAmount,
         'currency'    => $orderCurrency,
         'description' => $orderDescr,
     ],
-    'success_url'  => $successUrl,
-    'cancel_url'   => $cancelUrl,
-    // customer / billing_address за бажанням
-    'hash'         => $hash,
+    'success_url' => $successUrl,
+    'cancel_url'  => $cancelUrl,
+    'hash'        => $hash,
 ];
+
+// ================================
+// LOG REQUEST
+// ================================
+
+file_put_contents($logFile,
+    "====================\n" .
+    "DATE: " . date('c') . "\n" .
+    "REQUEST:\n" .
+    json_encode($payload, JSON_PRETTY_PRINT) . "\n",
+    FILE_APPEND
+);
+
+// ================================
+// CURL
+// ================================
 
 $ch = curl_init($sessionUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -55,28 +68,35 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
 $response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error    = curl_error($ch);
+
 curl_close($ch);
 
-if ($error) {
-    die('cURL error: ' . $error);
-}
+// ================================
+// LOG RESPONSE
+// ================================
+
+file_put_contents($logFile,
+    "HTTP CODE: {$httpCode}\n" .
+    "RESPONSE:\n" .
+    $response . "\n" .
+    "ERROR:\n" .
+    $error . "\n\n",
+    FILE_APPEND
+);
+
+// ================================
+// REDIRECT OR DEBUG
+// ================================
 
 $data = json_decode($response, true);
 
-// очікується redirect_url в успішній відповіді
 if (!empty($data['redirect_url'])) {
-    // лог для дебагу
-    file_put_contents(__DIR__ . '/logs/mpesa_checkout_session.log',
-        date('c') . " | ORDER {$orderNumber}\n" . $response . "\n\n",
-        FILE_APPEND
-    );
-
     header('Location: ' . $data['redirect_url']);
     exit;
 }
 
-// Якщо щось пішло не так – покажемо відповідь
 header('Content-Type: text/plain; charset=utf-8');
-echo "No redirect_url in response\n\n";
+echo "NO REDIRECT URL\n\n";
 echo $response;
