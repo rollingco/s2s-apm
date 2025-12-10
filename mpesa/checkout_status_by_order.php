@@ -6,8 +6,9 @@
 $checkoutHost = 'https://api.leogcltd.com';
 $statusUrl    = $checkoutHost . '/api/v1/payment/status';
 
-$merchantKey  = 'PUT_YOUR_MERCHANT_KEY';
-$merchantPass = 'PUT_YOUR_MERCHANT_PASSWORD';
+// YOUR CREDENTIALS
+$merchantKey   = 'a9375384-26f2-11f0-877d-022c42254708';
+$merchantPass  = '554999c284e9f29cf95f090d9a8f3171';
 
 $orderId = $_GET['order_id'] ?? '';
 
@@ -17,16 +18,12 @@ if ($orderId === '') {
 
 $logFile = __DIR__ . '/logs/checkout_status.log';
 
-// ================================
-// HASH
-// ================================
+// ===================================
+// HASH sha1(md5(strtoupper(order_id + pass)))
+// ===================================
 
 $toMd5 = $orderId . $merchantPass;
 $hash  = sha1(md5(strtoupper($toMd5)));
-
-// ================================
-// PAYLOAD
-// ================================
 
 $payload = [
     'merchant_key' => $merchantKey,
@@ -34,21 +31,17 @@ $payload = [
     'hash'         => $hash,
 ];
 
-// ================================
 // LOG REQUEST
-// ================================
-
 file_put_contents($logFile,
-    "====================\n" .
+    "\n====================\n" .
     "DATE: " . date('c') . "\n" .
-    "REQUEST:\n" .
-    json_encode($payload, JSON_PRETTY_PRINT) . "\n",
+    "REQUEST:\n" . json_encode($payload, JSON_PRETTY_PRINT) . "\n",
     FILE_APPEND
 );
 
-// ================================
-// CURL
-// ================================
+// ===================================
+// CURL REQUEST
+// ===================================
 
 $ch = curl_init($statusUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -62,27 +55,21 @@ $error    = curl_error($ch);
 
 curl_close($ch);
 
-// ================================
 // LOG RESPONSE
-// ================================
-
 file_put_contents($logFile,
     "HTTP CODE: {$httpCode}\n" .
-    "RESPONSE:\n" .
-    $response . "\n" .
-    "ERROR:\n" .
-    $error . "\n\n",
+    "RESPONSE:\n" . $response . "\n" .
+    "CURL ERROR:\n" . $error . "\n\n",
     FILE_APPEND
 );
 
-// ================================
+// ===================================
 // OUTPUT
-// ================================
+// ===================================
 
 header('Content-Type: text/plain; charset=utf-8');
 
-echo "ORDER ID:\n" . $orderId . "\n\n";
+echo "ORDER ID:\n$orderId\n\n";
 echo "REQUEST:\n";
 print_r($payload);
-echo "\nRESPONSE:\n";
-echo $response;
+echo "\nRESPONSE:\n$response";
