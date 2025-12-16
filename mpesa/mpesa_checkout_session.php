@@ -8,7 +8,7 @@ $sessionUrl   = $checkoutHost . '/api/v1/session';
 //$sessionUrl   = $checkoutHost . '';
 
 // ✅ ТВОЇ ДАНІ
-$merchantKey   = 'a9375384-26f2-11f0-877d-022c42254708';
+$merchantKey   = 'a9375190-26f2-11f0-be42-022c42254708';
 $merchantPass  = '554999c284e9f29cf95f090d9a8f3171';
 
 // ✅ ORDER
