@@ -4,8 +4,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $checkoutHost = 'https://pay.leogcltd.com';
-//$sessionUrl   = $checkoutHost . '/api/v1/session';
-$sessionUrl   = $checkoutHost . '';
+$sessionUrl   = $checkoutHost . '/api/v1/session';
+//$sessionUrl   = $checkoutHost . '';
 
 // ✅ ТВОЇ ДАНІ
 $merchantKey   = 'a9375384-26f2-11f0-877d-022c42254708';
