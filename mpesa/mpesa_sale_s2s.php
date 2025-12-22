@@ -1,9 +1,13 @@
 <?php
 /**
- * S2S APM SALE — MPESA — full required fields (AfriMoney-style)
- * - UI form: msisdn + amount (+ optional identifier/return_url/description)
+ * S2S APM SALE — MPESA — AfriMoney-style full required fields + AfriMoney-style hash
+ * - UI form: msisdn + amount (+ identifier/return_url/description)
  * - Sends form-data (CURLOPT_POSTFIELDS array)
  * - Minimal logs on screen
+ * - Update markers via filemtime(__FILE__)
+ *
+ * HASH FORMULA (AfriMoney-style):
+ * md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -16,7 +20,7 @@ $SECRET     = '554999c284e9f29cf95f090d9a8f3171';
 
 $DEFAULTS = [
   'brand'       => 'mpesa',
-  'identifier'  => '111',                 // переносимо як в AfriMoney
+  'identifier'  => '111',
   'currency'    => 'KES',
   'return_url'  => 'https://google.com',
   'description' => 'APM payment',
@@ -40,11 +44,11 @@ function pretty($v){
 }
 
 /**
- * MPESA signature (your mpesa sample):
- * md5( strtoupper( strrev( order_id + amount + currency + SECRET ) ) )
+ * AfriMoney-style hash:
+ * md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )
  */
-function build_mpesa_hash($order_id, $amount, $currency, $secret, &$srcOut = null){
-  $src = $order_id . $amount . $currency . $secret;
+function build_sale_hash($identifier, $order_id, $amount, $currency, $secret, &$srcOut = null){
+  $src = $identifier . $order_id . $amount . $currency . $secret;
   if ($srcOut !== null) $srcOut = $src;
   return md5(strtoupper(strrev($src)));
 }
@@ -102,15 +106,15 @@ $responseBlocks = ['bodyRaw' => '', 'json' => null];
 $statusLink = '';
 
 if ($submitted) {
-  $brand      = $DEFAULTS['brand'];
-  $currency   = $DEFAULTS['currency'];
-  $order_id   = 'mpesa_sale_' . time();
-  $payer_ip   = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+  $brand    = $DEFAULTS['brand'];
+  $currency = $DEFAULTS['currency'];
+  $order_id = 'mpesa_sale_' . time();
+  $payer_ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
   $hash_src_dbg = '';
-  $hash = build_mpesa_hash($order_id, $order_amt, $currency, $SECRET, $hash_src_dbg);
+  $hash = build_sale_hash($identifier, $order_id, $order_amt, $currency, $SECRET, $hash_src_dbg);
 
-  // переносимо ПОВНИЙ каркас як в AfriMoney
+  // Full required fields (AfriMoney-style skeleton)
   $form = [
     'action'            => 'SALE',
     'client_key'        => $CLIENT_KEY,
@@ -125,13 +129,12 @@ if ($submitted) {
     'payer_ip'          => $payer_ip,
     'return_url'        => $return_url,
 
-    // phone fields — щоб не вгадувати назву
+    // phone fields (keep both to avoid naming mismatch)
     'msisdn'            => $msisdn,
     'payer_phone'       => $msisdn,
 
-    // hash/signature — теж щоб не вгадувати
+    // AfriMoney-style field name
     'hash'              => $hash,
-    'signature'         => $hash,
   ];
 
   $debug = [
@@ -206,7 +209,7 @@ function render_page($ctx){
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MPESA SALE — full required fields</title>
+<title>MPESA SALE — AfriMoney-style</title>
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff6b6b}
 html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
@@ -255,19 +258,17 @@ label{display:inline-block;min-width:180px}
       <div style="margin:8px 0;">
         <label>Identifier:</label>
         <input type="text" name="identifier" value="<?=h($prefill['identifier'])?>" placeholder="111">
-        <div class="kv small">Copied from AfriMoney template</div>
+        <div class="kv small">Used in hash formula</div>
       </div>
 
       <div style="margin:8px 0;">
         <label>Return URL:</label>
         <input type="text" name="return_url" value="<?=h($prefill['return_url'])?>" placeholder="https://google.com">
-        <div class="kv small">Required</div>
       </div>
 
       <div style="margin:8px 0;">
         <label>Order description:</label>
         <input type="text" name="order_description" value="<?=h($prefill['order_description'])?>" placeholder="APM payment">
-        <div class="kv small">Required</div>
       </div>
 
       <div style="margin-top:12px;">
@@ -290,8 +291,8 @@ label{display:inline-block;min-width:180px}
   </div>
 
   <div class="panel">
-    <div class="h">🧮 MPESA hash</div>
-    <div class="kv">md5( strtoupper( strrev( order_id + amount + currency + SECRET ) ) )</div>
+    <div class="h">🧮 SALE hash</div>
+    <div class="kv">md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )</div>
     <div class="kv">Source string:</div>
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
     <div class="kv">Hash:</div>
@@ -304,7 +305,7 @@ label{display:inline-block;min-width:180px}
   </div>
 
   <div class="panel">
-         <div class="h">⬅ Response body</div>
+    <div class="h">⬅ Response body</div>
     <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
     <?php if (is_array($resp['json'] ?? null)): ?>
       <div class="h">Parsed</div>
