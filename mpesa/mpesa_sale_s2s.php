@@ -71,7 +71,10 @@ curl_close($ch);
 // ================================
 echo "<pre style='background:#0b1020;color:#e8e8e8;padding:14px;border-radius:10px;white-space:pre-wrap;font-size:13px;line-height:1.35'>";
 
-echo "LAST UPDATE: 2025-12-22 (server time)\n";
+echo "SCRIPT: " . basename(__FILE__) . "\n";
+echo "LAST UPDATE (filemtime): " . date('Y-m-d H:i:s', filemtime(__FILE__)) . "\n";
+echo "TIMEZONE: " . date_default_timezone_get() . "\n\n";
+
 echo "ENDPOINT: {$endpoint}\n";
 echo "ACTION: SALE | BRAND: {$brand} | CURRENCY: {$currency}\n\n";
 
