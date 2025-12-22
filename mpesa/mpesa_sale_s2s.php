@@ -304,7 +304,7 @@ label{display:inline-block;min-width:180px}
   </div>
 
   <div class="panel">
-    <div class="h">⬅ Response body</div>
+         <div class="h">⬅ Response body</div>
     <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
     <?php if (is_array($resp['json'] ?? null)): ?>
       <div class="h">Parsed</div>
