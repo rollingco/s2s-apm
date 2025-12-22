@@ -14,8 +14,8 @@
 
 $endpoint = "https://api.leogcltd.com/post"; // or sandbox endpoint if provided
 
-$client_id = "PUT_YOUR_CLIENT_ID_HERE";
-$client_password = "PUT_YOUR_PASSWORD_HERE";
+$client_id = "a9375190-26f2-11f0-be42-022c42254708";
+$client_password = "554999c284e9f29cf95f090d9a8f3171";
 
 $order_id = "mpesa-sale-" . time();
 $amount   = "100.00";
