@@ -73,7 +73,7 @@ echo "<pre style='background:#0b1020;color:#e8e8e8;padding:14px;border-radius:10
 
 echo "LAST UPDATE: 2025-12-22 (server time)\n";
 echo "ENDPOINT: {$endpoint}\n";
-echo "ACTION: SALE | BRAND: mpesa | CURRENCY: {$currency}\n\n";
+echo "ACTION: SALE | BRAND: {$brand} | CURRENCY: {$currency}\n\n";
 
 echo "SIGNATURE BASE (upper+rev of order_id+amount+currency):\n{$signature_base}\n\n";
 echo "SIGNATURE (md5(base + SECRET)):\n{$signature}\n\n";
