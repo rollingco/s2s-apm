@@ -2,6 +2,10 @@
 /**
  * S2S APM SALE — MPESA — msisdn + amount → minimal logs
  * - NO headers logging at all
+ *
+ * Requirements (based on API validation):
+ * - return_url must not be blank
+ * - order_description must not be blank
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -13,10 +17,12 @@ $CLIENT_KEY = 'a9375190-26f2-11f0-be42-022c42254708';
 $SECRET     = '554999c284e9f29cf95f090d9a8f3171';
 
 $DEFAULTS = [
-  'brand'    => 'mpesa',
-  'currency' => 'KES',
-  'msisdn'   => '254700000000',
-  'amount'   => '10.00',
+  'brand'        => 'mpesa',
+  'currency'     => 'KES',
+  'return_url'   => 'https://google.com',
+  'description'  => 'APM payment',
+  'msisdn'       => '254700000000',
+  'amount'       => '10.00',
 ];
 
 /* ===================== UPDATE MARKERS ===================== */
@@ -58,15 +64,25 @@ if ($submitted) {
   $rawAmt    = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
   $order_amt = number_format((float)$rawAmt, 2, '.', '');
 
+  $return_url = trim((string)($_POST['return_url'] ?? ''));
+  $order_desc = trim((string)($_POST['order_description'] ?? ''));
+
   $errors = [];
   if ($msisdn === '') $errors[] = 'MSISDN is required.';
   if (!is_numeric($order_amt) || (float)$order_amt <= 0) $errors[] = 'Amount must be a positive number.';
+  if ($return_url === '') $errors[] = 'return_url is required.';
+  if ($order_desc === '') $errors[] = 'order_description is required.';
 
   if (!empty($errors)) {
     render_page([
       'showForm'   => true,
       'errors'     => $errors,
-      'prefill'    => ['msisdn' => $_POST['msisdn'] ?? $DEFAULTS['msisdn'], 'amount' => $_POST['amount'] ?? $DEFAULTS['amount']],
+      'prefill'    => [
+        'msisdn'            => $_POST['msisdn'] ?? $DEFAULTS['msisdn'],
+        'amount'            => $_POST['amount'] ?? $DEFAULTS['amount'],
+        'return_url'        => $_POST['return_url'] ?? $DEFAULTS['return_url'],
+        'order_description' => $_POST['order_description'] ?? $DEFAULTS['description'],
+      ],
       'debug'      => [],
       'response'   => [],
       'statusLink' => '',
@@ -75,8 +91,10 @@ if ($submitted) {
     exit;
   }
 } else {
-  $msisdn    = $DEFAULTS['msisdn'];
-  $order_amt = $DEFAULTS['amount'];
+  $msisdn     = $DEFAULTS['msisdn'];
+  $order_amt  = $DEFAULTS['amount'];
+  $return_url = $DEFAULTS['return_url'];
+  $order_desc = $DEFAULTS['description'];
 }
 
 /* ===================== Send SALE ===================== */
@@ -91,14 +109,22 @@ if ($submitted) {
   $signature = build_mpesa_signature($order_id, $order_amt, $order_ccy, $SECRET, $sig_src_dbg);
 
   $form = [
-    'action'         => 'SALE',
-    'client_key'     => $CLIENT_KEY,
-    'brand'          => $brand,
-    'order_id'       => $order_id,
-    'order_amount'   => $order_amt,
-    'order_currency' => $order_ccy,
-    'msisdn'         => $msisdn,
-    'signature'      => $signature,
+    'action'            => 'SALE',
+    'client_key'        => $CLIENT_KEY,
+    'brand'             => $brand,
+    'order_id'          => $order_id,
+    'order_amount'      => $order_amt,
+    'order_currency'    => $order_ccy,
+
+    // REQUIRED BY VALIDATION:
+    'order_description' => $order_desc,
+    'return_url'        => $return_url,
+
+    // MPESA-specific:
+    'msisdn'            => $msisdn,
+
+    // signature:
+    'signature'         => $signature,
   ];
 
   $debug = [
@@ -135,7 +161,7 @@ if ($submitted) {
   if (json_last_error() === JSON_ERROR_NONE) {
     $responseBlocks['json'] = $json;
 
-    // if API returns trans_id — build a link to status_once.php (same logic as AfriMoney file)
+    // If API returns trans_id — build a link to status_once.php (same logic as AfriMoney file)
     if (!empty($json['trans_id'])) {
       $basePath   = rtrim(dirname($_SERVER['PHP_SELF']), '/');
       $statusOnce = $basePath . '/status_once.php';
@@ -148,7 +174,12 @@ if ($submitted) {
 render_page([
   'showForm'   => true,
   'errors'     => [],
-  'prefill'    => ['msisdn' => $msisdn, 'amount' => $order_amt],
+  'prefill'    => [
+    'msisdn'            => $msisdn,
+    'amount'            => $order_amt,
+    'return_url'        => $return_url,
+    'order_description' => $order_desc,
+  ],
   'debug'      => $debug,
   'response'   => $responseBlocks,
   'statusLink' => $statusLink,
@@ -157,9 +188,8 @@ render_page([
 
 /* ---------------------- View ---------------------- */
 function render_page($ctx){
-  $showForm   = $ctx['showForm'];
   $errors     = $ctx['errors'] ?? [];
-  $prefill    = $ctx['prefill'] ?? ['msisdn'=>'','amount'=>''];
+  $prefill    = $ctx['prefill'] ?? ['msisdn'=>'','amount'=>'','return_url'=>'','order_description'=>''];
   $debug      = $ctx['debug'] ?? [];
   $resp       = $ctx['response'] ?? [];
   $statusLink = $ctx['statusLink'] ?? '';
@@ -171,7 +201,7 @@ function render_page($ctx){
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MPESA SALE — msisdn+amount → minimal</title>
+<title>MPESA SALE — minimal</title>
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff6b6b}
 html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
@@ -180,11 +210,12 @@ html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-mono
 .panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
 .kv{color:var(--muted)}
 pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
-.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none}
+.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none;border:none;cursor:pointer}
 .btn:hover{opacity:.9}
 .error{color:var(--err);margin:6px 0}
-input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6}
-label{display:inline-block;min-width:140px}
+input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6;width:420px;max-width:100%}
+label{display:inline-block;min-width:170px}
+.small{font-size:12px}
 </style>
 </head>
 <body>
@@ -200,18 +231,34 @@ label{display:inline-block;min-width:140px}
 
   <div class="panel">
     <div class="h">📨 Create MPESA SALE</div>
+
     <form action="<?=h($self)?>" method="post">
       <?php if ($errors): ?>
         <?php foreach ($errors as $e): ?><div class="error">❌ <?=h($e)?></div><?php endforeach; ?>
       <?php endif; ?>
+
       <div style="margin:8px 0;">
         <label>MSISDN:</label>
         <input type="text" name="msisdn" value="<?=h($prefill['msisdn'])?>" placeholder="254700000000">
       </div>
+
       <div style="margin:8px 0;">
         <label>Amount:</label>
         <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="10.00">
       </div>
+
+      <div style="margin:8px 0;">
+        <label>Return URL:</label>
+        <input type="text" name="return_url" value="<?=h($prefill['return_url'])?>" placeholder="https://google.com">
+        <div class="kv small">Required by validation</div>
+      </div>
+
+      <div style="margin:8px 0;">
+        <label>Order description:</label>
+        <input type="text" name="order_description" value="<?=h($prefill['order_description'])?>" placeholder="APM payment">
+        <div class="kv small">Required by validation</div>
+      </div>
+
       <div style="margin-top:12px;">
         <button class="btn" type="submit">Send SALE</button>
       </div>
