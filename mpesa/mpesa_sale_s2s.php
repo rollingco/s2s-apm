@@ -39,7 +39,7 @@ $data = [
   "order_id"       => $order_id,
   "order_amount"   => $amount,
   "order_currency" => $currency,
-  "brand"          => "mpesa",
+  "brand"          => "mpesa-express",
   "parameters"     => [
     "msisdn" => $msisdn
   ],
