@@ -15,8 +15,8 @@ $secret      = '554999c284e9f29cf95f090d9a8f3171';
 
 // --- Test card data (example) ---
 $cardNumber  = '4111111111111111';
-$expMonth    = '12';
-$expYear     = '2027';
+$expMonth    = '05';
+$expYear     = '2038';
 $cvv         = '123';
 
 // --- Payer data (required in your screenshot) ---
