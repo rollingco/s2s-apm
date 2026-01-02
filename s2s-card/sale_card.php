@@ -13,7 +13,7 @@ $secret      = '554999c284e9f29cf95f090d9a8f3171';
 
 // --- Your card data ---
 $cardNumber  = '4111111111111111';
-$expMonth    = '05';
+$expMonth    = '01';
 $expYear     = '2038';
 $cvv         = '123';
 
