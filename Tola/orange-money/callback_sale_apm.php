@@ -38,7 +38,7 @@ header('Content-Type: text/html; charset=utf-8');
  *     only on your secure server.
  */
 //$PASSWORD = '554999c284e9f29cf95f090d9a8f3171';
-$PASSWORD = '4b486f4c7bee7cb42ccca2a5a980910e';
+$PASSWORD = '41e813071b0bea0b0c700b0cf84f51df';
 
 
 /**
