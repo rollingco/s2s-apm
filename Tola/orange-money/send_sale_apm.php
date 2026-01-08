@@ -20,7 +20,7 @@ $DEFAULTS = [
   'brand'       => 'orange-money',
   'identifier'  => '111',
   'currency'    => 'SLE',
-  'return_url'  => 'https://www.zal25.pp.ua/s2stest/Tola/orange-money/callback_sale_apm.php',
+  'return_url'  => 'https://www.za6l25.pp.ua/s2stest/Tola/orange-money/callback_sale_apm.php',
   'phone'       => '23274221777',
   'amount'      => '0.99',
 ];
