@@ -22,7 +22,7 @@ $merchantPass = '554999c284e9f29cf95f090d9a8f3171';
 $DEFAULTS = [
   'method'   => 'paytota',
   'currency' => 'LRD',
-  'phone'    => '46700000000', // E.164 without +
+  'phone'    => '256700000000', // E.164 without +
   'amount'   => '7.00',
 ];
 
