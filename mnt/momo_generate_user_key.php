@@ -8,7 +8,7 @@ $subscriptionKeyCollections = '3ffd6cae71514869886e03164962c7fd';
 $callbackHost = 'zal25.pp.ua'; // host only
 $targetEnv = 'sandbox';
 
-$apiUser = uuid_v4(); // This IS the API User
+$apiUser = uuid_v4(); // This ISccc the API User
 
 // 1) Create API User
 $createUrl = "https://sandbox.momodeveloper.mtn.com/v1_0/apiuser";
