@@ -1,257 +1,115 @@
 <?php
-/**
- * S2S APM CREDIT2VIRTUAL (paytota/MTN) — phone + amount → minimal logs
- * - NO headers logging at all
- * - Uses: parameters[payee_phone]
- *
- * Sample (as in docs):
- * action=CREDIT2VIRTUAL&brand=paytota&parameters[payee_phone]=...
- */
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 header('Content-Type: text/html; charset=utf-8');
 
-/* ===================== CONFIG ===================== */
-$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+$checkoutHost = 'https://pay.leogcltd.com';
+$sessionUrl   = $checkoutHost . '/api/v1/session';
 
-$CLIENT_KEY  = '477368c6-9fac-11f0-9c75-42699c2d6471';
-$SECRET      = '41e813071b0bea0b0c700b0cf84f51df';
+// ✅ MERCHANT (MID)
+$merchantKey   = 'a9375190-26f2-11f0-be42-022c42254708';
+$merchantPass  = '554999c284e9f29cf95f090d9a8f3171';
 
-$DEFAULTS = [
-  'brand'      => 'paytota',  // MTN MoMo connector (Akurateco brand)
-  'currency'   => 'UGX',
-  'phone'      => '256700000000', // E.164 without +
-  'amount'     => '100.00',
+// ✅ ORDER
+$orderNumber   = 'mtnmomo-checkout-' . time();
+$orderAmount   = '10.00';
+
+// MTN MoMo currency depends on country. For example: UGX (Uganda), GHS (Ghana), XAF (Cameroon), etc.
+// Put the currency you were told to use for this MID / test environment.
+$orderCurrency = 'UGX';
+
+$orderDescr    = 'Test MTN MoMo checkout payment';
+
+$successUrl = 'https://zal25.pp.ua/success.php';
+$cancelUrl  = 'https://zal25.pp.ua/cancel.php';
+
+// ✅ Optional: customer phone (E.164, usually without +)
+$payerPhone = '256700000000';
+
+// ✅ HASH (same as your example)
+$toMd5 = $orderNumber . $orderAmount . $orderCurrency . $orderDescr . $merchantPass;
+$hash  = sha1(md5(strtoupper($toMd5)));
+
+// ✅ PAYLOAD
+$payload = [
+    'merchant_key' => $merchantKey,
+    'operation'    => 'purchase',
+
+    // ✅ MTN MoMo method (Akurateco brand is paytota)
+    // If your checkout expects "paytota" or "paytota_mtn" etc — this is the ONLY line to change.
+    'methods'      => ['paytota'],
+
+    'order'        => [
+        'number'      => $orderNumber,
+        'amount'      => $orderAmount,
+        'currency'    => $orderCurrency,
+        'description' => $orderDescr,
+    ],
+
+    // ✅ If checkout supports passing phone — keep it.
+    // If not supported, it will be ignored.
+    'customer' => [
+        'phone' => $payerPhone,
+    ],
+
+    'success_url' => $successUrl,
+    'cancel_url'  => $cancelUrl,
+    'hash'        => $hash,
 ];
 
-/* ===================== Helpers ===================== */
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8'); }
-function pretty($v){
-  if (is_string($v)) {
-    $d = json_decode($v,true);
-    if (json_last_error()===JSON_ERROR_NONE) $v=$d; else return h($v);
-  }
-  return h(json_encode($v, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE));
-}
+// =======================
+// ✅ DEBUG: REQUEST
+// =======================
 
-/**
- * Hash formula used in your current scripts:
- * md5( strtoupper( strrev( identifier + order_id + amount + currency + SECRET ) ) )
- *
- * For this CREDIT2VIRTUAL example, docs curl does NOT include identifier.
- * So we calculate without identifier by default.
- */
-function build_apm_hash($order_id, $amount, $currency, $secret, &$srcOut = null){
-  $src = $order_id . $amount . $currency . $secret;
-  if ($srcOut !== null) $srcOut = $src;
-  return md5(strtoupper(strrev($src)));
-}
+echo "<pre>";
+echo "==================== REQUEST ====================\n";
+echo "URL:\n$sessionUrl\n\n";
+echo "HASH BASE STRING:\n$toMd5\n\n";
+echo "FINAL HASH:\n$hash\n\n";
+echo "JSON PAYLOAD:\n";
+echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+echo "\n\n";
 
-/* ===================== Read form ===================== */
-$method    = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$submitted = ($method === 'POST');
+// =======================
+// ✅ CURL
+// =======================
 
-$brand     = $DEFAULTS['brand'];
-$order_ccy = $DEFAULTS['currency'];
+$ch = curl_init($sessionUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_SLASHES));
+curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
-if ($submitted) {
-  $payee_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
-  $payee_phone = ltrim($payee_phone, '+');
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$error    = curl_error($ch);
 
-  $rawAmt   = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
-  $order_amt = number_format((float)$rawAmt, 2, '.', '');
+curl_close($ch);
 
-  $errors = [];
-  if ($payee_phone === '') $errors[] = 'Phone is required.';
-  if (!is_numeric($order_amt) || (float)$order_amt <= 0) $errors[] = 'Amount must be a positive number.';
+// =======================
+// ✅ DEBUG: RESPONSE
+// =======================
 
-  if (!empty($errors)) {
-    render_page([
-      'showForm'   => true,
-      'errors'     => $errors,
-      'prefill'    => ['phone' => $_POST['phone'] ?? $DEFAULTS['phone'], 'amount' => $_POST['amount'] ?? $DEFAULTS['amount']],
-      'debug'      => [],
-      'response'   => [],
-      'statusLink' => '',
-    ]);
+echo "==================== RESPONSE ====================\n";
+echo "HTTP CODE:\n$httpCode\n\n";
+echo "RAW RESPONSE:\n$response\n\n";
+echo "CURL ERROR:\n$error\n\n";
+
+// =======================
+// ✅ REDIRECT CHECK
+// =======================
+
+$data = json_decode($response, true);
+
+if (!empty($data['redirect_url'])) {
+    echo "✅ REDIRECT URL FOUND:\n" . $data['redirect_url'] . "\n";
+    echo "</pre>";
+    header('Location: ' . $data['redirect_url']);
     exit;
-  }
-} else {
-  $payee_phone = $DEFAULTS['phone'];
-  $order_amt   = $DEFAULTS['amount'];
 }
 
-/* ===================== Send CREDIT2VIRTUAL ===================== */
-$debug = [];
-$responseBlocks = ['bodyRaw' => '', 'json' => null];
-$statusLink = '';
-
-if ($submitted) {
-  $order_id   = 'ORDER_' . time();
-  $order_desc = 'APM credit2virtual';
-
-  $hash_src_dbg = '';
-  $hash = build_apm_hash($order_id, $order_amt, $order_ccy, $SECRET, $hash_src_dbg);
-
-  // Build form-data exactly like docs: parameters[payee_phone]
-  $form = [
-    'action'            => 'CREDIT2VIRTUAL',
-    'client_key'        => $CLIENT_KEY,
-    'brand'             => $brand,
-    'order_id'          => $order_id,
-    'order_amount'      => $order_amt,
-    'order_currency'    => $order_ccy,
-    'order_description' => $order_desc,
-    'parameters[payee_phone]' => $payee_phone,
-    'hash'              => $hash,
-  ];
-
-  $debug = [
-    'endpoint'   => $PAYMENT_URL,
-    'client_key' => $CLIENT_KEY,
-    'order_id'   => $order_id,
-    'form'       => $form,
-    'hash_src'   => $hash_src_dbg,
-    'hash'       => $hash,
-  ];
-
-  $ch = curl_init($PAYMENT_URL);
-  curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => $form, // sends application/x-www-form-urlencoded
-    CURLOPT_TIMEOUT        => 60,
-  ]);
-
-  $start = microtime(true);
-  $raw   = curl_exec($ch);
-  $info  = curl_getinfo($ch);
-  $err   = curl_errno($ch) ? curl_error($ch) : '';
-  curl_close($ch);
-
-  $dur = number_format(microtime(true) - $start, 3, '.', '');
-
-  $debug['duration_sec'] = $dur;
-  $debug['http_code']    = (int)($info['http_code'] ?? 0);
-  if ($err) $debug['curl_error'] = $err;
-
-  $responseBlocks['bodyRaw'] = (string)$raw;
-  $json = json_decode($responseBlocks['bodyRaw'], true);
-  if (json_last_error() === JSON_ERROR_NONE) {
-    $responseBlocks['json'] = $json;
-
-    // If gateway returns trans_id — keep your existing status_once flow
-    if (!empty($json['trans_id'])) {
-      $basePath   = rtrim(dirname($_SERVER['PHP_SELF']), '/');
-      $statusOnce = $basePath . '/status_once.php';
-      $statusLink = $statusOnce . '?trans_id=' . urlencode($json['trans_id']);
-    }
-  }
-}
-
-/* ===================== Render ===================== */
-render_page([
-  'showForm'   => true,
-  'errors'     => [],
-  'prefill'    => ['phone' => $payee_phone, 'amount' => $order_amt],
-  'debug'      => $debug,
-  'response'   => $responseBlocks,
-  'statusLink' => $statusLink,
-]);
-
-/* ---------------------- View ---------------------- */
-function render_page($ctx){
-  $errors     = $ctx['errors'] ?? [];
-  $prefill    = $ctx['prefill'] ?? ['phone'=>'','amount'=>''];
-  $debug      = $ctx['debug'] ?? [];
-  $resp       = $ctx['response'] ?? [];
-  $statusLink = $ctx['statusLink'] ?? '';
-
-  $self = (isset($_SERVER['HTTPS'])?'https':'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
-  ?>
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>CREDIT2VIRTUAL — paytota (MTN) — phone+amount</title>
-<style>
-:root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff6b6b}
-html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
-.wrap{padding:22px;max-width:1100px;margin:0 auto}
-.h{font-weight:700;margin:10px 0 6px}
-.panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
-.kv{color:var(--muted)}
-pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
-.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none}
-.btn:hover{opacity:.9}
-.error{color:var(--err);margin:6px 0}
-input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6}
-label{display:inline-block;min-width:150px}
-</style>
-</head>
-<body>
-<div class="wrap">
-
-  <div class="panel">
-    <div class="h">📨 Create CREDIT2VIRTUAL (paytota/MTN)</div>
-    <form action="<?=h($self)?>" method="post">
-      <?php if ($errors): ?>
-        <?php foreach ($errors as $e): ?><div class="error">❌ <?=h($e)?></div><?php endforeach; ?>
-      <?php endif; ?>
-      <div style="margin:8px 0;">
-        <label>Phone (payee_phone):</label>
-        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="256700000000">
-      </div>
-      <div style="margin:8px 0;">
-        <label>Amount:</label>
-        <input type="text" name="amount" value="<?=h($prefill['amount'])?>" placeholder="100.00">
-      </div>
-      <div style="margin-top:12px;">
-        <button class="btn" type="submit">Send CREDIT2VIRTUAL</button>
-      </div>
-    </form>
-  </div>
-
-  <?php if (!empty($debug)): ?>
-  <div class="panel">
-    <div class="h">🟢 Request sent</div>
-    <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
-    <div><span class="kv">Client key:</span> <?=h($debug['client_key'] ?? '')?></div>
-    <div><span class="kv">Order ID:</span> <?=h($debug['order_id'] ?? '')?></div>
-    <div><span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?> <span class="kv" style="margin-left:12px;">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s</div>
-    <?php if (!empty($debug['curl_error'])): ?>
-      <div class="error">cURL: <?=h($debug['curl_error'])?></div>
-    <?php endif; ?>
-  </div>
-
-  <div class="panel">
-    <div class="h">🧮 Hash</div>
-    <div class="kv">md5( strtoupper( strrev( order_id + amount + currency + SECRET ) ) )</div>
-    <div class="kv">Source string:</div>
-    <pre><?=h($debug['hash_src'] ?? '')?></pre>
-    <div class="kv">Hash:</div>
-    <pre><?=h($debug['hash'] ?? '')?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="h">➡ Sent form-data</div>
-    <pre><?=pretty($debug['form'] ?? [])?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="h">⬅ Response body</div>
-    <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
-    <?php if (is_array($resp['json'] ?? null)): ?>
-      <div class="h">Parsed</div>
-      <pre><?=pretty($resp['json'])?></pre>
-      <?php if (!empty($statusLink)): ?>
-        <p><a class="btn" href="<?=h($statusLink)?>" target="_blank">➡ Check status once (trans_id)</a></p>
-      <?php endif; ?>
-    <?php endif; ?>
-  </div>
-  <?php endif; ?>
-
-</div>
-</body>
-</html>
-<?php
-}
+echo "❌ NO redirect_url FOUND\n";
+echo "</pre>";
