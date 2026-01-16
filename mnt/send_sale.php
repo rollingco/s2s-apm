@@ -18,7 +18,7 @@ $orderAmount   = '10.00';
 
 // MTN MoMo currency depends on country. For example: UGX (Uganda), GHS (Ghana), XAF (Cameroon), etc.
 // Put the currency you were told to use for this MID / test environment.
-$orderCurrency = 'UGX';
+$orderCurrency = 'LRD';
 
 $orderDescr    = 'Test MTN MoMo checkout payment';
 
