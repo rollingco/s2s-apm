@@ -23,7 +23,7 @@ $DEFAULTS = [
   'method'   => 'paytota',
   'currency' => 'RLD',
   'phone'    => '256700000000', // E.164 without +
-  'amount'   => '5.00',
+  'amount'   => '7.00',
 ];
 
 $successUrl = 'https://zal25.pp.ua/success.php';
