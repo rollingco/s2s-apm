@@ -11,8 +11,8 @@
  *  - Use your Collections Primary subscription key for these steps.
  */
 
-$subscriptionKeyCollections = 'PUT_YOUR_COLLECTIONS_PRIMARY_SUBSCRIPTION_KEY_HERE';
-$callbackHost = 'your-domain.com'; // WITHOUT https:// and WITHOUT path, just host
+$subscriptionKeyCollections = '3ffd6cae71514869886e03164962c7fd';
+$callbackHost = 'zal25.pp.ua'; // WITHOUT https:// and WITHOUT path, just host
 
 // You asked "uuid = leogcltd" — MoMo requires UUID v4.
 // We'll use "leogcltd" as an internal label only.
