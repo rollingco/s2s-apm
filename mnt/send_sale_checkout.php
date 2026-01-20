@@ -24,7 +24,7 @@ $DEFAULTS = [
 //  'currency' => 'LRD',
   'currency' => 'EUR',
   'phone'    => '256700000000', // E.164 without +
-  'amount'   => '7.00',
+  'amount'   => '8.00',
 ];
 
 $successUrl = 'https://zal25.pp.ua/success.php';
