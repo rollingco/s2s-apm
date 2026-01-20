@@ -21,7 +21,8 @@ $merchantPass = '554999c284e9f29cf95f090d9a8f3171';
 // MTN MoMo currency depends on MID/country. Put the one configured for your MID.
 $DEFAULTS = [
   'method'   => 'paytota',
-  'currency' => 'LRD',
+//  'currency' => 'LRD',
+  'currency' => 'EUR',
   'phone'    => '256700000000', // E.164 without +
   'amount'   => '7.00',
 ];
