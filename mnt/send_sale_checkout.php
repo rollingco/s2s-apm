@@ -23,7 +23,7 @@ $DEFAULTS = [
   'method'   => 'paytota',
 //  'currency' => 'LRD',
   'currency' => 'EUR',
-  'phone'    => '256700000000', // E.164 without +
+  'phone'    => '2567000200000', // E.164 without +
   'amount'   => '8.00',
 ];
 
