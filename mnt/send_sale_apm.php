@@ -17,10 +17,10 @@ $SECRET      = '41e813071b0bea0b0c700b0cf84f51df';
 $DEFAULTS = [
   'brand'       => 'mnt-momo',      // ✅ changed only this
   'identifier'  => '111',
-  'currency'    => 'SLE',
+  'currency'    => 'LRD',
   'return_url'  => 'https://google.com',
   'phone'       => '23274221777',
-  'amount'      => '0.99',
+  'amount'      => '10.00',
 ];
 
 /* ===================== Helpers ===================== */
