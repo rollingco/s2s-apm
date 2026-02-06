@@ -15,7 +15,7 @@ $brand = 'vcard';
 $identifier = 'success@gmail.com';
 $description = 'Test payment';
 $payer_ip = $_SERVER['REMOTE_ADDR'];
-$return_url = 'https://zal25.pp.ua/s2stest/callback.php';
+$return_url = 'https://sandbox.pp.ua/s2stest/callback.php';
 
 // HASH = md5(strtoupper(strrev(identifier + order_id + amount + currency + password)))
 $hash_source = $identifier . $order_id . $amount . $currency . $password;
