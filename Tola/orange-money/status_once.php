@@ -7,8 +7,8 @@ $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 //$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$CLIENT_KEY  = '01158d9a-9de6-11f0-ac32-ca759a298692';
-$PASSWORD    = '4b486f4c7bee7cb42ccca2a5a980910e'; // той самий, що для SALE
+$CLIENT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
+$PASSWORD    = '554999c284e9f29cf95f090d9a8f3171'; // той самий, що для SALE
 $ACTION      = 'GET_TRANS_STATUS';
 
 /* ==== INPUT ==== */
