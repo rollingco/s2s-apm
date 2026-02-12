@@ -3,7 +3,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 /* ==== CONFIG ==== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
-$API_USER    = 'leogc';
+//$API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 //$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
