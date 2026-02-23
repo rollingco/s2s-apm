@@ -23,8 +23,8 @@ $orderAmount      = '0.19';              // keep as string, e.g. "10.00"
 $orderCurrency    = 'USD';
 $orderDescription = 'Important gift';
 
-$successUrl = 'https://example.domain.com/success';
-$cancelUrl  = 'https://example.domain.com/cancel';
+$successUrl = 'https://sandbox.pp.ua/success';
+$cancelUrl  = 'https://sandbox.pp.ua/cancel';
 
 /* ===================== HELPERS ===================== */
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
