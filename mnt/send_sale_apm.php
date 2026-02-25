@@ -8,7 +8,7 @@
 header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
-$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+$PAYMENT_URL = 'https://api.leogcltd.com/post';
 
 // credentials (as-is from your file)
 $CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
