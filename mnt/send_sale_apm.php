@@ -15,7 +15,7 @@ $CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
 $SECRET      = '554999c284e9f29cf95f090d9a8f3171';
 
 $DEFAULTS = [
-  'brand'       => 'paytota',      // ✅ changed only this
+  'brand'       => 'mtn-momo',      // ✅ changed only this
   'identifier'  => '111',
   'currency'    => 'LRD',
   'return_url'  => 'https://google.com',
