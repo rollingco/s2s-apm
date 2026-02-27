@@ -1,21 +1,22 @@
 <?php
 /**
- * S2S CREDIT2VIRTUAL — AfriMoney payout by order_id → minimal logs
+ * S2S CREDIT2VIRTUAL — MTN MoMo payout by order_id → minimal logs
  *
  * - endpoint: https://api.leogcltd.com/post
- * - brand: afri-money-dbm
+ * - brand: mnt-momo
  * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
- * - amount нормалізуємо до 2 знаків (1 -> 1.00, 1.5 -> 1.50)
- * - phone (MSISDN) тепер відправляємо як parameters[msisdn]
- * - можна додатково передавати parameters[email]
+ * - amount normalized to 2 decimals (1 -> 1.00, 1.5 -> 1.50)
+ * - phone (MSISDN) sent as parameters[msisdn]
+ * - optional: parameters[email]
  */
 
 header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post';
-$CLIENT_KEY = '01158d9a-9de6-11f0-ac32-ca759a298692';
-  $SECRET     = '4b486f4c7bee7cb42ccca2a5a980910e';
+
+$CLIENT_KEY  = 'bd059f56-e01a-11f0-835c-42fb5ea66c1c';
+$SECRET      = '24907c0221dd485b8cd6ae936a9c3c01';
 
 /**
  * channel_id — якщо його потрібно передавати, вкажи тут значення.
@@ -31,11 +32,11 @@ $STATUS_HELPER_URL = 'status_credit2virtual.php';
 
 /* Prefill from GET (автономний режим) */
 $DEFAULTS = [
-  'order_id' => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('afrimoney-' . time()),
+  'order_id' => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('mtnmomo-' . time()),
   'amount'   => isset($_GET['amount'])   ? (string)$_GET['amount']   : '10.00',
-  'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'SLE',
-  'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'afri-money-dbm',
-  'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'AfriMoney payout test',
+  'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'EUR',
+  'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'mnt-momo',
+  'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'MTN MoMo payout test',
   'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '23280855053',
   'email'    => isset($_GET['email'])    ? (string)$_GET['email']    : 'success@gmail.com',
 ];
@@ -61,7 +62,7 @@ function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$src
   return md5($src);
 }
 
-/** Нормалізація суми до формату XX.XX */
+/** Amount normalization to XX.XX */
 function normalize_amount_2dec(string $raw): string {
   $s = preg_replace('/[^0-9.]/', '', $raw);
   if ($s === '') return '';
@@ -102,11 +103,11 @@ if ($submitted) {
   }
   if ($currency === '') $errors[] = 'Currency is required.';
   if ($phone === '') $errors[] = 'Phone (MSISDN) is required.';
-  // Email не обовʼязковий, але можна додати просту перевірку, якщо ввели щось
   if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'Email format looks wrong.';
   }
-  if ($brand === '') $brand = 'afri-money-dbm';
+
+  if ($brand === '') $brand = 'mnt-momo';
 
   if ($errors) {
     render_page([
@@ -152,21 +153,17 @@ if ($submitted) {
     'order_currency'    => $currency,
     'order_description' => $desc,
     'brand'             => $brand,
-    // Нові параметри у форматі parameters[...]
     'parameters[msisdn]' => $phone,
   ];
 
-  // channel_id додаємо тільки якщо заповнений у конфігу
   if ($CHANNEL_ID !== '') {
     $form['channel_id'] = $CHANNEL_ID;
   }
 
-  // Email додаємо тільки якщо щось ввели
   if ($email !== '') {
     $form['parameters[email]'] = $email;
   }
 
-  // Hash обовʼязково вкінці
   $form['hash'] = $hash;
 
   $debug = [
@@ -223,7 +220,7 @@ function render_page($ctx){
   global $STATUS_HELPER_URL;
 
   $errors = $ctx['errors'] ?? [];
-  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'SLE','brand'=>'afri-money-dbm','desc'=>'','phone'=>'','email'=>''];
+  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'EUR','brand'=>'mnt-momo','desc'=>'','phone'=>'','email'=>''];
   $debug  = $ctx['debug'] ?? [];
   $resp   = $ctx['response'] ?? [];
 
@@ -233,7 +230,7 @@ function render_page($ctx){
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>CREDIT2VIRTUAL — AfriMoney payout</title>
+<title>CREDIT2VIRTUAL — MTN MoMo payout</title>
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff6b6b}
 html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
@@ -253,7 +250,7 @@ label{display:inline-block;min-width:150px}
 <div class="wrap">
 
   <div class="panel">
-    <div class="h">💸 Create CREDIT2VIRTUAL payout (AfriMoney)</div>
+    <div class="h">💸 Create CREDIT2VIRTUAL payout (MTN MoMo)</div>
     <form action="<?=h($self)?>" method="post">
       <?php if ($errors): foreach ($errors as $e): ?>
         <div class="error">❌ <?=h($e)?></div>
@@ -261,7 +258,7 @@ label{display:inline-block;min-width:150px}
 
       <div style="margin:8px 0;">
         <label>order_id:</label>
-        <input type="text" name="order_id" value="<?=h($prefill['order_id'])?>" placeholder="e.g. afrimoney-123456">
+        <input type="text" name="order_id" value="<?=h($prefill['order_id'])?>" placeholder="e.g. mtnmomo-123456">
       </div>
 
       <div style="margin:8px 0%;">
@@ -272,18 +269,18 @@ label{display:inline-block;min-width:150px}
 
       <div style="margin:8px 0%;">
         <label>currency:</label>
-        <input type="text" name="currency" value="<?=h($prefill['currency'])?>" placeholder="SLE">
+        <input type="text" name="currency" value="<?=h($prefill['currency'])?>" placeholder="EUR">
       </div>
 
       <div style="margin:8px 0%;">
         <label>brand:</label>
-        <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="afri-money-dbm">
-        <div class="small">AfriMoney payout brand (default: afri-money-dbm).</div>
+        <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="mnt-momo">
+        <div class="small">MoMo payout brand (default: mnt-momo).</div>
       </div>
 
       <div style="margin:8px 0%;">
         <label>description:</label>
-        <input type="text" name="desc" value="<?=h($prefill['desc'])?>" placeholder="AfriMoney payout test">
+        <input type="text" name="desc" value="<?=h($prefill['desc'])?>" placeholder="MTN MoMo payout test">
       </div>
 
       <div style="margin:8px 0%;">
@@ -341,7 +338,6 @@ label{display:inline-block;min-width:150px}
       <?php
         $parsed = $resp['json'];
 
-        // Якщо статус REDIRECT — показуємо або форму POST, або просто URL
         if (
           !empty($parsed['status']) &&
           $parsed['status'] === 'REDIRECT' &&
@@ -370,7 +366,6 @@ label{display:inline-block;min-width:150px}
           echo '<div class="small">Open this URL in browser — recipient will enter MSISDN there.</div>';
         }
 
-        // Кнопка для GET_TRANS_STATUS, якщо у відповіді є trans_id
         if (!empty($parsed['trans_id'])) {
           ?>
           <div class="h" style="margin-top:16px;">🕒 Check transaction status (GET_TRANS_STATUS)</div>
