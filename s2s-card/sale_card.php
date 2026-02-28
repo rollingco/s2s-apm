@@ -23,7 +23,7 @@ $expYear     = '2038';
 $cvv         = '123';
 
 // Payer
-$payerEmail  = 'johndoe@gmail.com';
+$payerEmail  = '01.2038.test@gmail.com';
 
 // Order
 $orderId     = 'Vasyl s2s_test ORDER_' . time();
