@@ -13,8 +13,8 @@
 $endpoint    = 'https://api.leogcltd.com/post';
 
 //$merchantKey = 'cef92030-e7c1-11f0-a03f-26da8de1cc77';
-$merchantKey = 'a9375190-26f2-11f0-be42-022c42254708';
-$secret      = '554999c284e9f29cf95f090d9a8f3171';
+$merchantKey = 'bf6f046a-10aa-11f1-9dd2-2a45d761594f';
+$secret      = 'a61d1eebf33d23d14744afbe8cdd2874';
 
 // Card (TEST ONLY)
 $cardNumber  = '4111111111111111';
