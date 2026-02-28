@@ -18,7 +18,7 @@ $secret      = 'a61d1eebf33d23d14744afbe8cdd2874';
 
 // Card (TEST ONLY)
 $cardNumber  = '4111111111111111';
-$expMonth    = '01';
+$expMonth    = '05';
 $expYear     = '2038';
 $cvv         = '123';
 
@@ -29,7 +29,7 @@ $payerEmail  = 'jon.doe@gmail.com';
 $orderId     = 'Vasyl s2s_test ORDER_' . time();
 $amount      = '0.99';
 $currency    = 'USD';
-$desc        = '01/2038 test';
+$desc        = '05/2038 test';
 
 $termUrl3ds  = 'http://3ds.localhost/v4/confirmhandler';
 $termTarget  = '_self';
