@@ -26,7 +26,7 @@ $cvv         = '123';
 $payerEmail  = 'johndoe@gmail.com';
 
 // Order
-$orderId     = 'test-y0018';
+$orderId     = 'Vasyl s2s_test ORDER_' . time();
 $amount      = '0.99';
 $currency    = 'USD';
 $desc        = 'testInt';
