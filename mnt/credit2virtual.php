@@ -3,11 +3,10 @@
  * S2S CREDIT2VIRTUAL — MTN MoMo payout by order_id → minimal logs
  *
  * - endpoint: https://api.leogcltd.com/post
- * - brand: mnt-momo
+ * - brand: mtn-momo
  * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  * - amount normalized to 2 decimals (1 -> 1.00, 1.5 -> 1.50)
- * - phone (MSISDN) sent as parameters[msisdn]
- * - optional: parameters[email]
+ * - phone sent as parameters[payee_phone] (E.164)
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -37,8 +36,8 @@ $DEFAULTS = [
   'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'EUR',
   'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'mtn-momo',
   'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'MTN MoMo payout test',
+  // E.164: country code + number, no spaces. Example below is Sierra Leone (+232) without "+"
   'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '23280855053',
-  'email'    => isset($_GET['email'])    ? (string)$_GET['email']    : 'success@gmail.com',
 ];
 
 /* ===================== Helpers ===================== */
@@ -81,6 +80,22 @@ function normalize_amount_2dec(string $raw): string {
   return $int . '.' . $dec;
 }
 
+/** Quick E.164-ish validation (digits only, 8..15) */
+function is_e164_digits(string $phone): bool {
+  $p = preg_replace('/\s+/', '', $phone);
+  if ($p === '') return false;
+  // allow leading "+" in UI, but we store/send digits-only (common for form-data)
+  if ($p[0] === '+') $p = substr($p, 1);
+  return (bool)preg_match('/^\d{8,15}$/', $p);
+}
+
+/** Normalize phone to digits only (strip spaces and leading "+") */
+function normalize_phone_digits(string $phone): string {
+  $p = preg_replace('/\s+/', '', $phone);
+  if ($p !== '' && $p[0] === '+') $p = substr($p, 1);
+  return $p;
+}
+
 /* ===================== Read form ===================== */
 $method    = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $submitted = ($method === 'POST');
@@ -91,10 +106,10 @@ if ($submitted) {
   $currency    = strtoupper(trim((string)($_POST['currency'] ?? '')));
   $brand       = trim((string)($_POST['brand'] ?? ''));
   $desc        = trim((string)($_POST['desc'] ?? ''));
-  $phone       = trim((string)($_POST['phone'] ?? ''));
-  $email       = trim((string)($_POST['email'] ?? ''));
+  $phone_raw   = trim((string)($_POST['phone'] ?? ''));
 
   $amount = trim($amount_in) === '' ? '' : normalize_amount_2dec($amount_in);
+  $phone  = normalize_phone_digits($phone_raw);
 
   $errors = [];
   if ($order_id_in === '') $errors[] = 'order_id is required.';
@@ -102,12 +117,13 @@ if ($submitted) {
     $errors[] = 'Amount wrong format. Use e.g. 1.00, 10.50, 100.00';
   }
   if ($currency === '') $errors[] = 'Currency is required.';
-  if ($phone === '') $errors[] = 'Phone (MSISDN) is required.';
-  if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'Email format looks wrong.';
+  if ($phone === '') $errors[] = 'Payee phone is required.';
+  if ($phone !== '' && !is_e164_digits($phone_raw)) {
+    $errors[] = 'Phone must be in E.164 format (digits only, 8..15). Example: 23280855053';
   }
 
-  if ($brand === '') $brand = 'mnt-momo';
+  // force default brand if empty
+  if ($brand === '') $brand = 'mtn-momo';
 
   if ($errors) {
     render_page([
@@ -118,8 +134,7 @@ if ($submitted) {
         'currency' => $currency ?: $DEFAULTS['currency'],
         'brand'    => $brand,
         'desc'     => $desc,
-        'phone'    => $phone,
-        'email'    => $email,
+        'phone'    => $phone_raw, // keep original input for UI
       ],
       'debug'    => [],
       'response' => [],
@@ -133,8 +148,8 @@ if ($submitted) {
   $currency    = $DEFAULTS['currency'];
   $brand       = $DEFAULTS['brand'];
   $desc        = $DEFAULTS['desc'];
-  $phone       = $DEFAULTS['phone'];
-  $email       = $DEFAULTS['email'];
+  $phone_raw   = $DEFAULTS['phone'];
+  $phone       = normalize_phone_digits($phone_raw);
 }
 
 /*  ===================== Send CREDIT2VIRTUAL ===================== */
@@ -153,17 +168,16 @@ if ($submitted) {
     'order_currency'    => $currency,
     'order_description' => $desc,
     'brand'             => $brand,
-    'parameters[msisdn]' => $phone,
+
+    // IMPORTANT (per Support): only one parameter is supported
+    'parameters[payee_phone]' => $phone,
   ];
 
   if ($CHANNEL_ID !== '') {
     $form['channel_id'] = $CHANNEL_ID;
   }
 
-  if ($email !== '') {
-    $form['parameters[email]'] = $email;
-  }
-
+  // Hash must be last
   $form['hash'] = $hash;
 
   $debug = [
@@ -208,8 +222,7 @@ render_page([
     'currency' => $currency,
     'brand'    => $brand,
     'desc'     => $desc,
-    'phone'    => $phone,
-    'email'    => $email,
+    'phone'    => $phone_raw,
   ],
   'debug'    => $debug,
   'response' => $responseBlocks,
@@ -220,7 +233,7 @@ function render_page($ctx){
   global $STATUS_HELPER_URL;
 
   $errors = $ctx['errors'] ?? [];
-  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'EUR','brand'=>'mnt-momo','desc'=>'','phone'=>'','email'=>''];
+  $prefill= $ctx['prefill'] ?? ['order_id'=>'','amount'=>'','currency'=>'EUR','brand'=>'mtn-momo','desc'=>'','phone'=>''];
   $debug  = $ctx['debug'] ?? [];
   $resp   = $ctx['response'] ?? [];
 
@@ -241,8 +254,8 @@ html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-mono
 pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
 .btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none;cursor:pointer}
 .error{color:var(--err);margin:6px 0}
-input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6}
-label{display:inline-block;min-width:150px}
+input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6;width:min(700px, 100%)}
+label{display:inline-block;min-width:170px}
 .small{font-size:12px;color:var(--muted)}
 </style>
 </head>
@@ -274,8 +287,8 @@ label{display:inline-block;min-width:150px}
 
       <div style="margin:8px 0%;">
         <label>brand:</label>
-        <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="mnt-momo">
-        <div class="small">MoMo payout brand (default: mnt-momo).</div>
+        <input type="text" name="brand" value="<?=h($prefill['brand'])?>" placeholder="mtn-momo">
+        <div class="small">Default brand: mtn-momo.</div>
       </div>
 
       <div style="margin:8px 0%;">
@@ -284,15 +297,9 @@ label{display:inline-block;min-width:150px}
       </div>
 
       <div style="margin:8px 0%;">
-        <label>phone (MSISDN):</label>
-        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="+2327XXXXXXX">
-        <div class="small">Will be sent as parameters[msisdn] (required).</div>
-      </div>
-
-      <div style="margin:8px 0%;">
-        <label>email (optional):</label>
-        <input type="text" name="email" value="<?=h($prefill['email'])?>" placeholder="success@gmail.com">
-        <div class="small">If filled, will be sent as parameters[email].</div>
+        <label>payee_phone (E.164):</label>
+        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="23280855053">
+        <div class="small">Will be sent as parameters[payee_phone]. Digits only, 8..15.</div>
       </div>
 
       <div style="margin-top:12px;">
@@ -363,7 +370,7 @@ label{display:inline-block;min-width:150px}
           <?php
         } elseif (!empty($parsed['status']) && $parsed['status'] === 'REDIRECT') {
           echo '<div class="h">🔗 Redirect URL</div><pre>' . h($parsed['redirect_url'] ?? '') . "</pre>";
-          echo '<div class="small">Open this URL in browser — recipient will enter MSISDN there.</div>';
+          echo '<div class="small">Open this URL in browser.</div>';
         }
 
         if (!empty($parsed['trans_id'])) {
