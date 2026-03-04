@@ -13,7 +13,7 @@ $secret      = '554999c284e9f29cf95f090d9a8f3171';
 
 // ===================== ORIGINAL TRANSACTION =====================
 
-$transId = 'e5098d62-6de8-11eb-9da3-0242ac120013'; // trans_id from SALE response
+$transId = 'f6a849c8-17b7-11f1-af54-12622c319eea'; // trans_id from SALE response
 
 // card used in original payment
 $cardNumber = '4111111111111111';
