@@ -1,26 +1,19 @@
 <?php
 /**
- * Tokenization + Payment by card_token (single file)
+ * Tokenization + Payment by card_token (single file) — HASH FIXED
  *
  * Step 1: SALE with req_token=Y (tokenization)
- *   - Uses auth=Y and order_amount=0.00 (useful for tokenization per doc)
- *   - Sends full card data
- *   - Expects card_token in response
+ *   hash = md5(strtoupper(strrev(email) . PASSWORD . strrev(first6+last4)))
  *
  * Step 2: SALE with card_token (payment)
- *   - Sends card_token instead of full PAN/CVV
- *   - Does NOT send hash (doc says hash becomes optional when card_token is specified)
- *
- * NOTE:
- * - In your earlier script you used hash formula based on first6+last4.
- *   That cannot be calculated when you only have card_token, so we omit hash on Step 2.
+ *   hash = md5(strtoupper(strrev(email) . PASSWORD . strrev(card_token)))
  */
 
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
 $merchantKey = 'a9375190-26f2-11f0-be42-022c42254708';
-$secret      = '554999c284e9f29cf95f090d9a8f3171';
+$secret      = '554999c284e9f29cf95f090d9a8f3171'; // PASSWORD from docs
 
 // Card (TEST ONLY)
 $cardNumber  = '4111111111111111';
@@ -31,7 +24,7 @@ $cvv         = '123';
 // Payer
 $payerEmail  = 'jon.doe@gmail.com';
 
-// 3DS (keep same as your file)
+// 3DS
 $termUrl3ds  = 'http://3ds.localhost/v4/confirmhandler';
 $termTarget  = '_self';
 
@@ -93,7 +86,7 @@ function do_post_form(string $endpoint, array $fields): array {
   $outHeaders = [
     'Content-Type: application/x-www-form-urlencoded',
     'Accept: application/json',
-    'User-Agent: Token-Then-Pay-Emulator/1.0',
+    'User-Agent: Token-Then-Pay-Emulator/1.1',
     'Content-Length: ' . strlen($formBody),
   ];
 
@@ -156,11 +149,13 @@ function do_post_form(string $endpoint, array $fields): array {
 }
 
 // ========================= STEP 1: TOKENIZATION =========================
-// Hash (same as your script): md5( strtoupper( strrev(email) . SECRET . strrev(first6 + last4) ) )
 $first6 = substr($cardNumber, 0, 6);
 $last4  = substr($cardNumber, -4);
-$hashSource = strrev($payerEmail) . $secret . strrev($first6 . $last4);
-$hashStep1  = md5(strtoupper($hashSource));
+
+// FIX: PASSWORD is concatenated directly (no dot), per doc screenshots.
+//      md5(strtoupper(strrev(email).PASSWORD.strrev(first6+last4)))
+$hashSource1 = strrev($payerEmail) . $secret . strrev($first6 . $last4);
+$hashStep1   = md5(strtoupper($hashSource1));
 
 $orderIdToken = 'Vasyl TOKEN_INIT_' . time();
 
@@ -168,17 +163,15 @@ $reqStep1 = [
   'action'            => 'SALE',
   'client_key'        => $merchantKey,
   'order_id'          => $orderIdToken,
-  'order_amount'      => '0.00',          // tokenization-friendly
+  'order_amount'      => '0.00',
   'order_currency'    => 'USD',
   'order_description' => 'Tokenization init (AUTH 0.00)',
 
-  // card data
   'card_number'       => $cardNumber,
   'card_exp_month'    => $expMonth,
   'card_exp_year'     => $expYear,
   'card_cvv2'         => $cvv,
 
-  // payer (required in your doc screenshot)
   'payer_first_name'  => 'John',
   'payer_last_name'   => 'Doe',
   'payer_address'     => '106 New Address',
@@ -189,19 +182,17 @@ $reqStep1 = [
   'payer_phone'       => '1234567890',
   'payer_ip'          => '210.71.106.164',
 
-  // 3DS
   'term_url_3ds'      => $termUrl3ds,
   'term_url_target'   => $termTarget,
 
-  // important flags
-  'auth'              => 'Y',             // AUTH (hold), no capture
-  'req_token'         => 'Y',             // request card token (doc: Y/N)
+  'auth'              => 'Y',
+  'req_token'         => 'Y',
+
   'hash'              => $hashStep1,
 ];
 
 $resStep1 = do_post_form($endpoint, $reqStep1);
 
-// Extract card_token (if any)
 $cardToken = '';
 if (is_array($resStep1['json'])) {
   $cardToken = (string)($resStep1['json']['card_token'] ?? '');
@@ -209,6 +200,11 @@ if (is_array($resStep1['json'])) {
 
 // ========================= STEP 2: PAYMENT BY TOKEN =========================
 $orderIdPay = 'Vasyl TOKEN_PAY_' . time();
+
+// FIX: hash for card_token case
+// md5(strtoupper(strrev(email).PASSWORD.strrev(card_token)))
+$hashSource2 = strrev($payerEmail) . $secret . strrev($cardToken);
+$hashStep2   = $cardToken !== '' ? md5(strtoupper($hashSource2)) : '';
 
 $reqStep2 = [
   'action'            => 'SALE',
@@ -218,10 +214,8 @@ $reqStep2 = [
   'order_currency'    => 'USD',
   'order_description' => 'Payment by card_token',
 
-  // token instead of card data
   'card_token'        => $cardToken,
 
-  // payer data (keep same)
   'payer_first_name'  => 'John',
   'payer_last_name'   => 'Doe',
   'payer_address'     => '106 New Address',
@@ -235,11 +229,9 @@ $reqStep2 = [
   'term_url_3ds'      => $termUrl3ds,
   'term_url_target'   => $termTarget,
 
-  // IMPORTANT:
-  // hash omitted intentionally (doc note: hash becomes optional if card_token is specified)
+  'hash'              => $hashStep2,
 ];
 
-// If token is missing, do not run Step 2 (avoid sending empty token)
 $resStep2 = null;
 if ($cardToken !== '') {
   $resStep2 = do_post_form($endpoint, $reqStep2);
@@ -277,28 +269,21 @@ if ($cardToken !== '') {
 <div class="wrap">
 
   <div class="card">
-    <h1>Token → Pay Emulator</h1>
+    <h1>Token → Pay Emulator (HASH FIXED)</h1>
     <div class="meta">
       <div class="pill">Endpoint: <b><?=h($endpoint)?></b></div>
       <div class="pill">client_key: <b><?=h($merchantKey)?></b></div>
     </div>
-    <div class="hint warn">Step 1 requests card_token via <b>req_token=Y</b>. Step 2 uses <b>card_token</b> for payment (hash omitted).</div>
   </div>
 
-  <!-- STEP 1 -->
   <div class="card">
-    <h2>STEP 1 — Tokenization (SALE + auth=Y + order_amount=0.00 + req_token=Y)</h2>
+    <h2>STEP 1 — Tokenization (SALE + auth=Y + 0.00 + req_token=Y)</h2>
     <div class="meta">
       <div class="pill <?=($resStep1['http_code']>=200 && $resStep1['http_code']<400 && !$resStep1['curl_error'])?'ok':'bad'?>">HTTP: <b><?=h($resStep1['http_code'])?></b></div>
       <div class="pill">Time: <b><?=h($resStep1['ms'])?> ms</b></div>
       <div class="pill">order_id: <b><?=h($orderIdToken)?></b></div>
       <div class="pill">card_token: <b><?=h($cardToken ?: '—')?></b></div>
     </div>
-    <?php if ($resStep1['curl_error']): ?>
-      <div class="meta" style="margin-top:10px;">
-        <div class="pill bad">cURL error: <b><?=h($resStep1['curl_error'])?></b></div>
-      </div>
-    <?php endif; ?>
   </div>
 
   <div class="grid">
@@ -309,10 +294,7 @@ if ($cardToken !== '') {
     <div class="card">
       <h2>Step 1 — Hash debug</h2>
       <pre class="mono"><?=h(pretty_json([
-        'email' => $payerEmail,
-        'first6' => $first6,
-        'last4' => $last4,
-        'hash_source' => $hashSource,
+        'hash_source' => $hashSource1,
         'hash' => $hashStep1,
       ]))?></pre>
       <div class="hint warn">Не пиши secret у прод-логах. Тут лише для дебагу.</div>
@@ -338,15 +320,13 @@ if ($cardToken !== '') {
     </div>
   <?php endif; ?>
 
-  <!-- STEP 2 -->
   <div class="card">
-    <h2>STEP 2 — Payment by card_token (SALE + card_token)</h2>
+    <h2>STEP 2 — Payment by card_token (SALE + card_token + hash)</h2>
 
     <?php if ($cardToken === ''): ?>
       <div class="meta">
         <div class="pill bad">Skipped: <b>card_token is empty</b></div>
       </div>
-      <div class="hint warn">Step 2 is not executed because Step 1 did not return card_token.</div>
     <?php else: ?>
       <div class="meta">
         <div class="pill <?=($resStep2 && $resStep2['http_code']>=200 && $resStep2['http_code']<400 && !$resStep2['curl_error'])?'ok':'bad'?>">HTTP: <b><?=h($resStep2['http_code'])?></b></div>
@@ -354,23 +334,24 @@ if ($cardToken !== '') {
         <div class="pill">order_id: <b><?=h($orderIdPay)?></b></div>
       </div>
 
-      <?php if ($resStep2['curl_error']): ?>
-        <div class="meta" style="margin-top:10px;">
-          <div class="pill bad">cURL error: <b><?=h($resStep2['curl_error'])?></b></div>
-        </div>
-      <?php endif; ?>
-
       <div class="grid">
         <div class="card">
           <h2>Step 2 — Request (masked)</h2>
           <pre class="mono"><?=h(pretty_json(mask_sensitive($reqStep2)))?></pre>
-          <div class="hint warn">hash intentionally omitted (optional when card_token is specified).</div>
         </div>
 
         <div class="card">
-          <h2>Step 2 — Response (readable JSON)</h2>
-          <pre class="mono"><?=h(is_array($resStep2['json']) ? pretty_json($resStep2['json']) : (string)$resStep2['raw'])?></pre>
+          <h2>Step 2 — Hash debug (card_token)</h2>
+          <pre class="mono"><?=h(pretty_json([
+            'hash_source' => $hashSource2,
+            'hash' => $hashStep2,
+          ]))?></pre>
         </div>
+      </div>
+
+      <div class="card">
+        <h2>Step 2 — Response (readable JSON)</h2>
+        <pre class="mono"><?=h(is_array($resStep2['json']) ? pretty_json($resStep2['json']) : (string)$resStep2['raw'])?></pre>
       </div>
 
       <?php if ($resStep2['do3ds']): ?>
