@@ -5,7 +5,7 @@
  * Sends request as: application/x-www-form-urlencoded
  * Shows request/response in: pretty JSON (human-readable)
  *
- * Hash (SALE/RETRY) formula (per your doc screenshot):
+ * Hash (SALE/RETRY) formula (per y our doc screenshot):
  *   md5( strtoupper( strrev(email) . SECRET . strrev(first6 + last4) ) )
  */
 
