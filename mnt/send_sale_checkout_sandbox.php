@@ -15,8 +15,8 @@ header('Content-Type: text/html; charset=utf-8');
 $checkoutHost = 'https://pay.leogcltd.com';
 $sessionUrl   = $checkoutHost . '/api/v1/session';
 
-$merchantKey  = 'a9375190-26f2-11f0-be42-022c42254708';
-$merchantPass = '554999c284e9f29cf95f090d9a8f3171';
+$merchantKey  = 'bd059f56-e01a-11f0-835c-42fb5ea66c1c';
+$merchantPass = '24907c0221dd485b8cd6ae936a9c3c01';
 
 // MTN MoMo currency depends on MID/country. Put the one configured for your MID.
 $DEFAULTS = [
