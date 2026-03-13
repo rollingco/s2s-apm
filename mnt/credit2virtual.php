@@ -7,6 +7,7 @@
  * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  * - amount normalized to 2 decimals (1 -> 1.00, 1.5 -> 1.50)
  * - phone sent as parameters[payee_phone] (E.164)
+ * - X-Reference-Id header added with random UUID v4
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -84,7 +85,6 @@ function normalize_amount_2dec(string $raw): string {
 function is_e164_digits(string $phone): bool {
   $p = preg_replace('/\s+/', '', $phone);
   if ($p === '') return false;
-  // allow leading "+" in UI, but we store/send digits-only (common for form-data)
   if ($p[0] === '+') $p = substr($p, 1);
   return (bool)preg_match('/^\d{8,15}$/', $p);
 }
@@ -94,6 +94,14 @@ function normalize_phone_digits(string $phone): string {
   $p = preg_replace('/\s+/', '', $phone);
   if ($p !== '' && $p[0] === '+') $p = substr($p, 1);
   return $p;
+}
+
+/** UUID v4 generator */
+function uuid_v4(): string {
+  $data = random_bytes(16);
+  $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+  $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+  return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 }
 
 /* ===================== Read form ===================== */
@@ -122,7 +130,6 @@ if ($submitted) {
     $errors[] = 'Phone must be in E.164 format (digits only, 8..15). Example: 23280855053';
   }
 
-  // force default brand if empty
   if ($brand === '') $brand = 'mtn-momo';
 
   if ($errors) {
@@ -134,7 +141,7 @@ if ($submitted) {
         'currency' => $currency ?: $DEFAULTS['currency'],
         'brand'    => $brand,
         'desc'     => $desc,
-        'phone'    => $phone_raw, // keep original input for UI
+        'phone'    => $phone_raw,
       ],
       'debug'    => [],
       'response' => [],
@@ -180,12 +187,21 @@ if ($submitted) {
   // Hash must be last
   $form['hash'] = $hash;
 
+  // New unique reference ID for header
+  $referenceId = uuid_v4();
+
+  $headers = [
+    'X-Reference-Id: ' . $referenceId,
+  ];
+
   $debug = [
-    'endpoint'   => $PAYMENT_URL,
-    'client_key' => $CLIENT_KEY,
-    'form'       => $form,
-    'hash_src'   => $hash_src_dbg,
-    'hash'       => $hash,
+    'endpoint'      => $PAYMENT_URL,
+    'client_key'    => $CLIENT_KEY,
+    'form'          => $form,
+    'headers'       => $headers,
+    'reference_id'  => $referenceId,
+    'hash_src'      => $hash_src_dbg,
+    'hash'          => $hash,
   ];
 
   $ch = curl_init($PAYMENT_URL);
@@ -193,6 +209,7 @@ if ($submitted) {
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
     CURLOPT_POSTFIELDS     => $form,
+    CURLOPT_HTTPHEADER     => $headers,
     CURLOPT_TIMEOUT        => 60,
   ]);
   $start = microtime(true);
@@ -313,6 +330,7 @@ label{display:inline-block;min-width:170px}
     <div class="h">🟢 CREDIT2VIRTUAL sent</div>
     <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
     <div><span class="kv">Client key:</span> <?=h($debug['client_key'] ?? '')?></div>
+    <div><span class="kv">X-Reference-Id:</span> <?=h($debug['reference_id'] ?? '')?></div>
     <div>
       <span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?>
       <span class="kv" style="margin-left:12px;">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s
@@ -329,6 +347,11 @@ label{display:inline-block;min-width:170px}
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
     <div class="kv">Hash:</div>
     <pre><?=h($debug['hash'] ?? '')?></pre>
+  </div>
+
+  <div class="panel">
+    <div class="h">📨 Sent headers</div>
+    <pre><?=pretty($debug['headers'] ?? [])?></pre>
   </div>
 
   <div class="panel">
