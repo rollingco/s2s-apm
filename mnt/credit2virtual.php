@@ -38,7 +38,7 @@ $DEFAULTS = [
   'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'mtn-momo',
   'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'MTN MoMo payout test',
   // E.164: country code + number, no spaces. Example below is Sierra Leone (+232) without "+"
-  'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '23280855053',
+  'phone'    => isset($_GET['phone'])    ? (string)$_GET['phone']    : '231881052626',
 ];
 
 /* ===================== Helpers ===================== */
