@@ -127,7 +127,7 @@ if ($submitted) {
   if ($currency === '') $errors[] = 'Currency is required.';
   if ($phone === '') $errors[] = 'Payee phone is required.';
   if ($phone !== '' && !is_e164_digits($phone_raw)) {
-    $errors[] = 'Phone must be in E.164 format (digits only, 8..15). Example: 23280855053';
+    $errors[] = 'Phone must be in E.164 format (digits only, 8..15). Example: 231881052626';
   }
 
   if ($brand === '') $brand = 'mtn-momo';
@@ -315,7 +315,7 @@ label{display:inline-block;min-width:170px}
 
       <div style="margin:8px 0%;">
         <label>payee_phone (E.164):</label>
-        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="23280855053">
+        <input type="text" name="phone" value="<?=h($prefill['phone'])?>" placeholder="231881052626">
         <div class="small">Will be sent as parameters[payee_phone]. Digits only, 8..15.</div>
       </div>
 
