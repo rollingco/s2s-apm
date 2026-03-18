@@ -11,44 +11,20 @@ $PASSWORD    = '7cf670da6f33e1c31cf493f2650e90cc';
 $ACTION      = 'GET_TRANS_STATUS';
 
 /* ==== INPUT ==== */
-$trans_id    = trim($_GET['trans_id'] ?? '');
-$email       = trim($_GET['email'] ?? '');
-$card_number = preg_replace('/\D+/', '', $_GET['card_number'] ?? '');
-
+$trans_id = trim($_GET['trans_id'] ?? '');
 if ($trans_id === '') {
     http_response_code(400);
-    echo 'Pass ?trans_id=...&email=...&card_number=...';
+    echo 'Pass ?trans_id=...';
     exit;
 }
 
-if ($email === '') {
-    http_response_code(400);
-    echo 'Pass ?email=...';
-    exit;
-}
-
-if (strlen($card_number) < 10) {
-    http_response_code(400);
-    echo 'Pass full card_number or at least first6+last4';
-    exit;
-}
-
-/* ==== SIGNATURE (Formula 2) ==== */
-/*
-md5(
-  strtoupper(
-    strrev(email) .
-    PASSWORD .
-    trans_id .
-    strrev(substr(card_number,0,6) . substr(card_number,-4))
-  )
-)
-*/
-
-$first6   = substr($card_number, 0, 6);
-$last4    = substr($card_number, -4);
+/* ==== FIXED DATA FOR HASH ==== */
+$email    = 'jj.cordoba1953@gmail.com';
+$first6   = '548901';
+$last4    = '9169';
 $cardPart = $first6 . $last4;
 
+/* ==== SIGNATURE (Formula 2) ==== */
 $hash_src = strrev($email) . $PASSWORD . $trans_id . strrev($cardPart);
 $hash     = md5(strtoupper($hash_src));
 
