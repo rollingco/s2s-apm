@@ -2,7 +2,7 @@
 header('Content-Type: text/html; charset=utf-8');
 
 /* ==== CONFIG ==== */
-$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+$PAYMENT_URL = 'https://api.leogcltd.com/post';
 $API_USER    = 'leogc';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
