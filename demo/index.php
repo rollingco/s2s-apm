@@ -176,7 +176,7 @@ $awccAccountId    = posted('awcc_account_id', 'CA1001390C');
 
 /* APM minimal fields */
 $apmClientKey     = posted('apm_client_key', MERCHANT_KEY);
-$apmSecret        = posted('apm_secret', MERCHANT_PASS);
+$apmSecret        = MERCHANT_PASS; // hidden from UI
 $apmBrand         = posted('apm_brand', 'afri-money');
 $apmIdentifier    = posted('apm_identifier', '111');
 $apmPhone         = posted('apm_phone', '23233310905');
@@ -381,10 +381,6 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
         font-size: 14px;
         background: #fff;
     }
-    textarea {
-        min-height: 110px;
-        resize: vertical;
-    }
     .btn {
         border: 0;
         background: #2563eb;
@@ -476,11 +472,6 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
                     <option value="orange_apm" <?= $flow === 'orange_apm' ? 'selected' : '' ?>>Orange Money APM SALE</option>
                     <option value="mtn_apm" <?= $flow === 'mtn_apm' ? 'selected' : '' ?>>MTN MoMo APM SALE</option>
                 </select>
-            </div>
-
-            <div class="field">
-                <label>Hosted Merchant Key</label>
-                <input type="text" value="<?= h(MERCHANT_KEY) ?>" readonly>
             </div>
         </div>
 
@@ -586,18 +577,14 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
                     <input type="text" name="apm_client_key" id="apm_client_key" value="<?= h($apmClientKey) ?>">
                 </div>
                 <div class="field">
-                    <label for="apm_secret">Secret</label>
-                    <input type="text" name="apm_secret" id="apm_secret" value="<?= h($apmSecret) ?>">
-                </div>
-                <div class="field">
                     <label for="apm_brand">Brand</label>
                     <input type="text" name="apm_brand" id="apm_brand" value="<?= h($apmBrand) ?>" readonly>
                 </div>
-
                 <div class="field">
                     <label for="apm_identifier">Identifier</label>
                     <input type="text" name="apm_identifier" id="apm_identifier" value="<?= h($apmIdentifier) ?>">
                 </div>
+
                 <div class="field">
                     <label for="apm_phone">Payer Phone</label>
                     <input type="text" name="apm_phone" id="apm_phone" value="<?= h($apmPhone) ?>">
@@ -606,11 +593,11 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
                     <label for="apm_return_url">Return URL</label>
                     <input type="text" name="apm_return_url" id="apm_return_url" value="<?= h($apmReturnUrl) ?>">
                 </div>
-
                 <div class="field">
                     <label for="apm_currency">Currency</label>
                     <input type="text" name="apm_currency" id="apm_currency" value="<?= h($apmCurrency) ?>">
                 </div>
+
                 <div class="field">
                     <label for="apm_amount">Amount</label>
                     <input type="text" name="apm_amount" id="apm_amount" value="<?= h($apmAmount) ?>">
@@ -730,30 +717,33 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
 
         blockHostedCommon.style.display = isHosted ? 'block' : 'none';
         blockAwcc.style.display = isAwcc ? 'block' : 'none';
-        blockApm.style.display = isApm ? 'block' : 'block';
+        blockApm.style.display = isApm ? 'block' : 'none';
 
         if (value === 'afri_apm') {
             apmBrand.value = 'afri-money';
-            if (!apmCurrency.value || apmCurrency.value === 'LRD') apmCurrency.value = 'SLE';
-            if (!apmPhone.value || apmPhone.value === '23274221777') apmPhone.value = '23233310905';
-            if (!apmAmount.value || apmAmount.value === '10.00') apmAmount.value = '0.99';
-            if (!apmIdentifier.value) apmIdentifier.value = '111';
+            apmCurrency.value = 'SLE';
+            apmPhone.value = '23233310905';
+            apmAmount.value = '0.99';
+            apmIdentifier.value = '111';
             if (!apmReturnUrl.value) apmReturnUrl.value = 'https://google.com';
         }
 
         if (value === 'orange_apm') {
             apmBrand.value = 'orange-money';
-            if (!apmCurrency.value || apmCurrency.value === 'LRD') apmCurrency.value = 'SLE';
-            if (!apmPhone.value || apmPhone.value === '23233310905') apmPhone.value = '23274221777';
-            if (!apmAmount.value || apmAmount.value === '10.00') apmAmount.value = '0.99';
-            if (!apmIdentifier.value) apmIdentifier.value = '111';
+            apmCurrency.value = 'SLE';
+            apmPhone.value = '23274221777';
+            apmAmount.value = '0.99';
+            apmIdentifier.value = '111';
             if (!apmReturnUrl.value) apmReturnUrl.value = 'https://google.com';
         }
 
         if (value === 'mtn_apm') {
             apmBrand.value = 'mtn-momo';
             apmCurrency.value = 'LRD';
-            if (!apmAmount.value || apmAmount.value === '0.99') apmAmount.value = '10.00';
+            apmPhone.value = '231881052626';
+            apmAmount.value = '10.00';
+            apmIdentifier.value = '111';
+            if (!apmReturnUrl.value) apmReturnUrl.value = 'https://google.com';
         }
     }
 
