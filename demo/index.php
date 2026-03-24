@@ -8,12 +8,6 @@
  * - AfriMoney APM SALE
  * - Orange Money APM SALE
  * - MTN MoMo APM SALE
- *
- * Notes:
- * - Hosted Checkout uses Merchant Key + Password
- * - APM SALE usually uses client_key + secret
- * - For convenience, APM defaults below are prefilled from Merchant Key / Password,
- *   but you can change them in the form per flow if needed
  */
 
 error_reporting(E_ALL);
@@ -49,21 +43,33 @@ function pretty_json($data): string {
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
-function http_json(string $url, array $payload, int $timeout = 60): array {
-    $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
+function http_json(string $url, $payload, bool $asForm = false, int $timeout = 60): array {
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_HTTPHEADER     => [
-            'Content-Type: application/json',
-            'Accept: application/json',
-        ],
-        CURLOPT_POSTFIELDS     => $json,
-        CURLOPT_TIMEOUT        => $timeout,
-    ]);
 
+    if ($asForm) {
+        $sentBody = $payload;
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_TIMEOUT        => $timeout,
+        ]);
+    } else {
+        $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $sentBody = $payload;
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            CURLOPT_POSTFIELDS     => $json,
+            CURLOPT_TIMEOUT        => $timeout,
+        ]);
+    }
+
+    $start    = microtime(true);
     $body     = curl_exec($ch);
     $error    = curl_error($ch);
     $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -77,8 +83,9 @@ function http_json(string $url, array $payload, int $timeout = 60): array {
         'error'    => $error,
         'raw'      => (string)$body,
         'json'     => is_array($decoded) ? $decoded : null,
-        'sent'     => $payload,
+        'sent'     => $sentBody,
         'url'      => $url,
+        'duration' => number_format(microtime(true) - $start, 3, '.', ''),
     ];
 }
 
@@ -103,10 +110,10 @@ function apm_hash_source(string $identifier, string $orderId, string $amount, st
 }
 
 function apm_hash(string $identifier, string $orderId, string $amount, string $currency, string $secret): array {
-    $source = apm_hash_source($identifier, $orderId, $amount, $currency, $secret);
+    $source   = apm_hash_source($identifier, $orderId, $amount, $currency, $secret);
     $reversed = strrev($source);
-    $upper = strtoupper($reversed);
-    $hash = md5($upper);
+    $upper    = strtoupper($reversed);
+    $hash     = md5($upper);
 
     return [
         'source'   => $source,
@@ -167,19 +174,15 @@ $awccBech32       = posted('awcc_bech32', '0');
 $awccCryptoType   = posted('awcc_crypto_type', 'USDT');
 $awccAccountId    = posted('awcc_account_id', 'CA1001390C');
 
+/* APM minimal fields */
 $apmClientKey     = posted('apm_client_key', MERCHANT_KEY);
 $apmSecret        = posted('apm_secret', MERCHANT_PASS);
 $apmBrand         = posted('apm_brand', 'afri-money');
-$apmIdentifier    = posted('apm_identifier', 'demo-pos-001');
-$apmPhone         = posted('apm_phone', '232000000000');
-$apmMcid          = posted('apm_mcid', '');
-$apmMsisdn        = posted('apm_msisdn', '');
-$apmCountry       = posted('apm_country', 'SL');
-$apmFirstName     = posted('apm_first_name', 'John');
-$apmLastName      = posted('apm_last_name', 'Doe');
-$apmAddress       = posted('apm_address', 'Demo street');
-$apmCity          = posted('apm_city', 'Freetown');
-$apmZip           = posted('apm_zip', '1000');
+$apmIdentifier    = posted('apm_identifier', '111');
+$apmPhone         = posted('apm_phone', '23233310905');
+$apmReturnUrl     = posted('apm_return_url', 'https://google.com');
+$apmCurrency      = posted('apm_currency', 'SLE');
+$apmAmount        = posted('apm_amount', '0.99');
 
 /* =========================================================
  * EXECUTION
@@ -209,10 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'hash'        => $hashData['hash'],
             ];
 
-            $responseData = http_json(SESSION_URL, $payload);
+            $responseData = http_json(SESSION_URL, $payload, false);
             $debug = [
-                'type'   => 'Hosted Checkout / Card',
-                'hash'   => $hashData,
+                'type' => 'Hosted Checkout / Card',
+                'hash' => $hashData,
             ];
         }
 
@@ -254,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'hash'      => $hashData['hash'],
             ];
 
-            $responseData = http_json(SESSION_URL, $payload);
+            $responseData = http_json(SESSION_URL, $payload, false);
             $debug = [
                 'type' => 'Hosted Checkout / AquaNow (AWCC)',
                 'hash' => $hashData,
@@ -268,42 +271,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'mtn_apm'    => 'mtn-momo',
             ];
 
-            $brand = $apmBrand ?: $brandByFlow[$flow];
+            $brand = $brandByFlow[$flow];
 
-            $hashData = apm_hash($apmIdentifier, $orderId, $orderAmount, $orderCurrency, $apmSecret);
+            $payerPhone = preg_replace('/\s+/', '', $apmPhone);
+            $payerPhone = ltrim($payerPhone, '+');
+
+            $rawAmt = preg_replace('/[^0-9.]/', '', $apmAmount);
+            $orderAmt = number_format((float)$rawAmt, 2, '.', '');
+
+            if ($payerPhone === '') {
+                throw new Exception('Phone is required.');
+            }
+            if (!is_numeric($orderAmt) || (float)$orderAmt <= 0) {
+                throw new Exception('Amount must be a positive number.');
+            }
+
+            $orderIdApm   = 'ORDER_' . time();
+            $orderDescApm = 'APM payment';
+            $payerIp      = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+            $hashData = apm_hash($apmIdentifier, $orderIdApm, $orderAmt, $apmCurrency, $apmSecret);
 
             $payload = [
-                'action'      => 'SALE',
-                'client_key'  => $apmClientKey,
-                'brand'       => $brand,
-                'order_id'    => $orderId,
-                'order_amount'=> $orderAmount,
-                'order_currency' => $orderCurrency,
-                'order_description' => $orderDescription,
-                'payer_first_name'  => $apmFirstName,
-                'payer_last_name'   => $apmLastName,
-                'payer_address'     => $apmAddress,
-                'payer_country'     => $apmCountry,
-                'payer_city'        => $apmCity,
-                'payer_zip'         => $apmZip,
-                'payer_email'       => $customerEmail,
-                'payer_phone'       => $apmPhone,
-                'return_url'        => $returnUrl,
+                'action'            => 'SALE',
+                'client_key'        => $apmClientKey,
+                'brand'             => $brand,
+                'order_id'          => $orderIdApm,
+                'order_amount'      => $orderAmt,
+                'order_currency'    => $apmCurrency,
+                'order_description' => $orderDescApm,
                 'identifier'        => $apmIdentifier,
+                'payer_ip'          => $payerIp,
+                'return_url'        => $apmReturnUrl,
+                'payer_phone'       => $payerPhone,
                 'hash'              => $hashData['hash'],
             ];
 
-            // optional fields for demo visibility
-            if ($apmMcid !== '') {
-                $payload['mcid'] = $apmMcid;
-            }
-            if ($apmMsisdn !== '') {
-                $payload['parameters'] = [
-                    'msisdn' => $apmMsisdn
-                ];
-            }
-
-            $responseData = http_json(APM_URL, $payload);
+            $responseData = http_json(APM_URL, $payload, true);
             $debug = [
                 'type' => 'APM SALE / ' . $brand,
                 'hash' => $hashData,
@@ -420,9 +424,6 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
         padding-bottom: 8px;
         border-bottom: 1px solid #e5e7eb;
     }
-    .hidden {
-        display: none;
-    }
     .note {
         padding: 10px 12px;
         background: #eff6ff;
@@ -483,27 +484,27 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
             </div>
         </div>
 
-        <h2 class="section-title">Common Order Fields</h2>
-        <div class="grid">
-            <div class="field">
-                <label for="order_id">Order ID</label>
-                <input type="text" name="order_id" id="order_id" value="<?= h($orderId) ?>">
-            </div>
-            <div class="field">
-                <label for="order_amount">Amount</label>
-                <input type="text" name="order_amount" id="order_amount" value="<?= h($orderAmount) ?>">
-            </div>
-            <div class="field">
-                <label for="order_currency">Currency</label>
-                <input type="text" name="order_currency" id="order_currency" value="<?= h($orderCurrency) ?>">
-            </div>
-            <div class="field">
-                <label for="order_description">Description</label>
-                <input type="text" name="order_description" id="order_description" value="<?= h($orderDescription) ?>">
-            </div>
-        </div>
-
         <div id="block-hosted-common">
+            <h2 class="section-title">Common Order Fields</h2>
+            <div class="grid">
+                <div class="field">
+                    <label for="order_id">Order ID</label>
+                    <input type="text" name="order_id" id="order_id" value="<?= h($orderId) ?>">
+                </div>
+                <div class="field">
+                    <label for="order_amount">Amount</label>
+                    <input type="text" name="order_amount" id="order_amount" value="<?= h($orderAmount) ?>">
+                </div>
+                <div class="field">
+                    <label for="order_currency">Currency</label>
+                    <input type="text" name="order_currency" id="order_currency" value="<?= h($orderCurrency) ?>">
+                </div>
+                <div class="field">
+                    <label for="order_description">Description</label>
+                    <input type="text" name="order_description" id="order_description" value="<?= h($orderDescription) ?>">
+                </div>
+            </div>
+
             <h2 class="section-title">Hosted URLs</h2>
             <div class="grid">
                 <div class="field">
@@ -590,7 +591,7 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
                 </div>
                 <div class="field">
                     <label for="apm_brand">Brand</label>
-                    <input type="text" name="apm_brand" id="apm_brand" value="<?= h($apmBrand) ?>">
+                    <input type="text" name="apm_brand" id="apm_brand" value="<?= h($apmBrand) ?>" readonly>
                 </div>
 
                 <div class="field">
@@ -602,47 +603,17 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
                     <input type="text" name="apm_phone" id="apm_phone" value="<?= h($apmPhone) ?>">
                 </div>
                 <div class="field">
-                    <label for="apm_msisdn">MSISDN (optional)</label>
-                    <input type="text" name="apm_msisdn" id="apm_msisdn" value="<?= h($apmMsisdn) ?>">
+                    <label for="apm_return_url">Return URL</label>
+                    <input type="text" name="apm_return_url" id="apm_return_url" value="<?= h($apmReturnUrl) ?>">
                 </div>
 
                 <div class="field">
-                    <label for="apm_mcid">MCID (optional)</label>
-                    <input type="text" name="apm_mcid" id="apm_mcid" value="<?= h($apmMcid) ?>">
+                    <label for="apm_currency">Currency</label>
+                    <input type="text" name="apm_currency" id="apm_currency" value="<?= h($apmCurrency) ?>">
                 </div>
                 <div class="field">
-                    <label for="return_url">Return URL</label>
-                    <input type="text" name="return_url" id="return_url" value="<?= h($returnUrl) ?>">
-                </div>
-                <div class="field">
-                    <label for="apm_country">Payer Country</label>
-                    <input type="text" name="apm_country" id="apm_country" value="<?= h($apmCountry) ?>">
-                </div>
-
-                <div class="field">
-                    <label for="apm_first_name">First Name</label>
-                    <input type="text" name="apm_first_name" id="apm_first_name" value="<?= h($apmFirstName) ?>">
-                </div>
-                <div class="field">
-                    <label for="apm_last_name">Last Name</label>
-                    <input type="text" name="apm_last_name" id="apm_last_name" value="<?= h($apmLastName) ?>">
-                </div>
-                <div class="field">
-                    <label for="customer_email">Payer Email</label>
-                    <input type="text" name="customer_email" value="<?= h($customerEmail) ?>">
-                </div>
-
-                <div class="field">
-                    <label for="apm_address">Address</label>
-                    <input type="text" name="apm_address" id="apm_address" value="<?= h($apmAddress) ?>">
-                </div>
-                <div class="field">
-                    <label for="apm_city">City</label>
-                    <input type="text" name="apm_city" id="apm_city" value="<?= h($apmCity) ?>">
-                </div>
-                <div class="field">
-                    <label for="apm_zip">ZIP</label>
-                    <input type="text" name="apm_zip" id="apm_zip" value="<?= h($apmZip) ?>">
+                    <label for="apm_amount">Amount</label>
+                    <input type="text" name="apm_amount" id="apm_amount" value="<?= h($apmAmount) ?>">
                 </div>
             </div>
         </div>
@@ -665,6 +636,7 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
             <p>
                 <strong>Endpoint:</strong> <?= h($responseData['url']) ?><br>
                 <strong>HTTP code:</strong> <?= h((string)$responseData['httpCode']) ?><br>
+                <strong>Duration:</strong> <?= h($responseData['duration']) ?> s<br>
                 <strong>Status:</strong>
                 <?php if ($responseData['ok']): ?>
                     <span class="ok">OK</span>
@@ -688,7 +660,7 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
         </div>
 
         <div class="card">
-            <h2 class="section-title">Request JSON</h2>
+            <h2 class="section-title">Request</h2>
             <pre><?= h(pretty_json($responseData['sent'])) ?></pre>
         </div>
 
@@ -742,6 +714,13 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
     const blockAwcc = document.getElementById('block-awcc');
     const blockApm = document.getElementById('block-apm');
 
+    const apmBrand = document.getElementById('apm_brand');
+    const apmCurrency = document.getElementById('apm_currency');
+    const apmPhone = document.getElementById('apm_phone');
+    const apmAmount = document.getElementById('apm_amount');
+    const apmIdentifier = document.getElementById('apm_identifier');
+    const apmReturnUrl = document.getElementById('apm_return_url');
+
     function updateFlowUI() {
         const value = flow.value;
 
@@ -751,13 +730,31 @@ $redirectUrl = $responseData ? find_redirect_url($responseData['json']) : '';
 
         blockHostedCommon.style.display = isHosted ? 'block' : 'none';
         blockAwcc.style.display = isAwcc ? 'block' : 'none';
-        blockApm.style.display = isApm ? 'block' : 'none';
+        blockApm.style.display = isApm ? 'block' : 'block';
 
-        const brandInput = document.getElementById('apm_brand');
+        if (value === 'afri_apm') {
+            apmBrand.value = 'afri-money';
+            if (!apmCurrency.value || apmCurrency.value === 'LRD') apmCurrency.value = 'SLE';
+            if (!apmPhone.value || apmPhone.value === '23274221777') apmPhone.value = '23233310905';
+            if (!apmAmount.value || apmAmount.value === '10.00') apmAmount.value = '0.99';
+            if (!apmIdentifier.value) apmIdentifier.value = '111';
+            if (!apmReturnUrl.value) apmReturnUrl.value = 'https://google.com';
+        }
 
-        if (value === 'afri_apm') brandInput.value = 'afri-money';
-        if (value === 'orange_apm') brandInput.value = 'orange-money';
-        if (value === 'mtn_apm') brandInput.value = 'mtn-momo';
+        if (value === 'orange_apm') {
+            apmBrand.value = 'orange-money';
+            if (!apmCurrency.value || apmCurrency.value === 'LRD') apmCurrency.value = 'SLE';
+            if (!apmPhone.value || apmPhone.value === '23233310905') apmPhone.value = '23274221777';
+            if (!apmAmount.value || apmAmount.value === '10.00') apmAmount.value = '0.99';
+            if (!apmIdentifier.value) apmIdentifier.value = '111';
+            if (!apmReturnUrl.value) apmReturnUrl.value = 'https://google.com';
+        }
+
+        if (value === 'mtn_apm') {
+            apmBrand.value = 'mtn-momo';
+            apmCurrency.value = 'LRD';
+            if (!apmAmount.value || apmAmount.value === '0.99') apmAmount.value = '10.00';
+        }
     }
 
     flow.addEventListener('change', updateFlowUI);
