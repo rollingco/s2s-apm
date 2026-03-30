@@ -13,12 +13,12 @@
 $endpoint    = 'https://api.leogcltd.com/post';
 
 //$merchantKey = 'cef92030-e7c1-11f0-a03f-26da8de1cc77';
-$merchantKey = '8af2433a-1269-11f1-9540-2a588e8348b1';
-$secret      = '71d7e2e8a5bca26c7cc63776fc36078d';
+$merchantKey = '8708bf06-1d3b-11f1-abb0-0239ede258e8';
+$secret      = '659b1519ea16454dc45bcd889193ccb8';
 
 // Card (TEST ONLY)
 $cardNumber  = '4111111111111111';
-$expMonth    = '01';
+$expMonth    = '05';
 $expYear     = '2038';
 $cvv         = '123';
 
