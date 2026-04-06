@@ -17,7 +17,8 @@ $CLIENT_KEY  = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
  $SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
 
 $DEFAULTS = [
-  'brand'       => 'orange-money',
+  //'brand'       => 'orange-money',
+  'brand'       => 'orange-web-sl',
   'identifier'  => '111',
   'currency'    => 'SLE',
   'return_url'  => 'https://google.com',
