@@ -111,7 +111,7 @@ $requestFields = [
   'payer_city'        => 'Dubai',
   'payer_zip'         => '00100',
   'payer_email'       => $payerEmail,
-  'payer_phone'       => '1234567890',
+  'payer_phone'       => '+1234567890',
   'payer_ip'          => '210.71.106.164',
 
   'term_url_3ds'      => $termUrl3ds,
