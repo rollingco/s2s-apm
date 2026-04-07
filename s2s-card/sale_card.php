@@ -17,7 +17,7 @@ $merchantKey = '4bf7a70c-3252-11f1-9e2c-1600b4aec292';
 $secret      = 'f0eba05582c6cfe69a84090530efc0ba';
 
 // Card (TEST ONLY)
-$cardNumber  = '4111111111111111';
+$cardNumber  = '4222222222222222';
 $expMonth    = '05';
 $expYear     = '2038';
 $cvv         = '123';
