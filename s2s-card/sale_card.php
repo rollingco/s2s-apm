@@ -28,8 +28,8 @@ $payerEmail  = 'jon.doe@gmail.com';
 // Order
 $orderId     = 'Vasyl s2s_test ORDER_' . time();
 $amount      = '0.99';
-$currency    = 'USD';
-$desc        = '01/2038 test';
+$currency    = 'EUR';
+$desc        = '05/2038 test';
 
 $termUrl3ds  = 'http://3ds.localhost/v4/confirmhandler';
 $termTarget  = '_self';
