@@ -14,8 +14,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post';
-$CLIENT_KEY = '01158d9a-9de6-11f0-ac32-ca759a298692';
-  $SECRET     = '4b486f4c7bee7cb42ccca2a5a980910e';
+$CLIENT_KEY = '4f643d7a-21fd-11f1-8d45-4209656920b3';
+  $SECRET     = 'ce39abb748308f6bcff70616c7625c8f';
 
 /**
  * channel_id — якщо його потрібно передавати, вкажи тут значення.
