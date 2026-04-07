@@ -14,7 +14,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post';
-$CLIENT_KEY = '4f643d7a-21fd-11f1-8d45-4209656920b3';
+$CLIENT_KEY = '4f644162-21fd-11f1-a4c9-4209656920b3';
   $SECRET     = 'ce39abb748308f6bcff70616c7625c8f';
 
 /**
