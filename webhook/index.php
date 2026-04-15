@@ -47,6 +47,10 @@ function getAllHeadersSafe(): array
         $headers['Content-Type'] = $_SERVER['CONTENT_TYPE'];
     }
 
+    if (isset($_SERVER['CONTENT_LENGTH'])) {
+        $headers['Content-Length'] = $_SERVER['CONTENT_LENGTH'];
+    }
+
     return $headers;
 }
 
@@ -83,9 +87,9 @@ function validateHash(array $data, string $merchantPass): array
 
 function detectMeaning(array $data): string
 {
-    $type = strtolower($data['type'] ?? '');
-    $status = strtolower($data['status'] ?? '');
-    $orderStatus = strtolower($data['order_status'] ?? '');
+    $type = strtolower((string)($data['type'] ?? ''));
+    $status = strtolower((string)($data['status'] ?? ''));
+    $orderStatus = strtolower((string)($data['order_status'] ?? ''));
 
     if ($status === 'success' && $type === 'sale') {
         return 'SALE success (likely payment OK, check order_status)';
@@ -105,6 +109,14 @@ function detectMeaning(array $data): string
 
     if ($status === 'fail') {
         return 'FAILED';
+    }
+
+    if ($status !== '') {
+        return 'Status: ' . strtoupper($status);
+    }
+
+    if ($orderStatus !== '') {
+        return 'Order status: ' . strtoupper($orderStatus);
     }
 
     return 'Unknown state';
@@ -140,6 +152,11 @@ $file = $logDir . "/cb_{$timestamp}_" . bin2hex(random_bytes(3)) . ".log";
 $log = [];
 $log[] = "TIME: " . date('Y-m-d H:i:s');
 $log[] = "IP: " . ($_SERVER['REMOTE_ADDR'] ?? '');
+$log[] = "METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? '');
+$log[] = "REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? '');
+$log[] = "--------------------------------";
+$log[] = "HEADERS:";
+$log[] = print_r($headers, true);
 $log[] = "--------------------------------";
 $log[] = "RAW:";
 $log[] = $rawBody;
