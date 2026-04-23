@@ -13,32 +13,50 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===================== CONFIG ===================== */
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $SESSION_URL   = $CHECKOUT_HOST . '/api/v1/session';
-//fuck off
+
 $merchantKey  = 'bfd234ec-225a-11f1-9929-c2acaa9a99d6';
 $merchantPass = 'd9e638df1988977ea8febd7b5fa70919';
 
 /* ===================== INPUTS ===================== */
 $orderNumber      = 'order-' . time();
-$orderAmount      = '0.19';              // keep as string, e.g. "10.00"
+$orderAmount      = '0.19'; // keep as string, e.g. "10.00"
 $orderCurrency    = 'USD';
 $orderDescription = 'Important gift';
 
 $successUrl = 'https://sandbox.pp.ua/success';
 $cancelUrl  = 'https://sandbox.pp.ua/cancel';
 
+/* ===================== BILLING ADDRESS ===================== */
+/*
+ * Added according to the billing_address structure discussed for Hosted Checkout:
+ * country / state / city / district / address / house_number / zip / phone
+ */
+$billingAddress = [
+    'country'      => 'US',
+    'state'        => 'TX',
+    'city'         => 'New Braunfels',
+    'district'     => 'New Braunfels',
+    'address'      => '960 Tornado Ridge',
+    'house_number' => '960',
+    'zip'          => '78130',
+    'phone'        => '7028068369',
+];
+
 /* ===================== HELPERS ===================== */
-function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function h($s): string
+{
+    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+}
 
-function calc_hash(string $number, string $amount, string $currency, string $description, string $password): string {
-    // Build exact string, uppercase it (IMPORTANT!)
+function calc_hash(string $number, string $amount, string $currency, string $description, string $password): string
+{
     $input = strtoupper($number . $amount . $currency . $description . $password);
-
-    // MD5 as HEX (32 chars), then SHA1 of that hex string
     $md5hex = md5($input);
     return sha1($md5hex);
 }
 
-function http_json(string $url, array $payload, int $timeout = 30): array {
+function http_json(string $url, array $payload, int $timeout = 30): array
+{
     $ch = curl_init($url);
     $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
 
@@ -55,7 +73,8 @@ function http_json(string $url, array $payload, int $timeout = 30): array {
 
     $respBody = curl_exec($ch);
     $err      = curl_error($ch);
-    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
     curl_close($ch);
 
     return [
@@ -63,7 +82,7 @@ function http_json(string $url, array $payload, int $timeout = 30): array {
         'httpCode' => $httpCode,
         'error'    => $err,
         'raw'      => $respBody,
-        'json'     => json_decode((string)$respBody, true),
+        'json'     => json_decode((string) $respBody, true),
         'sent'     => $payload,
     ];
 }
@@ -82,9 +101,10 @@ $request = [
         'currency'    => $orderCurrency,
         'description' => $orderDescription,
     ],
-    'success_url' => $successUrl,
-    'cancel_url'  => $cancelUrl,
-    'hash'        => $hash,
+    'billing_address' => $billingAddress,
+    'success_url'    => $successUrl,
+    'cancel_url'     => $cancelUrl,
+    'hash'           => $hash,
 ];
 
 /* ===================== SEND ===================== */
@@ -98,31 +118,39 @@ echo "<pre>" . h(json_encode($request, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHE
 
 echo "<h3>Response</h3>";
 echo "<div><b>HTTP:</b> " . h($res['httpCode']) . "</div>";
+
 if ($res['error']) {
     echo "<div style='color:#b00'><b>cURL error:</b> " . h($res['error']) . "</div>";
 }
-echo "<pre>" . h($res['raw']) . "</pre>";
+
+echo "<pre>" . h((string) $res['raw']) . "</pre>";
 
 $redirectUrl = '';
 if (is_array($res['json'])) {
-    // Most common: redirect_url; fallback: url
-    if (!empty($res['json']['redirect_url'])) $redirectUrl = (string)$res['json']['redirect_url'];
-    elseif (!empty($res['json']['url']))      $redirectUrl = (string)$res['json']['url'];
-    elseif (!empty($res['json']['data']['redirect_url'])) $redirectUrl = (string)$res['json']['data']['redirect_url'];
+    if (!empty($res['json']['redirect_url'])) {
+        $redirectUrl = (string) $res['json']['redirect_url'];
+    } elseif (!empty($res['json']['url'])) {
+        $redirectUrl = (string) $res['json']['url'];
+    } elseif (!empty($res['json']['data']['redirect_url'])) {
+        $redirectUrl = (string) $res['json']['data']['redirect_url'];
+    }
 }
 
-if ($redirectUrl) {
-    echo "<h3>Next step</h3>";
+echo "<h3>Next step</h3>";
+if ($redirectUrl !== '') {
     echo "<p>Redirect the customer to:</p>";
     echo "<p><a href='" . h($redirectUrl) . "' target='_blank' rel='noopener noreferrer'>" . h($redirectUrl) . "</a></p>";
 } else {
-    echo "<h3>Next step</h3>";
-    echo "<p><b>No redirect_url found</b>. Check response JSON fields (maybe different key name), or request validation error.</p>";
+    echo "<p><b>No redirect_url found</b>. Check response JSON fields or request validation error.</p>";
 }
 
 echo "<hr>";
 echo "<h3>Hash debug</h3>";
+
+$hashInput = strtoupper($orderNumber . $orderAmount . $orderCurrency . $orderDescription . $merchantPass);
+$md5hex    = md5($hashInput);
+
 echo "<div><b>Input string (UPPERCASE):</b></div>";
-echo "<pre>" . h(strtoupper($orderNumber . $orderAmount . $orderCurrency . $orderDescription . $merchantPass)) . "</pre>";
-echo "<div><b>MD5 hex:</b> " . h(md5(strtoupper($orderNumber . $orderAmount . $orderCurrency . $orderDescription . $merchantPass))) . "</div>";
+echo "<pre>" . h($hashInput) . "</pre>";
+echo "<div><b>MD5 hex:</b> " . h($md5hex) . "</div>";
 echo "<div><b>SHA1(MD5hex):</b> " . h($hash) . "</div>";
