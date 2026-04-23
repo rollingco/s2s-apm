@@ -13,7 +13,7 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===================== CONFIG ===================== */
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $SESSION_URL   = $CHECKOUT_HOST . '/api/v1/session';
-
+//fuck off
 $merchantKey  = 'bfd234ec-225a-11f1-9929-c2acaa9a99d6';
 $merchantPass = 'd9e638df1988977ea8febd7b5fa70919';
 
