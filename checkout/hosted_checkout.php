@@ -16,7 +16,7 @@ $merchantPass = 'd9e638df1988977ea8febd7b5fa70919';
 
 /* ===================== INPUTS ===================== */
 $orderNumber      = 'order-' . time();
-$orderAmount      = '0.19';
+$orderAmount      = '9.99';
 $orderCurrency    = 'USD';
 $orderDescription = 'Important gift';
 
