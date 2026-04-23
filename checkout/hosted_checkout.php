@@ -14,8 +14,8 @@ header('Content-Type: text/html; charset=utf-8');
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $SESSION_URL   = $CHECKOUT_HOST . '/api/v1/session';
 
-$merchantKey  = '8af2433a-1269-11f1-9540-2a588e8348b1';
-$merchantPass = '71d7e2e8a5bca26c7cc63776fc36078d';
+$merchantKey  = 'bfd234ec-225a-11f1-9929-c2acaa9a99d6';
+$merchantPass = 'd9e638df1988977ea8febd7b5fa70919';
 
 /* ===================== INPUTS ===================== */
 $orderNumber      = 'order-' . time();
