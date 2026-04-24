@@ -36,9 +36,15 @@ function getAllHeadersSafe(): array
     }
 
     $headers = [];
+
     foreach ($_SERVER as $key => $value) {
         if (strpos($key, 'HTTP_') === 0) {
-            $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
+            $name = str_replace(
+                ' ',
+                '-',
+                ucwords(strtolower(str_replace('_', ' ', substr($key, 5))))
+            );
+
             $headers[$name] = $value;
         }
     }
@@ -54,69 +60,69 @@ function getAllHeadersSafe(): array
     return $headers;
 }
 
-function buildHashSource(array $data, string $merchantPass): string
+/*
+|--------------------------------------------------------------------------
+| CREDIT2VIRTUAL / WITHDRAWAL CALLBACK HASH
+|--------------------------------------------------------------------------
+| Formula:
+| md5(strtoupper(strrev(trans_id . order_id . status)) . PASSWORD)
+|--------------------------------------------------------------------------
+*/
+function buildWithdrawalCallbackHashSource(array $data): string
 {
     return
-        ($data['id'] ?? '') .
-        ($data['order_number'] ?? '') .
-        ($data['order_amount'] ?? '') .
-        ($data['order_currency'] ?? '') .
-        ($data['order_description'] ?? '') .
-        $merchantPass;
+        (string)($data['trans_id'] ?? '') .
+        (string)($data['order_id'] ?? '') .
+        (string)($data['status'] ?? '');
 }
 
-function validateHash(array $data, string $merchantPass): array
+function validateWithdrawalCallbackHash(array $data, string $merchantPass): array
 {
-    $source = buildHashSource($data, $merchantPass);
+    $source = buildWithdrawalCallbackHashSource($data);
 
-    $expectedMd5  = strtoupper(md5($source));
-    $expectedSha1 = strtoupper(sha1($source));
-    $received     = strtoupper(trim((string)($data['hash'] ?? '')));
+    $expected = strtoupper(md5(
+        strtoupper(strrev($source)) . $merchantPass
+    ));
+
+    $received = strtoupper(trim((string)($data['hash'] ?? '')));
 
     return [
-        'source' => $source,
+        'formula'  => 'md5(strtoupper(strrev(trans_id . order_id . status)) . PASSWORD)',
+        'source'   => $source,
         'received' => $received,
-        'md5' => $expectedMd5,
-        'sha1' => $expectedSha1,
-        'valid' => $received && (
-            hash_equals($expectedMd5, $received) ||
-            hash_equals($expectedSha1, $received)
-        )
+        'expected' => $expected,
+        'valid'    => $received !== '' && hash_equals($expected, $received),
     ];
 }
 
 function detectMeaning(array $data): string
 {
-    $type = strtolower((string)($data['type'] ?? ''));
-    $status = strtolower((string)($data['status'] ?? ''));
-    $orderStatus = strtolower((string)($data['order_status'] ?? ''));
+    $action = strtoupper((string)($data['action'] ?? ''));
+    $result = strtoupper((string)($data['result'] ?? ''));
+    $status = strtoupper((string)($data['status'] ?? ''));
 
-    if ($status === 'success' && $type === 'sale') {
-        return 'SALE success (likely payment OK, check order_status)';
-    }
+    if ($action === 'CREDIT2VIRTUAL') {
+        if ($status === 'SETTLED' || $result === 'SUCCESS') {
+            return 'CREDIT2VIRTUAL / withdrawal callback: SUCCESS';
+        }
 
-    if ($type === 'redirect') {
-        return 'Redirect step (not final)';
-    }
+        if ($status === 'DECLINED' || $result === 'DECLINED') {
+            return 'CREDIT2VIRTUAL / withdrawal callback: DECLINED';
+        }
 
-    if ($type === '3ds') {
-        return '3DS step (not final)';
-    }
+        if ($status === 'PREPARE' || $result === 'UNDEFINED') {
+            return 'CREDIT2VIRTUAL / withdrawal callback: PREPARE / UNDEFINED';
+        }
 
-    if ($status === 'waiting') {
-        return 'Still processing';
-    }
-
-    if ($status === 'fail') {
-        return 'FAILED';
+        return 'CREDIT2VIRTUAL / withdrawal callback: Status = ' . $status . ', Result = ' . $result;
     }
 
     if ($status !== '') {
-        return 'Status: ' . strtoupper($status);
+        return 'Status: ' . $status;
     }
 
-    if ($orderStatus !== '') {
-        return 'Order status: ' . strtoupper($orderStatus);
+    if ($result !== '') {
+        return 'Result: ' . $result;
     }
 
     return 'Unknown state';
@@ -132,13 +138,14 @@ $data = $_POST;
 
 if (empty($data) && $rawBody) {
     parse_str($rawBody, $parsed);
+
     if (is_array($parsed)) {
         $data = $parsed;
     }
 }
 
 $headers = getAllHeadersSafe();
-$hashCheck = validateHash($data, $merchantPass);
+$hashCheck = validateWithdrawalCallbackHash($data, $merchantPass);
 $meaning = detectMeaning($data);
 
 /*
@@ -150,32 +157,39 @@ $timestamp = date('Y-m-d_H-i-s');
 $file = $logDir . "/cb_{$timestamp}_" . bin2hex(random_bytes(3)) . ".log";
 
 $log = [];
+
 $log[] = "TIME: " . date('Y-m-d H:i:s');
 $log[] = "IP: " . ($_SERVER['REMOTE_ADDR'] ?? '');
 $log[] = "METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? '');
 $log[] = "REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? '');
+
 $log[] = "--------------------------------";
 $log[] = "HEADERS:";
 $log[] = print_r($headers, true);
+
 $log[] = "--------------------------------";
 $log[] = "RAW:";
 $log[] = $rawBody;
+
 $log[] = "--------------------------------";
 $log[] = "DATA:";
 $log[] = print_r($data, true);
+
 $log[] = "--------------------------------";
 $log[] = "HASH:";
 $log[] = print_r($hashCheck, true);
+
 $log[] = "--------------------------------";
 $log[] = "MEANING:";
 $log[] = $meaning;
+
 $log[] = "================================";
 
 file_put_contents($file, implode("\n", $log));
 
 /*
 |--------------------------------------------------------------------------
-| RESPONSE (IMPORTANT!)
+| RESPONSE
 |--------------------------------------------------------------------------
 */
 http_response_code(200);
