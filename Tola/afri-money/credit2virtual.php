@@ -32,7 +32,7 @@ $STATUS_HELPER_URL = 'status_credit2virtual.php';
 /* Prefill from GET (автономний режим) */
 $DEFAULTS = [
   'order_id' => isset($_GET['order_id']) ? (string)$_GET['order_id'] : ('afrimoney-' . time()),
-  'amount'   => isset($_GET['amount'])   ? (string)$_GET['amount']   : '10.00',
+  'amount'   => isset($_GET['amount'])   ? (string)$_GET['amount']   : '1.00',
   'currency' => isset($_GET['currency']) ? (string)$_GET['currency'] : 'SLE',
   'brand'    => isset($_GET['brand'])    ? (string)$_GET['brand']    : 'afri-money-dbm',
   'desc'     => isset($_GET['desc'])     ? (string)$_GET['desc']     : 'AfriMoney payout test',
