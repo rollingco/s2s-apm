@@ -16,16 +16,16 @@ $merchantKey = '4bf7a996-3252-11f1-bd43-1600b4aec292';
 $secret      = 'f0eba05582c6cfe69a84090530efc0ba';
 
 // Card
-$cardNumber  = '4441111087875187';
-$expMonth    = '03';
-$expYear     = '2030';
-$cvv         = '501';
+$cardNumber  = '4441114494928789';
+$expMonth    = '02';
+$expYear     = '2028';
+$cvv         = '108';
 
 // Payer
 $payerEmail  = 'garik.m@pay.cc';
 
 // Order
-$orderId     = '0AjMTcVnIpnSAYsiinKdi-A';
+$orderId     = 'Vasil test order #' . time();
 $amount      = '10.00';
 $currency    = 'EUR';
 $desc        = 'DP1222233444222111';
