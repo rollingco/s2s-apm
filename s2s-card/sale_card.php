@@ -115,9 +115,8 @@ $requestFields = [
   'payer_ip'          => '210.71.106.164',
 
   'term_url_3ds'      => $termUrl3ds,
-  'term_url_target'   => $termTarget,
-
-  'auth'              => $authOnly,
+  //'term_url_target'   => $termTarget,
+  //'auth'              => $authOnly,
   'hash'              => $hash,
 ];
 
