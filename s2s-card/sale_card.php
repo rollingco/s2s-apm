@@ -5,33 +5,32 @@
  * Sends request as: application/x-www-form-urlencoded
  * Shows request/response in: pretty JSON (human-readable)
  *
- * Hash (SALE/RETRY) formula (per y our doc screenshot):
+ * Hash (SALE/RETRY) formula:
  *   md5( strtoupper( strrev(email) . SECRET . strrev(first6 + last4) ) )
  */
 
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-//$merchantKey = 'cef92030-e7c1-11f0-a03f-26da8de1cc77';
 $merchantKey = '4bf7a996-3252-11f1-bd43-1600b4aec292';
 $secret      = 'f0eba05582c6cfe69a84090530efc0ba';
 
-// Card (TEST ONLY)
-$cardNumber  = '4111111111111111';
-$expMonth    = '05';
-$expYear     = '2038';
+// Card
+$cardNumber  = '4633831111110158';
+$expMonth    = '01';
+$expYear     = '2031';
 $cvv         = '123';
 
 // Payer
-$payerEmail  = 'jon.doe@gmail.com';
+$payerEmail  = 'garik.m@pay.cc';
 
 // Order
-$orderId     = 'Vasyl s2s_test ORDER_' . time();
-$amount      = '0.99';
+$orderId     = '0AjMTcVnIpnSAYsiinKdi-A';
+$amount      = '10.00';
 $currency    = 'EUR';
-$desc        = '05/2038 test';
+$desc        = 'DP1222233444222111';
 
-$termUrl3ds  = 'http://3ds.localhost/v4/confirmhandler';
+$termUrl3ds  = 'https://portal.pay.cc/payment/p_controller/atomix/ret/return/w/1S2zavARHcZHlyNVCQWuhiA';
 $termTarget  = '_self';
 $authOnly    = 'N';
 
@@ -61,7 +60,6 @@ function mask_sensitive(array $arr): array {
   if (isset($out['card_number'])) $out['card_number'] = mask_pan((string)$out['card_number']);
   if (isset($out['card_cvv2']))   $out['card_cvv2']   = '***';
 
-  // show hash but shorten a bit for “readable masked view”
   if (isset($out['hash']) && is_string($out['hash']) && strlen($out['hash']) > 16) {
     $out['hash'] = substr($out['hash'], 0, 10) . '…' . substr($out['hash'], -10);
   }
@@ -104,15 +102,16 @@ $requestFields = [
   'card_exp_year'     => $expYear,
   'card_cvv2'         => $cvv,
 
-  'payer_first_name'  => 'John',
-  'payer_last_name'   => 'Doe',
-  'payer_address'     => '106 New Address',
-  'payer_country'     => 'AE',
-  'payer_city'        => 'Dubai',
-  'payer_zip'         => '00100',
+  'payer_first_name'  => 'Alan',
+  'payer_last_name'   => 'Ward',
+  'payer_address'     => 'Keryneias Line 1 Limassol 4604 CY',
+  'payer_country'     => 'CY',
+  'payer_city'        => 'Limassol',
+  'payer_state'       => '',
+  'payer_zip'         => '4604',
   'payer_email'       => $payerEmail,
-  'payer_phone'       => '+1234567890',
-  'payer_ip'          => '210.71.106.164',
+  'payer_phone'       => '+35795952955',
+  'payer_ip'          => '78.158.143.67',
 
   'term_url_3ds'      => $termUrl3ds,
   //'term_url_target'   => $termTarget,
@@ -130,7 +129,6 @@ $outHeaders = [
   'User-Agent: SALE-Readable-Emulator/1.0',
   'Content-Length: ' . strlen($formBody),
 ];
-
 
 // ========================= cURL COMMAND (debug) =========================
 $curlParts = [
@@ -265,7 +263,6 @@ if (is_array($responseArr)) {
     <h2>Request body (what is actually sent, form-urlencoded)</h2>
     <pre class="mono"><?=h($formBody)?></pre>
   </div>
-
 
   <div class="card">
     <h2>cURL request (what is actually sent)</h2>
