@@ -25,7 +25,7 @@ $cancelUrl  = 'https://sandbox.pp.ua/cancel';
 
 /* ===================== BILLING ADDRESS ===================== */
 $billingAddress = [
-    'country'      => 'US',
+    'country'      => 'UAE',
     'state'        => 'TX',
     'city'         => 'New Braunfels',
     'district'     => 'New Braunfels',
