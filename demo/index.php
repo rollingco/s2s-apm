@@ -21,8 +21,8 @@ const CHECKOUT_HOST   = 'https://pay.leogcltd.com';
 const SESSION_URL     = CHECKOUT_HOST . '/api/v1/session';
 const APM_URL         = 'https://api.leogcltd.com/post-va';
 
-const MERCHANT_KEY    = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
-const MERCHANT_PASS   = '976d5c5d5eacbab78288b12bb15178baS';
+const MERCHANT_KEY    = 'a9375190-26f2-11f0-be42-022c42254708';
+const MERCHANT_PASS   = '554999c284e9f29cf95f090d9a8f3171';
 
 const DEFAULT_SUCCESS_URL = 'https://sandbox.pp.ua/success';
 const DEFAULT_CANCEL_URL  = 'https://sandbox.pp.ua/cancel';
