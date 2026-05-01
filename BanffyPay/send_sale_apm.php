@@ -6,7 +6,8 @@
 header('Content-Type: text/html; charset=utf-8');
 
 //$PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com';
-$PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com/api/manager/v1/charge';
+//$PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com/api/manager/v1/charge';
+$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
 $CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
