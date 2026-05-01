@@ -12,13 +12,13 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-$merchantKey = '4bf7a996-3252-11f1-bd43-1600b4aec292';
-$secret      = 'f0eba05582c6cfe69a84090530efc0ba';
+$merchantKey = 'f9923256-456c-11f1-bcf6-1a8c46ca30d8';
+$secret      = '26c3c342d94e6a8361180035ebf67106';
 
 // Card
-$cardNumber  = '4441114494928789';
-$expMonth    = '02';
-$expYear     = '2028';
+$cardNumber  = '41111111111111111';
+$expMonth    = '05';
+$expYear     = '2038';
 $cvv         = '108';
 
 // Payer
@@ -27,7 +27,7 @@ $payerEmail  = 'garik.m@pay.cc';
 // Order
 $orderId     = 'Vasil test order #' . time();
 $amount      = '10.00';
-$currency    = 'EUR';
+$currency    = 'USD';
 $desc        = 'DP1222233444222111';
 
 $termUrl3ds  = 'https://portal.pay.cc/payment/p_controller/atomix/ret/return/w/1S2zavARHcZHlyNVCQWuhiA';
