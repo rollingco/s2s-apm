@@ -5,7 +5,8 @@
 
 header('Content-Type: text/html; charset=utf-8');
 
-$PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com';
+//$PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com';
+$PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com/api/manager/v1/charge';
 
 $CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
@@ -17,7 +18,7 @@ $DEFAULTS = [
   'return_url'   => 'https://google.com',
   'country'      => 'Tanzania',
   'provider'     => 'Airtel',
-  'payment_code' => '', // TODO: confirm with Service Desk
+  'payment_code' => '401', // TODO: confirm with Service Desk
   'phone'        => '255683456789',
   'amount'       => '1000.00',
 ];
