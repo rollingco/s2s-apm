@@ -7,8 +7,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 $PAYMENT_URL = 'https://staging-collections-api-gateway.banffapi.com';
 
-$CLIENT_KEY = 'a9375190-26f2-11f0-be42-022c42254708';
-$SECRET     = '554999c284e9f29cf95f090d9a8f3171';
+$CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
 
 $DEFAULTS = [
   'brand'        => 'leogc-bannf',
