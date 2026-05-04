@@ -22,6 +22,7 @@ $DEFAULTS = [
   'payment_code' => '401', // TODO: confirm with Service Desk
   'phone'        => '255683456789',
   'amount'       => '1000.00',
+  'countryCode'  => 'TZ',
 ];
 
 $providers = [
