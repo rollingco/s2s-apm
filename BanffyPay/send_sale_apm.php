@@ -22,7 +22,7 @@ $DEFAULTS = [
   'payment_code' => '401', // TODO: confirm with Service Desk
   'phone'        => '255683456789',
   'amount'       => '1000.00',
-  'CountryCode'  => 'TZ',
+  'countryCode'  => 'TZ',
 ];
 
 $providers = [
@@ -105,7 +105,7 @@ if ($submitted) {
       'return_url'        => $DEFAULTS['return_url'],
 
       'payer_phone'       => $payer_phone,
-      'CountryCode'       => $DEFAULTS['CountryCode'],
+      'countryCode'       => $DEFAULTS['countryCode'],
 
       'hash'              => $hash,
     ];
