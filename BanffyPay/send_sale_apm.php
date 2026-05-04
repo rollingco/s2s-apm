@@ -105,7 +105,7 @@ if ($submitted) {
       'return_url'        => $DEFAULTS['return_url'],
 
       'payer_phone'       => $payer_phone,
-      'countryCode'       => $countryCode,
+      'countryCode'       => $DEFAULTS['countryCode'],
 
       'hash'              => $hash,
     ];
