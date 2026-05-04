@@ -25,6 +25,8 @@ $DEFAULTS = [
   'countryCode'  => 'TZ',
 ];
 
+print_r($DEFAULTS);
+
 $providers = [
   'Airtel'  => '255683456789',
   'Vodacom' => '255763456789',
