@@ -7,8 +7,8 @@ header('Content-Type: text/html; charset=utf-8');
 
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
-$CLIENT_KEY = 'd67e5242-47cc-11f1-bcc3-8e68cdc8846e';
-$SECRET     = '2c2b0c17afdf0a4bcb8eb6eb2a54e541';
+$CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
 
 $COUNTRIES = [
   'TZ' => [
