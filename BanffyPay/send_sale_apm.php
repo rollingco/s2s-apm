@@ -1,14 +1,14 @@
 <?php
 /**
- * S2S APM SALE — multi-country example with paymentProvider in extraData ----
+ * S2S APM SALE — multi-country example bu
  */
 
 header('Content-Type: text/html; charset=utf-8');
 
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
-$CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
-$SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
+$CLIENT_KEY = 'd67e5242-47cc-11f1-bcc3-8e68cdc8846e';
+$SECRET     = '2c2b0c17afdf0a4bcb8eb6eb2a54e541';
 
 $COUNTRIES = [
   'TZ' => [
@@ -17,10 +17,22 @@ $COUNTRIES = [
     'currency'     => 'TZS',
     'payer_country'=> 'TZ',
     'providers'    => [
-      'Airtel'  => '255683456789',
-      'Vodacom' => '255763456789',
-      'Tigo'    => '255713456789',
-      'Halotel' => '255623456789',
+      'Airtel'  => [
+        'phone'      => '255683456789',
+        'channel_id' => 'Airtel_Tanzania',
+      ],
+      'Vodacom' => [
+        'phone'      => '255763456789',
+        'channel_id' => 'Vodacom_Tanzania',
+      ],
+      'Tigo'    => [
+        'phone'      => '255713456789',
+        'channel_id' => 'Tigo_Tanzania',
+      ],
+      'Halotel' => [
+        'phone'      => '255623456789',
+        'channel_id' => 'Halotel_Tanzania',
+      ],
     ],
   ],
 ];
@@ -62,7 +74,8 @@ $submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 $selectedCountryCode = $DEFAULTS['countryCode'];
 $selectedCountry     = $COUNTRIES[$selectedCountryCode];
 $provider            = $DEFAULTS['provider'];
-$payer_phone         = $selectedCountry['providers'][$provider];
+$payer_phone         = $selectedCountry['providers'][$provider]['phone'];
+$channel_id          = $selectedCountry['providers'][$provider]['channel_id'];
 $order_amt           = $DEFAULTS['amount'];
 $payment_code        = $DEFAULTS['payment_code'];
 
@@ -86,6 +99,8 @@ if ($submitted) {
     $errors[] = 'Invalid provider for selected country.';
     $provider = array_key_first($selectedCountry['providers']);
   }
+
+  $channel_id = $selectedCountry['providers'][$provider]['channel_id'];
 
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $payer_phone = ltrim($payer_phone, '+');
@@ -118,42 +133,33 @@ if ($submitted) {
       $hash_src_dbg
     );
 
-  $form = [
-    'action'            => 'SALE',
-    'client_key'        => $CLIENT_KEY,
-    'brand'             => $DEFAULTS['brand'],
+    $form = [
+      'action'            => 'SALE',
+      'client_key'        => $CLIENT_KEY,
+      'brand'             => $DEFAULTS['brand'],
 
-    'order_id'          => $order_id,
-    'order_amount'      => $order_amt,
-    'order_currency'    => $selectedCountry['currency'],
-    'order_description' => $order_desc,
+      'order_id'          => $order_id,
+      'order_amount'      => $order_amt,
+      'order_currency'    => $selectedCountry['currency'],
+      'order_description' => $order_desc,
 
-    'identifier'        => $DEFAULTS['identifier'],
-    'payer_ip'          => $payer_ip,
-    'return_url'        => $DEFAULTS['return_url'],
+      'identifier'        => $DEFAULTS['identifier'],
+      'payer_ip'          => $payer_ip,
+      'return_url'        => $DEFAULTS['return_url'],
 
-    'country'           => $selectedCountry['country'],
-    'countryCode'       => $selectedCountry['countryCode'],
+      'country'           => $selectedCountry['country'],
+      'countryCode'       => $selectedCountry['countryCode'],
+      'provider'          => $provider,
+      'payment_code'      => $payment_code,
 
-    'payment_code'      => $payment_code,
+      'payer_phone'       => $payer_phone,
+      'payer_country'     => $selectedCountry['payer_country'],
+      'payer_email'       => $DEFAULTS['email'],
+      'payer_first_name'  => $DEFAULTS['payer_first_name'],
+      'payer_last_name'   => $DEFAULTS['payer_last_name'],
 
-    'payer_phone'       => $payer_phone,
-    'payer_country'     => $selectedCountry['payer_country'],
-    'payer_email'       => $DEFAULTS['email'],
-    'payer_first_name'  => $DEFAULTS['payer_first_name'],
-    'payer_last_name'   => $DEFAULTS['payer_last_name'],
-
-    // ✅ Ось тут вся магія
-    'extraData' => json_encode([
-        'firstName'       => $DEFAULTS['payer_first_name'],
-        'lastName'        => $DEFAULTS['payer_last_name'],
-        'name'            => $DEFAULTS['payer_first_name'] . ' ' . $DEFAULTS['payer_last_name'],
-        'email'           => $DEFAULTS['email'],
-        'paymentProvider' => $provider // Airtel / Vodacom / Tigo / Halotel
-    ]),
-
-    'hash' => $hash,
-];
+      'hash'              => $hash,
+    ];
 
     $debug = [
       'endpoint' => $PAYMENT_URL,
@@ -237,6 +243,13 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
     <br>
 
     <div>
+      <label>Channel ID:</label>
+      <input type="text" id="channel_id_preview" value="<?=h($channel_id)?>" readonly>
+    </div>
+
+    <br>
+
+    <div>
       <label>Phone / MSISDN:</label>
       <input type="text" name="phone" id="phone" value="<?=h($payer_phone)?>">
     </div>
@@ -289,6 +302,7 @@ function refreshProviders() {
   const countryCode = document.getElementById('countryCode').value;
   const providerSelect = document.getElementById('provider');
   const phoneInput = document.getElementById('phone');
+  const channelPreview = document.getElementById('channel_id_preview');
 
   providerSelect.innerHTML = '';
 
@@ -309,14 +323,16 @@ function refreshProviders() {
     providerSelect.selectedIndex = 0;
   }
 
-  phoneInput.value = providers[providerSelect.value];
+  phoneInput.value = providers[providerSelect.value].phone;
+  channelPreview.value = providers[providerSelect.value].channel_id;
 }
 
 document.getElementById('countryCode').addEventListener('change', refreshProviders);
 
 document.getElementById('provider').addEventListener('change', function() {
   const countryCode = document.getElementById('countryCode').value;
-  document.getElementById('phone').value = countries[countryCode].providers[this.value];
+  document.getElementById('phone').value = countries[countryCode].providers[this.value].phone;
+  document.getElementById('channel_id_preview').value = countries[countryCode].providers[this.value].channel_id;
 });
 
 refreshProviders();
