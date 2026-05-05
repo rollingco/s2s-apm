@@ -135,7 +135,7 @@ if ($submitted) {
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
       // Provider should be passed in extraData, not only as a top-level field
-      //'extraData[paymentProvider]' => $provider,
+      'extraData[paymentProvider]' => $provider.'_3extra',
       'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
