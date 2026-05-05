@@ -1,6 +1,6 @@
 <?php
 /**
- * S2S APM SALE — BanffyPay multi-country example
+ * S2S APM SALE — BanffyPay multi-country example bu
  */
 
 header('Content-Type: text/html; charset=utf-8');
