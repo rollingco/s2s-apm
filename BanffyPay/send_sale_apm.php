@@ -1,6 +1,6 @@
 <?php
 /**
- * S2S APM SALE — multi-country example bu
+ * S2S APM SALE — multi-country example with paymentProvider in extraData
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -134,7 +134,8 @@ if ($submitted) {
 
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
-      'provider'          => $provider,
+      // Provider should be passed in extraData, not only as a top-level field
+      'extraData[paymentProvider]' => $provider,
       'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
