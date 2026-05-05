@@ -1,6 +1,6 @@
 <?php
 /**
- * S2S APM SALE — multi-country example bu
+ * S2S APM SALE — multi-country example with channel_id
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -17,22 +17,10 @@ $COUNTRIES = [
     'currency'     => 'TZS',
     'payer_country'=> 'TZ',
     'providers'    => [
-      'Airtel'  => [
-        'phone'      => '255683456789',
-        'channel_id' => 'Airtel_Tanzania',
-      ],
-      'Vodacom' => [
-        'phone'      => '255763456789',
-        'channel_id' => 'Vodacom_Tanzania',
-      ],
-      'Tigo'    => [
-        'phone'      => '255713456789',
-        'channel_id' => 'Tigo_Tanzania',
-      ],
-      'Halotel' => [
-        'phone'      => '255623456789',
-        'channel_id' => 'Halotel_Tanzania',
-      ],
+      'Airtel'  => '255683456789',
+      'Vodacom' => '255763456789',
+      'Tigo'    => '255713456789',
+      'Halotel' => '255623456789',
     ],
   ],
 ];
@@ -74,8 +62,7 @@ $submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 $selectedCountryCode = $DEFAULTS['countryCode'];
 $selectedCountry     = $COUNTRIES[$selectedCountryCode];
 $provider            = $DEFAULTS['provider'];
-$payer_phone         = $selectedCountry['providers'][$provider]['phone'];
-$channel_id          = $selectedCountry['providers'][$provider]['channel_id'];
+$payer_phone         = $selectedCountry['providers'][$provider];
 $order_amt           = $DEFAULTS['amount'];
 $payment_code        = $DEFAULTS['payment_code'];
 
@@ -99,8 +86,6 @@ if ($submitted) {
     $errors[] = 'Invalid provider for selected country.';
     $provider = array_key_first($selectedCountry['providers']);
   }
-
-  $channel_id = $selectedCountry['providers'][$provider]['channel_id'];
 
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $payer_phone = ltrim($payer_phone, '+');
@@ -149,7 +134,7 @@ if ($submitted) {
 
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
-      'provider'          => $provider,
+      'channel_id'        => $provider,
       'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
@@ -243,13 +228,6 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
     <br>
 
     <div>
-      <label>Channel ID:</label>
-      <input type="text" id="channel_id_preview" value="<?=h($channel_id)?>" readonly>
-    </div>
-
-    <br>
-
-    <div>
       <label>Phone / MSISDN:</label>
       <input type="text" name="phone" id="phone" value="<?=h($payer_phone)?>">
     </div>
@@ -302,7 +280,6 @@ function refreshProviders() {
   const countryCode = document.getElementById('countryCode').value;
   const providerSelect = document.getElementById('provider');
   const phoneInput = document.getElementById('phone');
-  const channelPreview = document.getElementById('channel_id_preview');
 
   providerSelect.innerHTML = '';
 
@@ -323,16 +300,14 @@ function refreshProviders() {
     providerSelect.selectedIndex = 0;
   }
 
-  phoneInput.value = providers[providerSelect.value].phone;
-  channelPreview.value = providers[providerSelect.value].channel_id;
+  phoneInput.value = providers[providerSelect.value];
 }
 
 document.getElementById('countryCode').addEventListener('change', refreshProviders);
 
 document.getElementById('provider').addEventListener('change', function() {
   const countryCode = document.getElementById('countryCode').value;
-  document.getElementById('phone').value = countries[countryCode].providers[this.value].phone;
-  document.getElementById('channel_id_preview').value = countries[countryCode].providers[this.value].channel_id;
+  document.getElementById('phone').value = countries[countryCode].providers[this.value];
 });
 
 refreshProviders();
