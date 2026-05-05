@@ -111,7 +111,7 @@ if ($submitted) {
       'payer_phone'       => $payer_phone,
       'payer_country'     => $DEFAULTS['payer_country'],
       'payer_email'       => $DEFAULTS['email'],
-      'payer_name'        => $DEFAULTS['name'] ,
+      'name'              => $DEFAULTS['name'] ,
 
       'hash'              => $hash,
     ];
