@@ -118,34 +118,42 @@ if ($submitted) {
       $hash_src_dbg
     );
 
-    $form = [
-      'action'            => 'SALE',
-      'client_key'        => $CLIENT_KEY,
-      'brand'             => $DEFAULTS['brand'],
+  $form = [
+    'action'            => 'SALE',
+    'client_key'        => $CLIENT_KEY,
+    'brand'             => $DEFAULTS['brand'],
 
-      'order_id'          => $order_id,
-      'order_amount'      => $order_amt,
-      'order_currency'    => $selectedCountry['currency'],
-      'order_description' => $order_desc,
+    'order_id'          => $order_id,
+    'order_amount'      => $order_amt,
+    'order_currency'    => $selectedCountry['currency'],
+    'order_description' => $order_desc,
 
-      'identifier'        => $DEFAULTS['identifier'],
-      'payer_ip'          => $payer_ip,
-      'return_url'        => $DEFAULTS['return_url'],
+    'identifier'        => $DEFAULTS['identifier'],
+    'payer_ip'          => $payer_ip,
+    'return_url'        => $DEFAULTS['return_url'],
 
-      'country'           => $selectedCountry['country'],
-      'countryCode'       => $selectedCountry['countryCode'],
-      // Provider should be passed in extraData, not only as a top-level field
-      'paymentProvider' => $provider.'_3extra',
-      'payment_code'      => $payment_code,
+    'country'           => $selectedCountry['country'],
+    'countryCode'       => $selectedCountry['countryCode'],
 
-      'payer_phone'       => $payer_phone,
-      'payer_country'     => $selectedCountry['payer_country'],
-      'payer_email'       => $DEFAULTS['email'],
-      'payer_first_name'  => $DEFAULTS['payer_first_name'],
-      'payer_last_name'   => $DEFAULTS['payer_last_name'],
+    'payment_code'      => $payment_code,
 
-      'hash'              => $hash,
-    ];
+    'payer_phone'       => $payer_phone,
+    'payer_country'     => $selectedCountry['payer_country'],
+    'payer_email'       => $DEFAULTS['email'],
+    'payer_first_name'  => $DEFAULTS['payer_first_name'],
+    'payer_last_name'   => $DEFAULTS['payer_last_name'],
+
+    // ✅ Ось тут вся магія
+    'extraData' => json_encode([
+        'firstName'       => $DEFAULTS['payer_first_name'],
+        'lastName'        => $DEFAULTS['payer_last_name'],
+        'name'            => $DEFAULTS['payer_first_name'] . ' ' . $DEFAULTS['payer_last_name'],
+        'email'           => $DEFAULTS['email'],
+        'paymentProvider' => $provider // Airtel / Vodacom / Tigo / Halotel
+    ]),
+
+    'hash' => $hash,
+];
 
     $debug = [
       'endpoint' => $PAYMENT_URL,
