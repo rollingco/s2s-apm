@@ -1,6 +1,7 @@
 <?php
 /**
  * S2S APM SALE — multi-country example with channel_id
+ * Data source: BanffyPay_Payment_Methods_EN.xlsx
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -11,16 +12,216 @@ $CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
 
 $COUNTRIES = [
+  'BJ' => [
+    'country'         => 'Benin',
+    'countryCode'     => 'BJ',
+    'currency'        => 'XOF',
+    'payer_country'   => 'BJ',
+    'payment_code'    => '101',
+    'extraDataFields' => [],
+    'providers'       => [
+      'Mtn'  => '',
+      'Moov' => '',
+    ],
+  ],
+  'TG' => [
+    'country'         => 'Togo',
+    'countryCode'     => 'TG',
+    'currency'        => 'XOF',
+    'payer_country'   => 'TG',
+    'payment_code'    => '103',
+    'extraDataFields' => [],
+    'providers'       => [
+      'Togocel' => '',
+      'Moov'    => '',
+    ],
+  ],
+  'SN' => [
+    'country'         => 'Senegal',
+    'countryCode'     => 'SN',
+    'currency'        => 'XOF',
+    'payer_country'   => 'SN',
+    'payment_code'    => '201',
+    'extraDataFields' => [],
+    'providers'       => [
+      'orange-senegal' => '',
+      'wave-senegal'   => '',
+    ],
+  ],
+  'CM' => [
+    'country'         => 'Cameroon',
+    'countryCode'     => 'CM',
+    'currency'        => 'XAF',
+    'payer_country'   => 'CM',
+    'payment_code'    => '202',
+    'extraDataFields' => [],
+    'providers'       => [
+      'mtn-momo-cameroon' => '',
+    ],
+  ],
+  'KE' => [
+    'country'         => 'Kenya',
+    'countryCode'     => 'KE',
+    'currency'        => 'KES',
+    'payer_country'   => 'KE',
+    'payment_code'    => '203',
+    'extraDataFields' => [],
+    'providers'       => [
+      'airtel-kenya'    => '',
+      'equitel-kenya'   => '',
+      'safaricom-kenya' => '',
+      't-kash-kenya'    => '',
+      'telkom-kenya'    => '',
+    ],
+  ],
+  'CI' => [
+    'country'         => 'Ivory Coast',
+    'countryCode'     => 'CI',
+    'currency'        => 'XOF',
+    'payer_country'   => 'CI',
+    'payment_code'    => '204',
+    'extraDataFields' => [],
+    'providers'       => [
+      'moov-ivory-coast'   => '',
+      'orange-ivory-coast' => '',
+      'wave-ivory-coast'   => '',
+    ],
+  ],
+  'ML' => [
+    'country'         => 'Mali',
+    'countryCode'     => 'ML',
+    'currency'        => 'XOF',
+    'payer_country'   => 'ML',
+    'payment_code'    => '205',
+    'extraDataFields' => [],
+    'providers'       => [
+      'orange-mali' => '',
+      'moov-mali'   => '',
+    ],
+  ],
+  'BF' => [
+    'country'         => 'Burkina Faso',
+    'countryCode'     => 'BF',
+    'currency'        => 'XOF',
+    'payer_country'   => 'BF',
+    'payment_code'    => '206',
+    'extraDataFields' => [],
+    'providers'       => [
+      'Default' => '',
+    ],
+  ],
+  'GH' => [
+    'country'         => 'Ghana',
+    'countryCode'     => 'GH',
+    'currency'        => 'GHC',
+    'payer_country'   => 'GH',
+    'payment_code'    => '301',
+    'extraDataFields' => ['firstName', 'lastName'],
+    'providers'       => [
+      'Mtn'        => '',
+      'Zeepay'     => '',
+      'Vodafone'   => '',
+      'Airtel-Tigo'=> '',
+    ],
+  ],
+  'ZM' => [
+    'country'         => 'Zambia',
+    'countryCode'     => 'ZM',
+    'currency'        => 'ZMW',
+    'payer_country'   => 'ZM',
+    'payment_code'    => '302',
+    'extraDataFields' => ['firstName', 'lastName'],
+    'providers'       => [
+      'Zeepay' => '',
+    ],
+  ],
+  'NG' => [
+    'country'         => 'Nigeria',
+    'countryCode'     => 'NG',
+    'currency'        => 'NGN',
+    'payer_country'   => 'NG',
+    'payment_code'    => '401',
+    'extraDataFields' => ['firstName', 'lastName'],
+    'providers'       => [
+      'Originating Bank name' => '',
+    ],
+  ],
   'TZ' => [
-    'country'      => 'Tanzania',
-    'countryCode'  => 'TZ',
-    'currency'     => 'TZS',
-    'payer_country'=> 'TZ',
-    'providers'    => [
-      'Airtel'  => '255683456789',
+    'country'         => 'Tanzania',
+    'countryCode'     => 'TZ',
+    'currency'        => 'TZA',
+    'payer_country'   => 'TZ',
+    'payment_code'    => '501',
+    'extraDataFields' => ['name', 'email'],
+    'providers'       => [
       'Vodafone' => '255763456789',
-      'Tigo'    => '255713456789',
+      'Airtel'   => '255683456789',
+      'Tigo'     => '255713456789',
       'Halopesa' => '255623456789',
+      'Azampesa' => '',
+      'Mpesa'    => '',
+    ],
+  ],
+  'RW' => [
+    'country'         => 'Rwanda',
+    'countryCode'     => 'RW',
+    'currency'        => 'RWF',
+    'payer_country'   => 'RW',
+    'payment_code'    => '505',
+    'extraDataFields' => [],
+    'providers'       => [
+      'Airtel'   => '',
+      'Tigo'     => '',
+      'Halopesa' => '',
+      'Azampesa' => '',
+      'Mpesa'    => '',
+    ],
+  ],
+  'SL' => [
+    'country'         => 'Sierra Leone',
+    'countryCode'     => 'SL',
+    'currency'        => 'SLE',
+    'payer_country'   => 'SL',
+    'payment_code'    => '601',
+    'extraDataFields' => [],
+    'providers'       => [
+      'All Networks' => '',
+    ],
+  ],
+  'LR' => [
+    'country'         => 'Liberia',
+    'countryCode'     => 'LR',
+    'currency'        => 'LRD',
+    'payer_country'   => 'LR',
+    'payment_code'    => '701',
+    'extraDataFields' => [],
+    'providers'       => [
+      'MtnMomo'         => '',
+      'Mtn (in USD)'    => '',
+      'OrangeMoney'     => '',
+      'Orange (in USD)' => '',
+    ],
+  ],
+  'CF' => [
+    'country'         => 'DRC',
+    'countryCode'     => 'CF',
+    'currency'        => 'CAF',
+    'payer_country'   => 'CF',
+    'payment_code'    => '801',
+    'extraDataFields' => ['name', 'email'],
+    'providers'       => [
+      'Default' => '',
+    ],
+  ],
+  'CA' => [
+    'country'         => 'Canada',
+    'countryCode'     => 'CA',
+    'currency'        => 'CAD',
+    'payer_country'   => 'CA',
+    'payment_code'    => '901',
+    'extraDataFields' => ['email', 'name'],
+    'providers'       => [
+      'Default' => '',
     ],
   ],
 ];
@@ -31,7 +232,6 @@ $DEFAULTS = [
   'return_url'        => 'https://google.com',
   'countryCode'       => 'TZ',
   'provider'          => 'Airtel',
-  'payment_code'      => '401',
   'amount'            => '200.00',
   'email'             => 'customer@example.com',
   'payer_first_name'  => 'John',
@@ -57,14 +257,38 @@ function build_sale_hash($identifier, $order_id, $amount, $currency, $secret, &$
   return md5(strtoupper(strrev($src)));
 }
 
+function build_extra_data(array $country, array $defaults){
+  $extraData = [];
+  $fullName = trim($defaults['payer_first_name'] . ' ' . $defaults['payer_last_name']);
+
+  foreach ($country['extraDataFields'] as $field) {
+    if ($field === 'firstName') {
+      $extraData['firstName'] = $defaults['payer_first_name'];
+    } elseif ($field === 'lastName') {
+      $extraData['lastName'] = $defaults['payer_last_name'];
+    } elseif ($field === 'name') {
+      $extraData['name'] = $fullName;
+    } elseif ($field === 'email') {
+      $extraData['email'] = $defaults['email'];
+    }
+  }
+
+  return $extraData;
+}
+
 $submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
 $selectedCountryCode = $DEFAULTS['countryCode'];
 $selectedCountry     = $COUNTRIES[$selectedCountryCode];
 $provider            = $DEFAULTS['provider'];
+
+if (!isset($selectedCountry['providers'][$provider])) {
+  $provider = array_key_first($selectedCountry['providers']);
+}
+
 $payer_phone         = $selectedCountry['providers'][$provider];
 $order_amt           = $DEFAULTS['amount'];
-$payment_code        = $DEFAULTS['payment_code'];
+$payment_code        = $selectedCountry['payment_code'];
 
 $debug = [];
 $responseBlocks = ['bodyRaw' => '', 'json' => null];
@@ -80,7 +304,7 @@ if ($submitted) {
 
   $selectedCountry = $COUNTRIES[$selectedCountryCode];
 
-  $provider = $_POST['provider'] ?? $DEFAULTS['provider'];
+  $provider = $_POST['provider'] ?? array_key_first($selectedCountry['providers']);
 
   if (!isset($selectedCountry['providers'][$provider])) {
     $errors[] = 'Invalid provider for selected country.';
@@ -93,7 +317,10 @@ if ($submitted) {
   $rawAmt = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
   $order_amt = number_format((float)$rawAmt, 2, '.', '');
 
-  $payment_code = trim($_POST['payment_code'] ?? '');
+  $payment_code = trim($_POST['payment_code'] ?? $selectedCountry['payment_code']);
+  if ($payment_code === '') {
+    $payment_code = $selectedCountry['payment_code'];
+  }
 
   if ($payer_phone === '') {
     $errors[] = 'Phone / MSISDN is required.';
@@ -105,7 +332,7 @@ if ($submitted) {
 
   if (!$errors) {
     $order_id   = $selectedCountryCode . '_ORDER_' . time();
-    $order_desc = ' ' . $selectedCountry['country'] . ' APM payment';
+    $order_desc = $selectedCountry['country'] . ' APM payment';
     $payer_ip   = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
     $hash_src_dbg = '';
@@ -145,6 +372,11 @@ if ($submitted) {
 
       'hash'              => $hash,
     ];
+
+    $extraData = build_extra_data($selectedCountry, $DEFAULTS);
+    if (!empty($extraData)) {
+      $form['extraData'] = json_encode($extraData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
 
     $debug = [
       'endpoint' => $PAYMENT_URL,
@@ -192,6 +424,7 @@ input,select{padding:8px 10px;border-radius:8px;background:#11131a;color:#e6e6e6
 label{display:inline-block;min-width:140px}
 button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border:0}
 .error{color:#ff8080}
+.hint{color:#a7b0c0;font-size:12px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -212,7 +445,7 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
       <select name="countryCode" id="countryCode">
         <?php foreach ($COUNTRIES as $code => $c): ?>
           <option value="<?=h($code)?>" <?=($selectedCountryCode === $code ? 'selected' : '')?>>
-            <?=h($c['country'])?> / <?=h($code)?> / <?=h($c['currency'])?>
+            <?=h($c['country'])?> / <?=h($code)?> / <?=h($c['currency'])?> / payment_code: <?=h($c['payment_code'])?>
           </option>
         <?php endforeach; ?>
       </select>
@@ -223,6 +456,7 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
     <div>
       <label>Provider:</label>
       <select name="provider" id="provider"></select>
+      <div class="hint">This value is sent as channel_id.</div>
     </div>
 
     <br>
@@ -243,7 +477,8 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
 
     <div>
       <label>Payment Code:</label>
-      <input type="text" name="payment_code" value="<?=h($payment_code)?>">
+      <input type="text" name="payment_code" id="payment_code" value="<?=h($payment_code)?>">
+      <div class="hint">Default is the first deposit payment code from the file for the selected country.</div>
     </div>
 
     <br>
@@ -280,10 +515,13 @@ function refreshProviders() {
   const countryCode = document.getElementById('countryCode').value;
   const providerSelect = document.getElementById('provider');
   const phoneInput = document.getElementById('phone');
+  const paymentCodeInput = document.getElementById('payment_code');
 
   providerSelect.innerHTML = '';
 
-  const providers = countries[countryCode].providers;
+  const country = countries[countryCode];
+  const providers = country.providers;
+
   Object.keys(providers).forEach(function(provider) {
     const option = document.createElement('option');
     option.value = provider;
@@ -300,14 +538,15 @@ function refreshProviders() {
     providerSelect.selectedIndex = 0;
   }
 
-  phoneInput.value = providers[providerSelect.value];
+  phoneInput.value = providers[providerSelect.value] || '';
+  paymentCodeInput.value = country.payment_code || '';
 }
 
 document.getElementById('countryCode').addEventListener('change', refreshProviders);
 
 document.getElementById('provider').addEventListener('change', function() {
   const countryCode = document.getElementById('countryCode').value;
-  document.getElementById('phone').value = countries[countryCode].providers[this.value];
+  document.getElementById('phone').value = countries[countryCode].providers[this.value] || '';
 });
 
 refreshProviders();
