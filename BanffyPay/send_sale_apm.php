@@ -1,6 +1,6 @@
 <?php
 /**
- * S2S APM SALE — BanffyPay multi-country example bu
+ * S2S APM SALE — multi-country example bu
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -105,7 +105,7 @@ if ($submitted) {
 
   if (!$errors) {
     $order_id   = $selectedCountryCode . '_ORDER_' . time();
-    $order_desc = 'BanffyPay ' . $selectedCountry['country'] . ' APM payment';
+    $order_desc = ' ' . $selectedCountry['country'] . ' APM payment';
     $payer_ip   = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
     $hash_src_dbg = '';
