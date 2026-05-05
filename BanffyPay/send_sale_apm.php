@@ -24,7 +24,8 @@ $DEFAULTS = [
   'amount'       => '1000.00',
   'payer_country'  => 'TZ',
   'email'          => 'customer@example.com',
-  'name'           => 'John Doe',
+  'payer_first_name'=> 'John',
+  'payer_last_name' => 'Doe',
 ];
 
 //print_r($DEFAULTS);
@@ -111,7 +112,8 @@ if ($submitted) {
       'payer_phone'       => $payer_phone,
       'payer_country'     => $DEFAULTS['payer_country'],
       'payer_email'       => $DEFAULTS['email'],
-      'name'              => $DEFAULTS['name'] ,
+      'payer_first_name' => $DEFAULTS['payer_first_name'],
+      'payer_last_name'  => $DEFAULTS['payer_last_name'],
 
       'hash'              => $hash,
     ];
