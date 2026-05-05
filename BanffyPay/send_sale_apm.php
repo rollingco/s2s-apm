@@ -18,7 +18,7 @@ $COUNTRIES = [
     'payer_country'=> 'TZ',
     'providers'    => [
       'Airtel'  => '255683456789',
-      'Vodacom' => '255763456789',
+      'Vodafone' => '255763456789',
       'Tigo'    => '255713456789',
       'Halopesa' => '255623456789',
     ],
