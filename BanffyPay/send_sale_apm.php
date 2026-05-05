@@ -22,10 +22,10 @@ $DEFAULTS = [
   'payment_code' => '401', // TODO: confirm with Service Desk
   'phone'        => '255683456789',
   'amount'       => '1000.00',
-  'countryCode'  => 'TZ',
+  'payer_country'  => 'TZ',
 ];
 
-print_r($DEFAULTS);
+//print_r($DEFAULTS);
 
 $providers = [
   'Airtel'  => '255683456789',
@@ -107,7 +107,7 @@ if ($submitted) {
       'return_url'        => $DEFAULTS['return_url'],
 
       'payer_phone'       => $payer_phone,
-      'countryCode'       => $DEFAULTS['countryCode'],
+      'payer_country'     => $DEFAULTS['payer_country'],
 
       'hash'              => $hash,
     ];
