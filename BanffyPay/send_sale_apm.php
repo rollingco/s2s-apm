@@ -1,6 +1,6 @@
 <?php
 /**
- * S2S APM SALE — multi-country example with paymentProvider in extraData
+ * S2S APM SALE — multi-country example with paymentProvider in extraData ----
  */
 
 header('Content-Type: text/html; charset=utf-8');
