@@ -225,8 +225,7 @@ $DEFAULTS = [
   'countryCode'       => 'TZ',
   'provider'          => 'Airtel',
   'payment_code'      => '501',
-  //'amount'            => '200.00',
-  'amount'            => '200',
+  'amount'            => '200.00',
   'email'             => 'customer@example.com',
   'payer_first_name'  => 'John',
   'payer_last_name'   => 'Doe',
@@ -284,8 +283,9 @@ if ($submitted) {
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $payer_phone = ltrim($payer_phone, '+');
 
-  $rawAmt = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
-  $order_amt = number_format((float)$rawAmt, 2, '.', '');
+  //$rawAmt = preg_replace('/[^0-9.]/', '', $_POST['amount'] ?? '');
+  // $order_amt = number_format((float)$rawAmt, 2, '.', '');
+  $order_amt = trim($_POST['amount'] ?? '');
 
   $payment_code = trim($_POST['payment_code'] ?? '');
   if ($payment_code === '') {
