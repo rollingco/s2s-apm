@@ -7,7 +7,7 @@
  * - signature: md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  * - amount нормалізуємо до 2 знаків: 10 -> 10.00
  * - phone відправляємо як parameters[msisdn]
- * - Banffy params відправляємо через parameters[...]
+ * - Banffy params відправляємо через parameters[.......]
  */
 
 header('Content-Type: text/html; charset=utf-8');
