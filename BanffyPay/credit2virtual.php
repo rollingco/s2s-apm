@@ -15,8 +15,8 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===================== CONFIG ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post';
 
-$CLIENT_KEY = 'd67e5242-47cc-11f1-bcc3-8e68cdc8846e';
-$SECRET     = '2c2b0c17afdf0a4bcb8eb6eb2a54e541';
+$CLIENT_KEY = 'a9375190-26f2-11f0-be42-022c42254708';
+$SECRET     = '554999c284e9f29cf95f090d9a8f3171';
 
 $STATUS_HELPER_URL = 'status_credit2virtual.php';
 
