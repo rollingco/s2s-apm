@@ -353,6 +353,7 @@ if ($submitted) {
     $form['parameters[provider]'] = $provider;
     $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
     $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
+    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
 
     // Hash is required and added after all business fields.
     $form['hash'] = $hash;
