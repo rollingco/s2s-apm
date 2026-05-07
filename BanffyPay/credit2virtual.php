@@ -271,8 +271,8 @@ if ($submitted) {
     'parameters[countryCode]'     => $country_code,
     'parameters[countryName]'     => $country_name,
     'parameters[paymentCode]'     => $payment_code,
-    'parameters[paymentProvider]' => $payment_provider,
-    'parameters[Provider]'        => $provider,
+    //'parameters[paymentProvider]' => $payment_provider,
+    //'parameters[Provider]'        => $provider,
   ];
 
   if ($CHANNEL_ID !== '') {
