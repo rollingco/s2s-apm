@@ -1,11 +1,6 @@
 <?php
 /**
- * S2S CREDIT2VIRTUAL — BanffyPay PayOut / Halopesa
- *
- * Important:
- * - TZS is sent as integer amount, e.g. 1000, not 1000.00
- * - parameters[] is required by CREDIT2VIRTUAL docs
- * - countryCode and routing fields are also duplicated on top level
+ * CREDIT2VIRTUAL — BanffyPay PayOut / Halopesa
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -15,11 +10,9 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post';
 $CLIENT_KEY = 'a9375190-26f2-11f0-be42-022c42254708';
 $SECRET     = '554999c284e9f29cf95f090d9a8f3171';
 
-$STATUS_HELPER_URL = 'status_credit2virtual.php';
-
 $DEFAULTS = [
   'order_id'         => $_GET['order_id'] ?? ('halopesa-payout-' . time()),
-  'amount'           => $_GET['amount'] ?? '1000',
+  'amount'           => $_GET['amount'] ?? '10.00',
   'currency'         => $_GET['currency'] ?? 'TZS',
   'brand'            => $_GET['brand'] ?? 'leogc-bannf-dbm',
   'desc'             => $_GET['desc'] ?? 'Halopesa payout test',
@@ -29,9 +22,9 @@ $DEFAULTS = [
   'country_code'     => $_GET['country_code'] ?? 'TZ',
   'country_name'     => $_GET['country_name'] ?? 'Tanzania',
 
-  'provider'         => $_GET['provider'] ?? 'Halopesa',
-  'payment_provider' => $_GET['payment_provider'] ?? 'Halopesa',
   'payment_code'     => $_GET['payment_code'] ?? '999',
+  'payment_provider' => $_GET['payment_provider'] ?? 'Halopesa',
+  'provider'         => $_GET['provider'] ?? 'Halopesa',
 ];
 
 function h($s) {
@@ -41,7 +34,6 @@ function h($s) {
 function pretty($v) {
   if (is_string($v)) {
     $d = json_decode($v, true);
-
     if (json_last_error() === JSON_ERROR_NONE) {
       $v = $d;
     } else {
@@ -49,10 +41,7 @@ function pretty($v) {
     }
   }
 
-  return h(json_encode(
-    $v,
-    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-  ));
+  return h(json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 }
 
 /**
@@ -60,8 +49,7 @@ function pretty($v) {
  * md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  */
 function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$srcOut = null) {
-  $inner = $order_id . $amount . $currency;
-  $src   = strtoupper(strrev($inner)) . $secret;
+  $src = strtoupper(strrev($order_id . $amount . $currency)) . $secret;
 
   if ($srcOut !== null) {
     $srcOut = $src;
@@ -78,78 +66,50 @@ if ($submitted) {
   $currency         = strtoupper(trim((string)($_POST['currency'] ?? '')));
   $brand            = trim((string)($_POST['brand'] ?? ''));
   $desc             = trim((string)($_POST['desc'] ?? ''));
-
   $phone            = trim((string)($_POST['phone'] ?? ''));
 
   $country_code     = strtoupper(trim((string)($_POST['country_code'] ?? '')));
   $country_name     = trim((string)($_POST['country_name'] ?? ''));
 
-  $provider         = trim((string)($_POST['provider'] ?? ''));
-  $payment_provider = trim((string)($_POST['payment_provider'] ?? ''));
   $payment_code     = trim((string)($_POST['payment_code'] ?? ''));
+  $payment_provider = trim((string)($_POST['payment_provider'] ?? ''));
+  $provider         = trim((string)($_POST['provider'] ?? ''));
 
   $errors = [];
 
-  if ($order_id_in === '') {
-    $errors[] = 'order_id is required.';
-  }
+  if ($order_id_in === '') $errors[] = 'order_id is required.';
+  if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount)) $errors[] = 'order_amount format is wrong.';
+  if ($currency === '') $errors[] = 'order_currency is required.';
+  if ($brand === '') $brand = 'leogc-bannf-dbm';
+  if ($desc === '') $desc = 'Halopesa payout test';
+  if ($phone === '') $errors[] = 'payee_phone / msisdn is required.';
 
-  if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount)) {
-    $errors[] = 'Amount wrong format. Use 1000 for TZS, not 1000.00.';
-  }
+  if ($country_code === '') $country_code = 'TZ';
+  if ($country_name === '') $country_name = 'Tanzania';
 
-  if ($currency === '') {
-    $errors[] = 'Currency is required.';
-  }
-
-  if ($phone === '') {
-    $errors[] = 'Phone / MSISDN is required.';
-  }
-
-  if ($brand === '') {
-    $brand = 'leogc-bannf-dbm';
-  }
-
-  if ($country_code === '') {
-    $country_code = 'TZ';
-  }
-
-  if ($country_name === '') {
-    $country_name = 'Tanzania';
-  }
-
-  if ($provider === '') {
-    $provider = 'Halopesa';
-  }
-
-  if ($payment_provider === '') {
-    $payment_provider = $provider;
-  }
-
-  if ($payment_code === '') {
-    $payment_code = '999';
-  }
+  if ($payment_code === '') $payment_code = '999';
+  if ($payment_provider === '') $payment_provider = 'Halopesa';
+  if ($provider === '') $provider = $payment_provider;
 
   if ($errors) {
     render_page([
       'errors' => $errors,
-      'prefill' => [
-        'order_id'         => $order_id_in,
-        'amount'           => $amount,
-        'currency'         => $currency,
-        'brand'            => $brand,
-        'desc'             => $desc,
-        'phone'            => $phone,
-        'country_code'     => $country_code,
-        'country_name'     => $country_name,
-        'provider'         => $provider,
-        'payment_provider' => $payment_provider,
-        'payment_code'     => $payment_code,
-      ],
+      'prefill' => compact(
+        'order_id_in',
+        'amount',
+        'currency',
+        'brand',
+        'desc',
+        'phone',
+        'country_code',
+        'country_name',
+        'payment_code',
+        'payment_provider',
+        'provider'
+      ),
       'debug' => [],
       'response' => [],
     ]);
-
     exit;
   }
 } else {
@@ -158,19 +118,15 @@ if ($submitted) {
   $currency         = $DEFAULTS['currency'];
   $brand            = $DEFAULTS['brand'];
   $desc             = $DEFAULTS['desc'];
-
   $phone            = $DEFAULTS['phone'];
-
   $country_code     = $DEFAULTS['country_code'];
   $country_name     = $DEFAULTS['country_name'];
-
-  $provider         = $DEFAULTS['provider'];
-  $payment_provider = $DEFAULTS['payment_provider'];
   $payment_code     = $DEFAULTS['payment_code'];
+  $payment_provider = $DEFAULTS['payment_provider'];
+  $provider         = $DEFAULTS['provider'];
 }
 
 $debug = [];
-
 $responseBlocks = [
   'bodyRaw' => '',
   'json'    => null,
@@ -178,15 +134,15 @@ $responseBlocks = [
 
 if ($submitted) {
   $hash_src_dbg = '';
+  $hash = build_credit2virtual_hash($order_id_in, $amount, $currency, $SECRET, $hash_src_dbg);
 
-  $hash = build_credit2virtual_hash(
-    $order_id_in,
-    $amount,
-    $currency,
-    $SECRET,
-    $hash_src_dbg
-  );
-
+  /*
+   * Built strictly from CREDIT2VIRTUAL docs:
+   * action, client_key, brand, order_id, order_amount,
+   * order_currency, order_description, parameters, hash.
+   *
+   * payee_phone/payee_country are optional documented fields.
+   */
   $form = [
     'action'            => 'CREDIT2VIRTUAL',
     'client_key'        => $CLIENT_KEY,
@@ -197,10 +153,7 @@ if ($submitted) {
     'order_currency'    => $currency,
     'order_description' => $desc,
 
-    /*
-     * Required by CREDIT2VIRTUAL docs.
-     * This must remain inside parameters[].
-     */
+    // Required parameters array for brand-specific data
     'parameters[msisdn]'          => $phone,
     'parameters[countryCode]'     => $country_code,
     'parameters[countryName]'     => $country_name,
@@ -208,20 +161,17 @@ if ($submitted) {
     'parameters[paymentProvider]' => $payment_provider,
     'parameters[Provider]'        => $provider,
 
-    /*
-     * Optional payout fields from CREDIT2VIRTUAL docs.
-     */
+    // extraData from SALE-style Banffy flow, but still inside parameters
+    'parameters[extraData][msisdn]'          => $phone,
+    'parameters[extraData][countryCode]'     => $country_code,
+    'parameters[extraData][countryName]'     => $country_name,
+    'parameters[extraData][paymentCode]'     => $payment_code,
+    'parameters[extraData][paymentProvider]' => $payment_provider,
+    'parameters[extraData][Provider]'        => $provider,
+
+    // Optional CREDIT2VIRTUAL documented payee fields
     'payee_phone'   => $phone,
     'payee_country' => $country_code,
-
-    /*
-     * Duplicated on top level for Banffy routing.
-     */
-    'countryCode'     => $country_code,
-    'countryName'     => $country_name,
-    'paymentCode'     => $payment_code,
-    'paymentProvider' => $payment_provider,
-    'Provider'        => $provider,
 
     'hash' => $hash,
   ];
@@ -260,7 +210,6 @@ if ($submitted) {
   $responseBlocks['bodyRaw'] = (string)$raw;
 
   $json = json_decode($responseBlocks['bodyRaw'], true);
-
   if (json_last_error() === JSON_ERROR_NONE) {
     $responseBlocks['json'] = $json;
   }
@@ -269,7 +218,7 @@ if ($submitted) {
 render_page([
   'errors' => [],
   'prefill' => [
-    'order_id'         => $order_id_in,
+    'order_id_in'      => $order_id_in,
     'amount'           => $amount,
     'currency'         => $currency,
     'brand'            => $brand,
@@ -277,240 +226,105 @@ render_page([
     'phone'            => $phone,
     'country_code'     => $country_code,
     'country_name'     => $country_name,
-    'provider'         => $provider,
-    'payment_provider' => $payment_provider,
     'payment_code'     => $payment_code,
+    'payment_provider' => $payment_provider,
+    'provider'         => $provider,
   ],
   'debug'    => $debug,
   'response' => $responseBlocks,
 ]);
 
 function render_page($ctx) {
-  global $STATUS_HELPER_URL;
-
   $errors  = $ctx['errors'] ?? [];
   $prefill = $ctx['prefill'] ?? [];
   $debug   = $ctx['debug'] ?? [];
   $resp    = $ctx['response'] ?? [];
 
-  $self = (
-    (isset($_SERVER['HTTPS']) ? 'https' : 'http')
-    . '://'
-    . $_SERVER['HTTP_HOST']
-    . $_SERVER['PHP_SELF']
-  );
+  $self = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
 ?>
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Halopesa PayOut — CREDIT2VIRTUAL</title>
-
+<title>Halopesa CREDIT2VIRTUAL PayOut</title>
 <style>
-:root{
-  --bg:#0f1115;
-  --panel:#171923;
-  --b:#2a2f3a;
-  --text:#e6e6e6;
-  --muted:#9aa4af;
-  --err:#ff6b6b;
-}
-html,body{
-  background:var(--bg);
-  color:var(--text);
-  margin:0;
-  font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;
-}
-.wrap{
-  padding:22px;
-  max-width:1100px;
-  margin:0 auto;
-}
-.h{
-  font-weight:700;
-  margin:10px 0 6px;
-}
-.panel{
-  background:var(--panel);
-  border:1px solid var(--b);
-  border-radius:12px;
-  padding:14px 16px;
-  margin:14px 0;
-}
-.kv{
-  color:var(--muted);
-}
-pre{
-  background:#11131a;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #232635;
-  white-space:pre-wrap;
-}
-.btn{
-  display:inline-block;
-  padding:10px 14px;
-  border-radius:10px;
-  background:#2b7cff;
-  color:#fff;
-  text-decoration:none;
-  cursor:pointer;
-}
-.error{
-  color:var(--err);
-  margin:6px 0;
-}
-input[type=text]{
-  padding:8px 10px;
-  border-radius:8px;
-  border:1px solid #2a2f3a;
-  background:#11131a;
-  color:#e6e6e6;
-  width:320px;
-}
-label{
-  display:inline-block;
-  min-width:190px;
-}
-.small{
-  font-size:12px;
-  color:var(--muted);
-}
+body{background:#0f1115;color:#e6e6e6;margin:0;font:14px/1.45 Consolas,monospace}
+.wrap{padding:22px;max-width:1100px;margin:0 auto}
+.panel{background:#171923;border:1px solid #2a2f3a;border-radius:12px;padding:14px 16px;margin:14px 0}
+.h{font-weight:700;margin:10px 0 8px}
+.kv{color:#9aa4af}
+pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
+input{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6;width:340px}
+label{display:inline-block;min-width:190px}
+.btn{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border:0;cursor:pointer}
+.error{color:#ff6b6b}
+.small{font-size:12px;color:#9aa4af}
 </style>
 </head>
-
 <body>
 <div class="wrap">
 
-  <div class="panel">
-    <div class="h">💸 Halopesa PayOut — CREDIT2VIRTUAL</div>
+<div class="panel">
+  <div class="h">Halopesa PayOut — CREDIT2VIRTUAL</div>
 
-    <form action="<?=h($self)?>" method="post">
+  <form method="post" action="<?=h($self)?>">
+    <?php foreach ($errors as $e): ?>
+      <div class="error">❌ <?=h($e)?></div>
+    <?php endforeach; ?>
 
-      <?php foreach ($errors as $e): ?>
-        <div class="error">❌ <?=h($e)?></div>
-      <?php endforeach; ?>
+    <p><label>order_id:</label><input name="order_id" value="<?=h($prefill['order_id_in'] ?? '')?>"></p>
+    <p><label>order_amount:</label><input name="amount" value="<?=h($prefill['amount'] ?? '')?>"></p>
+    <p><label>order_currency:</label><input name="currency" value="<?=h($prefill['currency'] ?? '')?>"></p>
+    <p><label>brand:</label><input name="brand" value="<?=h($prefill['brand'] ?? '')?>"></p>
+    <p><label>order_description:</label><input name="desc" value="<?=h($prefill['desc'] ?? '')?>"></p>
 
-      <div style="margin:8px 0;">
-        <label>order_id:</label>
-        <input type="text" name="order_id" value="<?=h($prefill['order_id'] ?? '')?>">
-      </div>
+    <p><label>phone / msisdn:</label><input name="phone" value="<?=h($prefill['phone'] ?? '')?>"></p>
+    <p><label>countryCode:</label><input name="country_code" value="<?=h($prefill['country_code'] ?? '')?>"></p>
+    <p><label>countryName:</label><input name="country_name" value="<?=h($prefill['country_name'] ?? '')?>"></p>
+    <p><label>paymentCode:</label><input name="payment_code" value="<?=h($prefill['payment_code'] ?? '')?>"></p>
+    <p><label>paymentProvider:</label><input name="payment_provider" value="<?=h($prefill['payment_provider'] ?? '')?>"></p>
+    <p><label>Provider:</label><input name="provider" value="<?=h($prefill['provider'] ?? '')?>"></p>
 
-      <div style="margin:8px 0;">
-        <label>amount:</label>
-        <input type="text" name="amount" value="<?=h($prefill['amount'] ?? '')?>">
-        <div class="small">For TZS use integer amount, e.g. 1000, not 1000.00.</div>
-      </div>
+    <button class="btn" type="submit">Send CREDIT2VIRTUAL</button>
+  </form>
+</div>
 
-      <div style="margin:8px 0;">
-        <label>currency:</label>
-        <input type="text" name="currency" value="<?=h($prefill['currency'] ?? '')?>">
-      </div>
+<?php if (!empty($debug)): ?>
 
-      <div style="margin:8px 0;">
-        <label>brand:</label>
-        <input type="text" name="brand" value="<?=h($prefill['brand'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>description:</label>
-        <input type="text" name="desc" value="<?=h($prefill['desc'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>phone / MSISDN:</label>
-        <input type="text" name="phone" value="<?=h($prefill['phone'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>countryCode:</label>
-        <input type="text" name="country_code" value="<?=h($prefill['country_code'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>countryName:</label>
-        <input type="text" name="country_name" value="<?=h($prefill['country_name'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>Provider:</label>
-        <input type="text" name="provider" value="<?=h($prefill['provider'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>paymentProvider:</label>
-        <input type="text" name="payment_provider" value="<?=h($prefill['payment_provider'] ?? '')?>">
-      </div>
-
-      <div style="margin:8px 0;">
-        <label>paymentCode:</label>
-        <input type="text" name="payment_code" value="<?=h($prefill['payment_code'] ?? '')?>">
-      </div>
-
-      <div style="margin-top:12px;">
-        <button class="btn" type="submit">Send Halopesa PayOut</button>
-      </div>
-
-    </form>
-  </div>
-
-  <?php if (!empty($debug)): ?>
-
-  <div class="panel">
-    <div class="h">🟢 Request sent</div>
-
-    <div>
-      <span class="kv">Endpoint:</span>
-      <?=h($debug['endpoint'] ?? '')?>
-    </div>
-
-    <div>
-      <span class="kv">Client key:</span>
-      <?=h($debug['client_key'] ?? '')?>
-    </div>
-
-    <div>
-      <span class="kv">HTTP:</span>
-      <?=h($debug['http_code'] ?? '')?>
-      <span class="kv" style="margin-left:12px;">Duration:</span>
-      <?=h($debug['duration_sec'] ?? '')?>s
-    </div>
-
-    <?php if (!empty($debug['curl_error'])): ?>
-      <div class="error">cURL: <?=h($debug['curl_error'])?></div>
-    <?php endif; ?>
-  </div>
-
-  <div class="panel">
-    <div class="h">🧮 CREDIT2VIRTUAL hash</div>
-
-    <div class="kv">
-      md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
-    </div>
-
-    <div class="kv">Source string:</div>
-    <pre><?=h($debug['hash_src'] ?? '')?></pre>
-
-    <div class="kv">Hash:</div>
-    <pre><?=h($debug['hash'] ?? '')?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="h">➡ Sent form-data</div>
-    <pre><?=pretty($debug['form'] ?? [])?></pre>
-  </div>
-
-  <div class="panel">
-    <div class="h">⬅ Response body</div>
-    <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
-
-    <?php if (is_array($resp['json'] ?? null)): ?>
-      <div class="h">Parsed</div>
-      <pre><?=pretty($resp['json'])?></pre>
-    <?php endif; ?>
-  </div>
-
+<div class="panel">
+  <div class="h">Request sent</div>
+  <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
+  <div><span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?></div>
+  <div><span class="kv">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s</div>
+  <?php if (!empty($debug['curl_error'])): ?>
+    <div class="error">cURL: <?=h($debug['curl_error'])?></div>
   <?php endif; ?>
+</div>
+
+<div class="panel">
+  <div class="h">Hash</div>
+  <div class="kv">Source:</div>
+  <pre><?=h($debug['hash_src'] ?? '')?></pre>
+  <div class="kv">Hash:</div>
+  <pre><?=h($debug['hash'] ?? '')?></pre>
+</div>
+
+<div class="panel">
+  <div class="h">Sent form-data</div>
+  <pre><?=pretty($debug['form'] ?? [])?></pre>
+</div>
+
+<div class="panel">
+  <div class="h">Response body</div>
+  <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
+
+  <?php if (is_array($resp['json'] ?? null)): ?>
+    <div class="h">Parsed</div>
+    <pre><?=pretty($resp['json'])?></pre>
+  <?php endif; ?>
+</div>
+
+<?php endif; ?>
 
 </div>
 </body>
