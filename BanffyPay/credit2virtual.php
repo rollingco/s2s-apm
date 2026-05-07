@@ -342,7 +342,9 @@ if ($submitted) {
       'payee_country'     => $selectedCountry['payee_country'],
       'payee_phone'       => $phone,
       //'transactionType'   => 'sync',
-      'requestType'         => 'sync',
+      //'requestType'         => 'sync',
+      'transactionType'     => 'MOBILE_TRANSFER',
+      'requestType'         => 'MOBILE_TRANSFER',
     ];
 
     if ($payee_email !== '') {
