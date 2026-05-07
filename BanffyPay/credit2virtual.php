@@ -14,10 +14,11 @@ $STATUS_HELPER_URL = 'status_credit2virtual.php';
 
 $DEFAULTS = [
   'order_id'         => $_GET['order_id'] ?? ('halopesa-payout-' . time()),
-  'amount'           => $_GET['amount'] ?? '1',
+  'amount'           => $_GET['amount'] ?? '1000.00',
   'currency'         => $_GET['currency'] ?? 'TZS',
   'brand'            => $_GET['brand'] ?? 'leogc-bannf-dbm',
   'desc'             => $_GET['desc'] ?? 'Halopesa payout test',
+
   'phone'            => $_GET['phone'] ?? '255623456789',
 
   'country_code'     => $_GET['country_code'] ?? 'TZ',
@@ -42,16 +43,21 @@ function pretty($v) {
     }
   }
 
-  return h(json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+  return h(json_encode(
+    $v,
+    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+  ));
 }
 
 /**
- * CREDIT2VIRTUAL hash:
+ * CREDIT2VIRTUAL hash
  * md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  */
 function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$srcOut = null) {
+
   $inner = $order_id . $amount . $currency;
-  $src   = strtoupper(strrev($inner)) . $secret;
+
+  $src = strtoupper(strrev($inner)) . $secret;
 
   if ($srcOut !== null) {
     $srcOut = $src;
@@ -63,11 +69,13 @@ function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$src
 $submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
 if ($submitted) {
+
   $order_id_in      = trim((string)($_POST['order_id'] ?? ''));
   $amount           = trim((string)($_POST['amount'] ?? ''));
   $currency         = strtoupper(trim((string)($_POST['currency'] ?? '')));
   $brand            = trim((string)($_POST['brand'] ?? ''));
   $desc             = trim((string)($_POST['desc'] ?? ''));
+
   $phone            = trim((string)($_POST['phone'] ?? ''));
 
   $country_code     = strtoupper(trim((string)($_POST['country_code'] ?? '')));
@@ -79,21 +87,48 @@ if ($submitted) {
 
   $errors = [];
 
-  if ($order_id_in === '') $errors[] = 'order_id is required.';
-  if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount)) $errors[] = 'Amount wrong format. Use e.g. 1, 10.5, 100.00';
-  if ($currency === '') $errors[] = 'Currency is required.';
-  if ($phone === '') $errors[] = 'Phone / MSISDN is required.';
+  if ($order_id_in === '') {
+    $errors[] = 'order_id is required.';
+  }
 
-  if ($brand === '') $brand = 'leogc-bannf-dbm';
+  if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount)) {
+    $errors[] = 'Amount wrong format.';
+  }
 
-  if ($country_code === '') $country_code = 'TZ';
-  if ($country_name === '') $country_name = 'Tanzania';
+  if ($currency === '') {
+    $errors[] = 'Currency is required.';
+  }
 
-  if ($provider === '') $provider = 'Halopesa';
-  if ($payment_provider === '') $payment_provider = $provider;
-  if ($payment_code === '') $payment_code = '999';
+  if ($phone === '') {
+    $errors[] = 'Phone / MSISDN is required.';
+  }
+
+  if ($brand === '') {
+    $brand = 'leogc-bannf-dbm';
+  }
+
+  if ($country_code === '') {
+    $country_code = 'TZ';
+  }
+
+  if ($country_name === '') {
+    $country_name = 'Tanzania';
+  }
+
+  if ($provider === '') {
+    $provider = 'Halopesa';
+  }
+
+  if ($payment_provider === '') {
+    $payment_provider = $provider;
+  }
+
+  if ($payment_code === '') {
+    $payment_code = '999';
+  }
 
   if ($errors) {
+
     render_page([
       'errors' => $errors,
       'prefill' => [
@@ -112,54 +147,80 @@ if ($submitted) {
       'debug' => [],
       'response' => [],
     ]);
+
     exit;
   }
+
 } else {
+
   $order_id_in      = $DEFAULTS['order_id'];
   $amount           = $DEFAULTS['amount'];
   $currency         = $DEFAULTS['currency'];
   $brand            = $DEFAULTS['brand'];
   $desc             = $DEFAULTS['desc'];
+
   $phone            = $DEFAULTS['phone'];
+
   $country_code     = $DEFAULTS['country_code'];
   $country_name     = $DEFAULTS['country_name'];
+
   $provider         = $DEFAULTS['provider'];
   $payment_provider = $DEFAULTS['payment_provider'];
   $payment_code     = $DEFAULTS['payment_code'];
 }
 
 $debug = [];
+
 $responseBlocks = [
   'bodyRaw' => '',
   'json'    => null,
 ];
 
 if ($submitted) {
+
   $hash_src_dbg = '';
-  $hash = build_credit2virtual_hash($order_id_in, $amount, $currency, $SECRET, $hash_src_dbg);
+
+  $hash = build_credit2virtual_hash(
+    $order_id_in,
+    $amount,
+    $currency,
+    $SECRET,
+    $hash_src_dbg
+  );
 
   $form = [
+
     'action'            => 'CREDIT2VIRTUAL',
     'client_key'        => $CLIENT_KEY,
+
     'order_id'          => $order_id_in,
     'order_amount'      => $amount,
     'order_currency'    => $currency,
     'order_description' => $desc,
+
     'brand'             => $brand,
 
-    'parameters[msisdn]'          => $phone,
-    'parameters[countryCode]'     => $country_code,
-    'parameters[countryName]'     => $country_name,
-    'parameters[paymentCode]'     => $payment_code,
-    'parameters[paymentProvider]' => $payment_provider,
-    'parameters[Provider]'        => $provider,
+    // TOP LEVEL
+    'msisdn'            => $phone,
 
-    'parameters[extraData][msisdn]'          => $phone,
-    'parameters[extraData][countryCode]'     => $country_code,
-    'parameters[extraData][countryName]'     => $country_name,
-    'parameters[extraData][paymentCode]'     => $payment_code,
-    'parameters[extraData][paymentProvider]' => $payment_provider,
-    'parameters[extraData][Provider]'        => $provider,
+    'countryCode'       => $country_code,
+    'countryName'       => $country_name,
+
+    'paymentCode'       => $payment_code,
+
+    'paymentProvider'   => $payment_provider,
+    'Provider'          => $provider,
+
+    // extraData
+    'extraData[msisdn]'           => $phone,
+
+    'extraData[countryCode]'      => $country_code,
+    'extraData[countryName]'      => $country_name,
+
+    'extraData[paymentCode]'      => $payment_code,
+
+    'extraData[paymentProvider]'  => $payment_provider,
+    'extraData[Provider]'         => $provider,
 
     'hash' => $hash,
   ];
@@ -182,13 +243,25 @@ if ($submitted) {
   ]);
 
   $start = microtime(true);
-  $raw   = curl_exec($ch);
-  $info  = curl_getinfo($ch);
-  $err   = curl_errno($ch) ? curl_error($ch) : '';
+
+  $raw = curl_exec($ch);
+
+  $info = curl_getinfo($ch);
+
+  $err = curl_errno($ch)
+    ? curl_error($ch)
+    : '';
+
   curl_close($ch);
 
-  $debug['duration_sec'] = number_format(microtime(true) - $start, 3, '.', '');
-  $debug['http_code']    = (int)($info['http_code'] ?? 0);
+  $debug['duration_sec'] = number_format(
+    microtime(true) - $start,
+    3,
+    '.',
+    ''
+  );
+
+  $debug['http_code'] = (int)($info['http_code'] ?? 0);
 
   if ($err) {
     $debug['curl_error'] = $err;
@@ -197,6 +270,7 @@ if ($submitted) {
   $responseBlocks['bodyRaw'] = (string)$raw;
 
   $json = json_decode($responseBlocks['bodyRaw'], true);
+
   if (json_last_error() === JSON_ERROR_NONE) {
     $responseBlocks['json'] = $json;
   }
@@ -210,9 +284,12 @@ render_page([
     'currency'         => $currency,
     'brand'            => $brand,
     'desc'             => $desc,
+
     'phone'            => $phone,
+
     'country_code'     => $country_code,
     'country_name'     => $country_name,
+
     'provider'         => $provider,
     'payment_provider' => $payment_provider,
     'payment_code'     => $payment_code,
@@ -222,6 +299,7 @@ render_page([
 ]);
 
 function render_page($ctx) {
+
   global $STATUS_HELPER_URL;
 
   $errors  = $ctx['errors'] ?? [];
@@ -229,38 +307,121 @@ function render_page($ctx) {
   $debug   = $ctx['debug'] ?? [];
   $resp    = $ctx['response'] ?? [];
 
-  $self = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
+  $self = (
+    (isset($_SERVER['HTTPS']) ? 'https' : 'http')
+    . '://'
+    . $_SERVER['HTTP_HOST']
+    . $_SERVER['PHP_SELF']
+  );
+
 ?>
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Halopesa PayOut — CREDIT2VIRTUAL</title>
+
 <style>
-:root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff6b6b}
-html,body{background:var(--bg);color:var(--text);margin:0;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
-.wrap{padding:22px;max-width:1100px;margin:0 auto}
-.h{font-weight:700;margin:10px 0 6px}
-.panel{background:var(--panel);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:14px 0}
-.kv{color:var(--muted)}
-pre{background:#11131a;padding:12px;border-radius:10px;border:1px solid #232635;white-space:pre-wrap}
-.btn{display:inline-block;padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;text-decoration:none;cursor:pointer}
-.error{color:var(--err);margin:6px 0}
-input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#11131a;color:#e6e6e6;width:320px}
-label{display:inline-block;min-width:190px}
-.small{font-size:12px;color:var(--muted)}
+:root{
+  --bg:#0f1115;
+  --panel:#171923;
+  --b:#2a2f3a;
+  --text:#e6e6e6;
+  --muted:#9aa4af;
+  --err:#ff6b6b;
+}
+
+html,body{
+  background:var(--bg);
+  color:var(--text);
+  margin:0;
+  font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;
+}
+
+.wrap{
+  padding:22px;
+  max-width:1100px;
+  margin:0 auto;
+}
+
+.h{
+  font-weight:700;
+  margin:10px 0 6px;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--b);
+  border-radius:12px;
+  padding:14px 16px;
+  margin:14px 0;
+}
+
+.kv{
+  color:var(--muted);
+}
+
+pre{
+  background:#11131a;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #232635;
+  white-space:pre-wrap;
+}
+
+.btn{
+  display:inline-block;
+  padding:10px 14px;
+  border-radius:10px;
+  background:#2b7cff;
+  color:#fff;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.error{
+  color:var(--err);
+  margin:6px 0;
+}
+
+input[type=text]{
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #2a2f3a;
+  background:#11131a;
+  color:#e6e6e6;
+  width:320px;
+}
+
+label{
+  display:inline-block;
+  min-width:190px;
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+}
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
 
   <div class="panel">
-    <div class="h">💸 Create CREDIT2VIRTUAL payout — Halopesa</div>
+
+    <div class="h">
+      💸 Halopesa PayOut — CREDIT2VIRTUAL
+    </div>
 
     <form action="<?=h($self)?>" method="post">
-      <?php if ($errors): foreach ($errors as $e): ?>
-        <div class="error">❌ <?=h($e)?></div>
-      <?php endforeach; endif; ?>
+
+      <?php foreach ($errors as $e): ?>
+        <div class="error">
+          ❌ <?=h($e)?>
+        </div>
+      <?php endforeach; ?>
 
       <div style="margin:8px 0;">
         <label>order_id:</label>
@@ -270,7 +431,6 @@ label{display:inline-block;min-width:190px}
       <div style="margin:8px 0;">
         <label>amount:</label>
         <input type="text" name="amount" value="<?=h($prefill['amount'] ?? '')?>">
-        <div class="small">Amount is sent exactly as entered. No forced .00.</div>
       </div>
 
       <div style="margin:8px 0;">
@@ -319,59 +479,87 @@ label{display:inline-block;min-width:190px}
       </div>
 
       <div style="margin-top:12px;">
-        <button class="btn" type="submit">Send Halopesa PayOut</button>
+        <button class="btn" type="submit">
+          Send Halopesa PayOut
+        </button>
       </div>
+
     </form>
+
   </div>
 
   <?php if (!empty($debug)): ?>
+
   <div class="panel">
-    <div class="h">🟢 Request sent</div>
-    <div><span class="kv">Endpoint:</span> <?=h($debug['endpoint'] ?? '')?></div>
-    <div><span class="kv">Client key:</span> <?=h($debug['client_key'] ?? '')?></div>
+
+    <div class="h">
+      🟢 Request sent
+    </div>
+
     <div>
-      <span class="kv">HTTP:</span> <?=h($debug['http_code'] ?? '')?>
-      <span class="kv" style="margin-left:12px;">Duration:</span> <?=h($debug['duration_sec'] ?? '')?>s
+      <span class="kv">Endpoint:</span>
+      <?=h($debug['endpoint'] ?? '')?>
+    </div>
+
+    <div>
+      <span class="kv">HTTP:</span>
+      <?=h($debug['http_code'] ?? '')?>
     </div>
 
     <?php if (!empty($debug['curl_error'])): ?>
-      <div class="error">cURL: <?=h($debug['curl_error'])?></div>
+      <div class="error">
+        cURL: <?=h($debug['curl_error'])?>
+      </div>
     <?php endif; ?>
+
   </div>
 
   <div class="panel">
-    <div class="h">🧮 CREDIT2VIRTUAL hash</div>
-    <div class="kv">md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )</div>
-    <div class="kv">Source string:</div>
+
+    <div class="h">
+      🧮 Hash
+    </div>
+
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
-    <div class="kv">Hash:</div>
+
     <pre><?=h($debug['hash'] ?? '')?></pre>
+
   </div>
 
   <div class="panel">
-    <div class="h">➡ Sent form-data</div>
+
+    <div class="h">
+      ➡ Sent form-data
+    </div>
+
     <pre><?=pretty($debug['form'] ?? [])?></pre>
+
   </div>
 
   <div class="panel">
-    <div class="h">⬅ Response body</div>
+
+    <div class="h">
+      ⬅ Response body
+    </div>
+
     <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
 
     <?php if (is_array($resp['json'] ?? null)): ?>
-      <div class="h">Parsed</div>
+
+      <div class="h">
+        Parsed
+      </div>
+
       <pre><?=pretty($resp['json'])?></pre>
 
-      <?php if (!empty($resp['json']['trans_id'])): ?>
-        <div class="h" style="margin-top:16px;">🕒 Check transaction status</div>
-        <a class="btn" target="_blank" href="<?=h($STATUS_HELPER_URL)?>?trans_id=<?=h($resp['json']['trans_id'])?>">
-          Open status helper
-        </a>
-      <?php endif; ?>
     <?php endif; ?>
+
   </div>
+
   <?php endif; ?>
 
 </div>
+
 </body>
 </html>
 <?php
