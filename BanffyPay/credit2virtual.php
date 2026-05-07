@@ -341,7 +341,8 @@ if ($submitted) {
       'payee_last_name'   => $payee_last_name,
       'payee_country'     => $selectedCountry['payee_country'],
       'payee_phone'       => $phone,
-      'transactionType'   => 'sync',
+      //'transactionType'   => 'sync',
+      'requestType'         => 'sync',
     ];
 
     if ($payee_email !== '') {
@@ -353,7 +354,7 @@ if ($submitted) {
     $form['parameters[provider]'] = $provider;
     $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
     $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
-    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
+    $form['parameters[BeneficiaryCountryCode]'] = $selectedCountry['countryCode'];
 
     // Hash is required and added after all business fields.
     $form['hash'] = $hash;
