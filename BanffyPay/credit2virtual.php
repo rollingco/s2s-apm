@@ -11,6 +11,9 @@
  * - parameters[provider]
  *
  * Endpoint for CREDIT2VIRTUAL: https://api.leogcltd.com/post
+ *
+ * IMPORTANT: order_amount is sent exactly as entered in the form.
+ * No float/int conversion and no number_format.
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -220,7 +223,7 @@ $COUNTRIES = [
 $DEFAULTS = [
   'countryCode'       => 'TZ',
   'provider'          => 'Airtel',
-  'amount'            => '1000',
+  'amount'            => '1000.00',
   'description'       => 'BanffyPay payout test',
   'payee_first_name'  => 'John',
   'payee_last_name'   => 'Doe',
@@ -252,37 +255,6 @@ function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$src
   return md5($src);
 }
 
-function currency_decimals($currency){
-  $currency = strtoupper((string)$currency);
-  $zero = ['BIF','CLP','DJF','GNF','ISK','JPY','KMF','KRW','PYG','RWF','UGX','VND','VUV','XAF','XOF','XPF','TZS'];
-  $three = ['BHD','JOD','KWD','LYD','OMR','TND'];
-  $four = ['CLF'];
-  if (in_array($currency, $zero, true)) return 0;
-  if (in_array($currency, $three, true)) return 3;
-  if (in_array($currency, $four, true)) return 4;
-  return 2;
-}
-
-function normalize_amount_by_currency($raw, $currency){
-  $s = trim((string)$raw);
-  $s = str_replace(',', '.', $s);
-  $s = preg_replace('/[^0-9.]/', '', $s);
-
-  if ($s === '') return '';
-
-  if (substr_count($s, '.') > 1) {
-    $parts = explode('.', $s);
-    $s = array_shift($parts) . '.' . implode('', $parts);
-  }
-
-  $decimals = currency_decimals($currency);
-
-  if ($decimals === 0) {
-    return (string)((int)floor((float)$s));
-  }
-
-  return number_format((float)$s, $decimals, '.', '');
-}
 
 function current_url(){
   $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
@@ -329,7 +301,9 @@ if ($submitted) {
   $currency = $selectedCountry['currency'];
   $phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
   $phone = ltrim($phone, '+');
-  $amount = normalize_amount_by_currency($_POST['amount'] ?? '', $currency);
+  // IMPORTANT: keep amount exactly as entered in the form.
+  // Do not cast to float/int and do not format it, otherwise 1000.00 becomes 1000.
+  $amount = trim((string)($_POST['amount'] ?? ''));
 
   $description = trim((string)($_POST['description'] ?? $DEFAULTS['description']));
   $payee_first_name = trim((string)($_POST['payee_first_name'] ?? $DEFAULTS['payee_first_name']));
@@ -337,7 +311,7 @@ if ($submitted) {
   $payee_email = trim((string)($_POST['payee_email'] ?? $DEFAULTS['payee_email']));
 
   if ($phone === '') $errors[] = 'Payee phone / MSISDN is required.';
-  if ($amount === '' || !is_numeric($amount) || (float)$amount <= 0) $errors[] = 'Amount must be a positive number.';
+  if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount) || (float)$amount <= 0) $errors[] = 'Amount must be a positive number.';
   if ($description === '') $errors[] = 'Description is required.';
   if ($payee_email !== '' && !filter_var($payee_email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Payee email format looks wrong.';
 
@@ -475,7 +449,7 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
     <div class="row">
       <label>Amount:</label>
       <input type="text" name="amount" id="amount" value="<?=h($amount)?>">
-      <div class="small">Formatted by selected currency. TZS/XOF/XAF/RWF/UGX/JPY/KRW/CLP → integer.</div>
+      <div class="small">Sent exactly as entered. No float/int conversion, no number_format. Example: 1000.00 stays 1000.00.</div>
     </div>
 
     <div class="row">
