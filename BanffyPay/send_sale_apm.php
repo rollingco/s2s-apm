@@ -75,10 +75,12 @@ $COUNTRIES = [
     'payer_country' => 'CI',
     'payment_code' => '204',
     'providers' => [
-      'moov-ivory-coast' => '',
+      '//moov-ivory-coast' => '',
+      'moov-ic' => '',
       //'orange-ivory-coast' => '2250734567890',
       'orange-ic' => '2250734567890',
-      'wave-ivory-coast' => '',
+      //'wave-ivory-coast' => '',
+      'wave-ic' => '',
     ],
   ],
   'ML' => [
