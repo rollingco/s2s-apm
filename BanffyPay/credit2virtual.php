@@ -1,6 +1,11 @@
 <?php
 /**
  * S2S CREDIT2VIRTUAL — BanffyPay PayOut / Halopesa
+ *
+ * Important:
+ * - TZS is sent as integer amount, e.g. 1000, not 1000.00
+ * - parameters[] is required by CREDIT2VIRTUAL docs
+ * - countryCode and routing fields are also duplicated on top level
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -14,7 +19,7 @@ $STATUS_HELPER_URL = 'status_credit2virtual.php';
 
 $DEFAULTS = [
   'order_id'         => $_GET['order_id'] ?? ('halopesa-payout-' . time()),
-  'amount'           => $_GET['amount'] ?? '1000.00',
+  'amount'           => $_GET['amount'] ?? '1000',
   'currency'         => $_GET['currency'] ?? 'TZS',
   'brand'            => $_GET['brand'] ?? 'leogc-bannf-dbm',
   'desc'             => $_GET['desc'] ?? 'Halopesa payout test',
@@ -36,6 +41,7 @@ function h($s) {
 function pretty($v) {
   if (is_string($v)) {
     $d = json_decode($v, true);
+
     if (json_last_error() === JSON_ERROR_NONE) {
       $v = $d;
     } else {
@@ -50,14 +56,12 @@ function pretty($v) {
 }
 
 /**
- * CREDIT2VIRTUAL hash
+ * CREDIT2VIRTUAL hash:
  * md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
  */
 function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$srcOut = null) {
-
   $inner = $order_id . $amount . $currency;
-
-  $src = strtoupper(strrev($inner)) . $secret;
+  $src   = strtoupper(strrev($inner)) . $secret;
 
   if ($srcOut !== null) {
     $srcOut = $src;
@@ -69,7 +73,6 @@ function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$src
 $submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
 if ($submitted) {
-
   $order_id_in      = trim((string)($_POST['order_id'] ?? ''));
   $amount           = trim((string)($_POST['amount'] ?? ''));
   $currency         = strtoupper(trim((string)($_POST['currency'] ?? '')));
@@ -92,7 +95,7 @@ if ($submitted) {
   }
 
   if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount)) {
-    $errors[] = 'Amount wrong format.';
+    $errors[] = 'Amount wrong format. Use 1000 for TZS, not 1000.00.';
   }
 
   if ($currency === '') {
@@ -128,7 +131,6 @@ if ($submitted) {
   }
 
   if ($errors) {
-
     render_page([
       'errors' => $errors,
       'prefill' => [
@@ -150,9 +152,7 @@ if ($submitted) {
 
     exit;
   }
-
 } else {
-
   $order_id_in      = $DEFAULTS['order_id'];
   $amount           = $DEFAULTS['amount'];
   $currency         = $DEFAULTS['currency'];
@@ -177,7 +177,6 @@ $responseBlocks = [
 ];
 
 if ($submitted) {
-
   $hash_src_dbg = '';
 
   $hash = build_credit2virtual_hash(
@@ -189,38 +188,40 @@ if ($submitted) {
   );
 
   $form = [
-
     'action'            => 'CREDIT2VIRTUAL',
     'client_key'        => $CLIENT_KEY,
+    'brand'             => $brand,
 
     'order_id'          => $order_id_in,
     'order_amount'      => $amount,
     'order_currency'    => $currency,
     'order_description' => $desc,
 
-    'brand'             => $brand,
+    /*
+     * Required by CREDIT2VIRTUAL docs.
+     * This must remain inside parameters[].
+     */
+    'parameters[msisdn]'          => $phone,
+    'parameters[countryCode]'     => $country_code,
+    'parameters[countryName]'     => $country_name,
+    'parameters[paymentCode]'     => $payment_code,
+    'parameters[paymentProvider]' => $payment_provider,
+    'parameters[Provider]'        => $provider,
 
-    // TOP LEVEL
-    'msisdn'            => $phone,
+    /*
+     * Optional payout fields from CREDIT2VIRTUAL docs.
+     */
+    'payee_phone'   => $phone,
+    'payee_country' => $country_code,
 
-    'countryCode'       => $country_code,
-    'countryName'       => $country_name,
-
-    'paymentCode'       => $payment_code,
-
-    'paymentProvider'   => $payment_provider,
-    'Provider'          => $provider,
-
-    // extraData
-    'extraData[msisdn]'           => $phone,
-
-    'extraData[countryCode]'      => $country_code,
-    'extraData[countryName]'      => $country_name,
-
-    'extraData[paymentCode]'      => $payment_code,
-
-    'extraData[paymentProvider]'  => $payment_provider,
-    'extraData[Provider]'         => $provider,
+    /*
+     * Duplicated on top level for Banffy routing.
+     */
+    'countryCode'     => $country_code,
+    'countryName'     => $country_name,
+    'paymentCode'     => $payment_code,
+    'paymentProvider' => $payment_provider,
+    'Provider'        => $provider,
 
     'hash' => $hash,
   ];
@@ -243,25 +244,14 @@ if ($submitted) {
   ]);
 
   $start = microtime(true);
-
-  $raw = curl_exec($ch);
-
-  $info = curl_getinfo($ch);
-
-  $err = curl_errno($ch)
-    ? curl_error($ch)
-    : '';
+  $raw   = curl_exec($ch);
+  $info  = curl_getinfo($ch);
+  $err   = curl_errno($ch) ? curl_error($ch) : '';
 
   curl_close($ch);
 
-  $debug['duration_sec'] = number_format(
-    microtime(true) - $start,
-    3,
-    '.',
-    ''
-  );
-
-  $debug['http_code'] = (int)($info['http_code'] ?? 0);
+  $debug['duration_sec'] = number_format(microtime(true) - $start, 3, '.', '');
+  $debug['http_code']    = (int)($info['http_code'] ?? 0);
 
   if ($err) {
     $debug['curl_error'] = $err;
@@ -284,12 +274,9 @@ render_page([
     'currency'         => $currency,
     'brand'            => $brand,
     'desc'             => $desc,
-
     'phone'            => $phone,
-
     'country_code'     => $country_code,
     'country_name'     => $country_name,
-
     'provider'         => $provider,
     'payment_provider' => $payment_provider,
     'payment_code'     => $payment_code,
@@ -299,7 +286,6 @@ render_page([
 ]);
 
 function render_page($ctx) {
-
   global $STATUS_HELPER_URL;
 
   $errors  = $ctx['errors'] ?? [];
@@ -313,7 +299,6 @@ function render_page($ctx) {
     . $_SERVER['HTTP_HOST']
     . $_SERVER['PHP_SELF']
   );
-
 ?>
 <!doctype html>
 <html lang="en">
@@ -330,25 +315,21 @@ function render_page($ctx) {
   --muted:#9aa4af;
   --err:#ff6b6b;
 }
-
 html,body{
   background:var(--bg);
   color:var(--text);
   margin:0;
   font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;
 }
-
 .wrap{
   padding:22px;
   max-width:1100px;
   margin:0 auto;
 }
-
 .h{
   font-weight:700;
   margin:10px 0 6px;
 }
-
 .panel{
   background:var(--panel);
   border:1px solid var(--b);
@@ -356,11 +337,9 @@ html,body{
   padding:14px 16px;
   margin:14px 0;
 }
-
 .kv{
   color:var(--muted);
 }
-
 pre{
   background:#11131a;
   padding:12px;
@@ -368,7 +347,6 @@ pre{
   border:1px solid #232635;
   white-space:pre-wrap;
 }
-
 .btn{
   display:inline-block;
   padding:10px 14px;
@@ -378,12 +356,10 @@ pre{
   text-decoration:none;
   cursor:pointer;
 }
-
 .error{
   color:var(--err);
   margin:6px 0;
 }
-
 input[type=text]{
   padding:8px 10px;
   border-radius:8px;
@@ -392,12 +368,10 @@ input[type=text]{
   color:#e6e6e6;
   width:320px;
 }
-
 label{
   display:inline-block;
   min-width:190px;
 }
-
 .small{
   font-size:12px;
   color:var(--muted);
@@ -406,21 +380,15 @@ label{
 </head>
 
 <body>
-
 <div class="wrap">
 
   <div class="panel">
-
-    <div class="h">
-      💸 Halopesa PayOut — CREDIT2VIRTUAL
-    </div>
+    <div class="h">💸 Halopesa PayOut — CREDIT2VIRTUAL</div>
 
     <form action="<?=h($self)?>" method="post">
 
       <?php foreach ($errors as $e): ?>
-        <div class="error">
-          ❌ <?=h($e)?>
-        </div>
+        <div class="error">❌ <?=h($e)?></div>
       <?php endforeach; ?>
 
       <div style="margin:8px 0;">
@@ -431,6 +399,7 @@ label{
       <div style="margin:8px 0;">
         <label>amount:</label>
         <input type="text" name="amount" value="<?=h($prefill['amount'] ?? '')?>">
+        <div class="small">For TZS use integer amount, e.g. 1000, not 1000.00.</div>
       </div>
 
       <div style="margin:8px 0;">
@@ -479,22 +448,16 @@ label{
       </div>
 
       <div style="margin-top:12px;">
-        <button class="btn" type="submit">
-          Send Halopesa PayOut
-        </button>
+        <button class="btn" type="submit">Send Halopesa PayOut</button>
       </div>
 
     </form>
-
   </div>
 
   <?php if (!empty($debug)): ?>
 
   <div class="panel">
-
-    <div class="h">
-      🟢 Request sent
-    </div>
+    <div class="h">🟢 Request sent</div>
 
     <div>
       <span class="kv">Endpoint:</span>
@@ -502,64 +465,54 @@ label{
     </div>
 
     <div>
+      <span class="kv">Client key:</span>
+      <?=h($debug['client_key'] ?? '')?>
+    </div>
+
+    <div>
       <span class="kv">HTTP:</span>
       <?=h($debug['http_code'] ?? '')?>
+      <span class="kv" style="margin-left:12px;">Duration:</span>
+      <?=h($debug['duration_sec'] ?? '')?>s
     </div>
 
     <?php if (!empty($debug['curl_error'])): ?>
-      <div class="error">
-        cURL: <?=h($debug['curl_error'])?>
-      </div>
+      <div class="error">cURL: <?=h($debug['curl_error'])?></div>
     <?php endif; ?>
-
   </div>
 
   <div class="panel">
+    <div class="h">🧮 CREDIT2VIRTUAL hash</div>
 
-    <div class="h">
-      🧮 Hash
+    <div class="kv">
+      md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
     </div>
 
+    <div class="kv">Source string:</div>
     <pre><?=h($debug['hash_src'] ?? '')?></pre>
 
+    <div class="kv">Hash:</div>
     <pre><?=h($debug['hash'] ?? '')?></pre>
-
   </div>
 
   <div class="panel">
-
-    <div class="h">
-      ➡ Sent form-data
-    </div>
-
+    <div class="h">➡ Sent form-data</div>
     <pre><?=pretty($debug['form'] ?? [])?></pre>
-
   </div>
 
   <div class="panel">
-
-    <div class="h">
-      ⬅ Response body
-    </div>
-
+    <div class="h">⬅ Response body</div>
     <pre><?=pretty($resp['bodyRaw'] ?? '')?></pre>
 
     <?php if (is_array($resp['json'] ?? null)): ?>
-
-      <div class="h">
-        Parsed
-      </div>
-
+      <div class="h">Parsed</div>
       <pre><?=pretty($resp['json'])?></pre>
-
     <?php endif; ?>
-
   </div>
 
   <?php endif; ?>
 
 </div>
-
 </body>
 </html>
 <?php
