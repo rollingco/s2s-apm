@@ -268,9 +268,9 @@ if ($submitted) {
      * все додаткове — через parameters[...]
      */
     'parameters[msisdn]'          => $phone,
-    'parameters[countryCode]'     => $country_code,
-    'parameters[countryName]'     => $country_name,
-    'parameters[paymentCode]'     => $payment_code,
+    //'parameters[countryCode]'     => $country_code,
+    //'parameters[countryName]'     => $country_name,
+    //'parameters[paymentCode]'     => $payment_code,
     //'parameters[paymentProvider]' => $payment_provider,
     //'parameters[Provider]'        => $provider,
   ];
