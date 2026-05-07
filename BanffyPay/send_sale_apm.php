@@ -76,7 +76,8 @@ $COUNTRIES = [
     'payment_code' => '204',
     'providers' => [
       'moov-ivory-coast' => '',
-      'orange-ivory-coast' => '2250734567890',
+      //'orange-ivory-coast' => '2250734567890',
+      'orange-ic' => '2250734567890',
       'wave-ivory-coast' => '',
     ],
   ],
