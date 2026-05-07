@@ -1,5 +1,5 @@
 <?php
-/**
+/**********
  * S2S CREDIT2VIRTUAL — BanffyPay PayOut
  *
  * Base request follows Akurateco CREDIT2VIRTUAL documentation.
