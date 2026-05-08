@@ -321,74 +321,53 @@ if ($submitted) {
     $hash = build_credit2virtual_hash($order_id, $amount, $currency, $SECRET, $hash_src_dbg);
 
     $form = [
+      // Akurateco CREDIT2VIRTUAL documented fields
+      'action'            => 'CREDIT2VIRTUAL',
+      'client_key'        => $CLIENT_KEY,
+      'brand'             => $BRAND,
+      'order_id'          => $order_id,
+      'order_amount'      => $amount,
+      'order_currency'    => $currency,
+      'order_description' => $description,
 
-    'requestOrigin' => 'Api',
+      // BanffyPay routing fields from SALE connector
+      'country'           => $selectedCountry['country'],
+      'countryCode'       => $selectedCountry['countryCode'],
+      'channel_id'        => $provider,
+      'payment_code'      => $GLOBALS['WITHDRAWAL_PAYMENT_CODE'],
 
-    'brand' => 'leogc-bannf-dbm',
+      // Payee fields from CREDIT2VIRTUAL docs
+      'payee_first_name'  => $payee_first_name,
+      'payee_last_name'   => $payee_last_name,
+      'payee_country'     => $selectedCountry['payee_country'],
+      'payee_phone'       => $phone,
+      //'transactionType'   => 'sync',
+      //'requestType'         => 'sync',
+      //'transactionType'     => 'MOBILE_TRANSFER',
+      //'requestType'         => 'MOBILE_TRANSFER',
+    ];
 
-    'paymentCode' => $WITHDRAWAL_PAYMENT_CODE,
+    if ($payee_email !== '') {
+      $form['payee_email'] = $payee_email;
+    }
 
-    'paymentProvider' => $provider,
+    // Documented parameters array for brand-specific data.
+    // Akurateco/connector note: Provider should be the same as for PayIn.
+    $form['parameters[provider]'] = $provider;
+    $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
+    $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
+    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
 
-    'merchantURL' => $callback_url,
+    // Hash is required and added after all business fields.
+    $form['hash'] = $hash;
 
-    'merchantTransactionID' => $order_id,
-
-    'currencyCode' => $selectedCountry['currency'],
-
-    'amount' => $amount,
-
-    'description' => $description,
-
-    'countryCode' => $selectedCountry['countryCode'],
-
-    'msisdn' => $phone,
-
-    'extraData' => [
-
-        'transactionType' => 'MOBILE_TRANSFER',
-
-        'beneficiaryProvider' => $provider,
-
-        'beneficiaryName' =>
-            trim($payee_first_name . ' ' . $payee_last_name),
-
-        'beneficiaryEmail' => $payee_email,
-
-        'beneficiaryMsisdn' => $phone,
-
-        'beneficiaryCountryCode' =>
-            $selectedCountry['countryCode'],
-    ],
-];
-
-/*
-|--------------------------------------------------------------------------
-| CURL DEBUG
-|--------------------------------------------------------------------------
-*/
-
-$curlCommand = "curl -X POST '" . $PAYMENT_URL . "'";
-
-$curlCommand .=
-    " \
-  -H 'Content-Type: application/json'";
-
-$curlCommand .=
-    " \
-  -d '" .
-    json_encode(
-        $form,
-        JSON_UNESCAPED_SLASHES |
-        JSON_UNESCAPED_UNICODE
-    ) .
-    "'";
-
-echo "<pre>";
-
-echo htmlspecialchars($curlCommand);
-
-echo "</pre>";
+    $debug = [
+      'endpoint' => $PAYMENT_URL,
+      'form'     => $form,
+      'hash_formula' => 'md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )',
+      'hash_src' => $hash_src_dbg,
+      'hash'     => $hash,
+    ];
 
     $ch = curl_init($PAYMENT_URL);
     curl_setopt_array($ch, [
