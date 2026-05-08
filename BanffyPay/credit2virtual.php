@@ -1,12 +1,19 @@
 <?php
 /**********
- * BanffyPay PayOut test
- * Request body is built according to the WhatsApp example.
+ * S2S CREDIT2VIRTUAL — BanffyPay PayOut
  *
- * IMPORTANT:
- * - No Akurateco CREDIT2VIRTUAL form-data fields here.
- * - No action, client_key, order_amount, order_currency, payee_*, parameters[...].
- * - Payload is JSON with camelCase keys and extraData object.
+ * Base request follows Akurateco CREDIT2VIRTUAL documentation.
+ * Additional BanffyPay routing fields are added from SALE connector:
+ * - country
+ * - countryCode
+ * - channel_id (provider/channel)
+ * - payment_code = 999 for withdrawal
+ * - parameters[provider]
+ *
+ * Endpoint for CREDIT2VIRTUAL: https://api.leogcltd.com/post
+ *
+ * IMPORTANT: order_amount is sent exactly as entered in the form.
+ * No float/int conversion and no number_format.
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -14,49 +21,50 @@ header('Content-Type: text/html; charset=utf-8');
 /* ===================== CONFIG ===================== */
 $PAYMENT_URL = 'https://api.leogcltd.com/post';
 
-// Brand mentioned in WhatsApp message as the MID routing brand.
-// It is shown in static config only and is NOT included into Banffy JSON payload,
-// because the WhatsApp payload example does not contain brand.
-$BRAND = 'leogc-bannf-dbm';
+$CLIENT_KEY = 'a9375190-26f2-11f0-be42-022c42254708';
+$SECRET     = '554999c284e9f29cf95f090d9a8f3171';
 
+$BRAND = 'leogc-bannf-dbm';
 $WITHDRAWAL_PAYMENT_CODE = '999';
 
+$STATUS_HELPER_URL = 'status_credit2virtual.php';
+
 $COUNTRIES = [
-  'TZ' => [
-    'country' => 'Tanzania',
-    'countryCode' => 'TZ',
-    'currencyCode' => 'TZS',
-    'providers' => [
-      'Halopesa' => '255623456789',
-      'Airtel'   => '255683456789',
-      'Vodacom'  => '255763456789',
-      'Tigo'     => '255713456789',
-      'Azampesa' => '',
-      'Mpesa'    => '',
-    ],
-  ],
   'BJ' => [
     'country' => 'Benin',
     'countryCode' => 'BJ',
-    'currencyCode' => 'XOF',
+    'currency' => 'XOF',
+    'payee_country' => 'BJ',
     'providers' => [
-      'Mtn'  => '22951345789',
+      'Mtn' => '22951345789',
       'Moov' => '22995345789',
+    ],
+  ],
+  'Togo' => [
+    'country' => 'Togo',
+    'countryCode' => 'Togo',
+    'currency' => 'XOF',
+    'payee_country' => 'Togo',
+    'providers' => [
+      'Togocel' => '',
+      'Moov' => '',
     ],
   ],
   'SN' => [
     'country' => 'Senegal',
     'countryCode' => 'SN',
-    'currencyCode' => 'XOF',
+    'currency' => 'XOF',
+    'payee_country' => 'SN',
     'providers' => [
       'orange-senegal' => '221773456789',
-      'wave-senegal'   => '',
+      'wave-senegal' => '',
     ],
   ],
   'CM' => [
     'country' => 'Cameroon',
     'countryCode' => 'CM',
-    'currencyCode' => 'XAF',
+    'currency' => 'XAF',
+    'payee_country' => 'CM',
     'providers' => [
       'mtn-momo-cameroon' => '237653456789',
     ],
@@ -64,62 +72,115 @@ $COUNTRIES = [
   'KE' => [
     'country' => 'Kenya',
     'countryCode' => 'KE',
-    'currencyCode' => 'KES',
+    'currency' => 'KES',
+    'payee_country' => 'KE',
     'providers' => [
+      'airtel-kenya' => '',
+      'equitel-kenya' => '',
       'safaricom-kenya' => '254703456789',
-      'airtel-kenya'    => '',
-      'equitel-kenya'   => '',
-      't-kash-kenya'    => '',
-      'telkom-kenya'    => '',
+      't-kash-kenya' => '',
+      'telkom-kenya' => '',
     ],
   ],
   'CI' => [
     'country' => 'Ivory Coast',
     'countryCode' => 'CI',
-    'currencyCode' => 'XOF',
+    'currency' => 'XOF',
+    'payee_country' => 'CI',
     'providers' => [
+      'moov-ic' => '',
       'orange-ic' => '2250734567890',
-      'moov-ic'   => '',
-      'wave-ic'   => '',
+      'wave-ic' => '',
+    ],
+  ],
+  'ML' => [
+    'country' => 'Mali',
+    'countryCode' => 'ML',
+    'currency' => 'XOF',
+    'payee_country' => 'ML',
+    'providers' => [
+      'orange-mali' => '',
+      'moov-mali' => '',
+    ],
+  ],
+  'BF' => [
+    'country' => 'Burkina Faso',
+    'countryCode' => 'BF',
+    'currency' => 'XOF',
+    'payee_country' => 'BF',
+    'providers' => [
+      'Moov' => '22602345678',
+      'Orange' => '22607345678',
     ],
   ],
   'GH' => [
     'country' => 'Ghana',
     'countryCode' => 'GH',
-    'currencyCode' => 'GHS',
+    'currency' => 'GHS',
+    'payee_country' => 'GH',
     'providers' => [
-      'Mtn'         => '233593456789',
-      'Vodafone'    => '233503456789',
+      'Mtn' => '233593456789',
+      'Zeepay' => '',
+      'Vodafone' => '233503456789',
       'Airtel-Tigo' => '233273456789',
-      'Zeepay'      => '',
+    ],
+  ],
+  'ZM' => [
+    'country' => 'Zambia',
+    'countryCode' => 'ZM',
+    'currency' => 'ZMW',
+    'payee_country' => 'ZM',
+    'providers' => [
+      'Zeepay' => '',
     ],
   ],
   'NG' => [
     'country' => 'Nigeria',
     'countryCode' => 'NG',
-    'currencyCode' => 'NGN',
+    'currency' => 'NGN',
+    'payee_country' => 'NG',
     'providers' => [
+      'Originating Bank name' => '',
       'Access Bank' => '',
       'Zenith Bank' => '',
-      'GTBank'      => '',
-      'First Bank'  => '',
-      'UBA'         => '',
-      'Opay'        => '',
+      'GTBank' => '',
+      'First Bank' => '',
+      'UBA' => '',
+      'Opay' => '',
+    ],
+  ],
+  'TZ' => [
+    'country' => 'Tanzania',
+    'countryCode' => 'TZ',
+    'currency' => 'TZS',
+    'payee_country' => 'TZ',
+    'providers' => [
+      'Vodacom' => '255763456789',
+      'Airtel' => '255683456789',
+      'Tigo' => '255713456789',
+      'Halopesa' => '255623456789',
+      'Azampesa' => '',
+      'Mpesa' => '',
     ],
   ],
   'RW' => [
     'country' => 'Rwanda',
     'countryCode' => 'RW',
-    'currencyCode' => 'RWF',
+    'currency' => 'RWF',
+    'payee_country' => 'RW',
     'providers' => [
       'Airtel' => '250733456789',
-      'Tigo'   => '',
+      'Tigo' => '',
+      'Halopesa' => '',
+      'Azampesa' => '',
+      'Mpesa' => '',
     ],
   ],
   'SL' => [
     'country' => 'Sierra Leone',
     'countryCode' => 'SL',
-    'currencyCode' => 'SLE',
+    'currency' => 'SLE',
+    'payee_country' => 'SL',
     'providers' => [
       'All Networks' => '',
     ],
@@ -127,24 +188,46 @@ $COUNTRIES = [
   'LR' => [
     'country' => 'Liberia',
     'countryCode' => 'LR',
-    'currencyCode' => 'LRD',
+    'currency' => 'LRD',
+    'payee_country' => 'LR',
     'providers' => [
-      'MtnMomo'     => '',
-      'Mtn USD'     => '',
+      'MtnMomo' => '',
+      'Mtn USD' => '',
       'OrangeMoney' => '',
-      'Orange USD'  => '',
+      'Orange USD' => '',
+    ],
+  ],
+  'CF' => [
+    'country' => 'DRC',
+    'countryCode' => 'CF',
+    'currency' => 'CAF',
+    'payee_country' => 'CF',
+    'providers' => [
+      'Vodacom MPesa' => '243813456789',
+      'Africell' => '',
+      'Airtel' => '243973456789',
+      'Orange' => '243893456789',
+    ],
+  ],
+  'CA' => [
+    'country' => 'Canada',
+    'countryCode' => 'CA',
+    'currency' => 'CAD',
+    'payee_country' => 'CA',
+    'providers' => [
+      'For 901' => '',
     ],
   ],
 ];
 
 $DEFAULTS = [
-  'countryCode'      => 'TZ',
-  'provider'         => 'Halopesa',
-  'amount'           => '10.00',
-  'description'      => 'BanffyPay payout test',
-  'first_name'       => 'John',
-  'last_name'        => 'Doe',
-  'email'            => 'customer@example.com',
+  'countryCode'       => 'TZ',
+  'provider'          => 'Airtel',
+  'amount'            => '1000.00',
+  'description'       => 'BanffyPay payout test',
+  'payee_first_name'  => 'John',
+  'payee_last_name'   => 'Doe',
+  'payee_email'       => 'customer@example.com',
 ];
 
 /* ===================== Helpers ===================== */
@@ -161,34 +244,39 @@ function pretty($v){
   return h(json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 }
 
+/**
+ * CREDIT2VIRTUAL hash from documentation:
+ * md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )
+ */
+function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$srcOut = null){
+  $inner = $order_id . $amount . $currency;
+  $src = strtoupper(strrev($inner)) . $secret;
+  if ($srcOut !== null) $srcOut = $src;
+  return md5($src);
+}
+
+
 function current_url(){
   $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
   return ($https ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
 }
 
-function make_callback_url($orderId){
-  $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-  $scheme = $https ? 'https' : 'http';
-  $host = $_SERVER['HTTP_HOST'] ?? 'www.sandbox.pp.ua';
-  return $scheme . '://' . $host . '/callback/' . rawurlencode($orderId);
-}
-
 /* ===================== Initial state ===================== */
 $submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
-$selectedCountryCode = $_POST['countryCode'] ?? $_GET['countryCode'] ?? $DEFAULTS['countryCode'];
+$selectedCountryCode = $_GET['countryCode'] ?? $DEFAULTS['countryCode'];
 if (!isset($COUNTRIES[$selectedCountryCode])) $selectedCountryCode = $DEFAULTS['countryCode'];
-$selectedCountry = $COUNTRIES[$selectedCountryCode];
 
-$provider = $_POST['provider'] ?? $_GET['provider'] ?? $DEFAULTS['provider'];
+$selectedCountry = $COUNTRIES[$selectedCountryCode];
+$provider = $_GET['provider'] ?? $DEFAULTS['provider'];
 if (!isset($selectedCountry['providers'][$provider])) $provider = array_key_first($selectedCountry['providers']);
 
-$msisdn = $_POST['msisdn'] ?? ($selectedCountry['providers'][$provider] ?? '');
-$amount = $_POST['amount'] ?? $DEFAULTS['amount'];
-$description = $_POST['description'] ?? $DEFAULTS['description'];
-$firstName = $_POST['first_name'] ?? $DEFAULTS['first_name'];
-$lastName = $_POST['last_name'] ?? $DEFAULTS['last_name'];
-$email = $_POST['email'] ?? $DEFAULTS['email'];
+$phone = $selectedCountry['providers'][$provider] ?? '';
+$amount = $DEFAULTS['amount'];
+$description = $DEFAULTS['description'];
+$payee_first_name = $DEFAULTS['payee_first_name'];
+$payee_last_name = $DEFAULTS['payee_last_name'];
+$payee_email = $DEFAULTS['payee_email'];
 
 $debug = [];
 $responseBlocks = ['bodyRaw' => '', 'json' => null];
@@ -196,69 +284,96 @@ $errors = [];
 
 /* ===================== Submit ===================== */
 if ($submitted) {
-  $msisdn = preg_replace('/\s+/', '', (string)$msisdn);
-  $msisdn = ltrim($msisdn, '+');
+  $selectedCountryCode = $_POST['countryCode'] ?? $DEFAULTS['countryCode'];
+  if (!isset($COUNTRIES[$selectedCountryCode])) {
+    $errors[] = 'Invalid country.';
+    $selectedCountryCode = $DEFAULTS['countryCode'];
+  }
 
-  $amount = trim((string)$amount);
-  $description = trim((string)$description);
-  $firstName = trim((string)$firstName);
-  $lastName = trim((string)$lastName);
-  $email = trim((string)$email);
+  $selectedCountry = $COUNTRIES[$selectedCountryCode];
 
-  if ($msisdn === '') $errors[] = 'MSISDN is required.';
+  $provider = $_POST['provider'] ?? '';
+  if (!isset($selectedCountry['providers'][$provider])) {
+    $errors[] = 'Invalid provider/channel for selected country.';
+    $provider = array_key_first($selectedCountry['providers']);
+  }
+
+  $currency = $selectedCountry['currency'];
+  $phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
+  $phone = ltrim($phone, '+');
+  // IMPORTANT: keep amount exactly as entered in the form.
+  // Do not cast to float/int and do not format it, otherwise 1000.00 becomes 1000.
+  $amount = trim((string)($_POST['amount'] ?? ''));
+
+  $description = trim((string)($_POST['description'] ?? $DEFAULTS['description']));
+  $payee_first_name = trim((string)($_POST['payee_first_name'] ?? $DEFAULTS['payee_first_name']));
+  $payee_last_name = trim((string)($_POST['payee_last_name'] ?? $DEFAULTS['payee_last_name']));
+  $payee_email = trim((string)($_POST['payee_email'] ?? $DEFAULTS['payee_email']));
+
+  if ($phone === '') $errors[] = 'Payee phone / MSISDN is required.';
   if ($amount === '' || !preg_match('/^\d+(\.\d+)?$/', $amount) || (float)$amount <= 0) $errors[] = 'Amount must be a positive number.';
   if ($description === '') $errors[] = 'Description is required.';
-  if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email format looks wrong.';
+  if ($payee_email !== '' && !filter_var($payee_email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Payee email format looks wrong.';
 
   if (!$errors) {
-    $merchantTransactionID = $selectedCountryCode . '_PAYOUT_' . time();
-    $merchantURL = make_callback_url($merchantTransactionID);
-    $beneficiaryName = trim($firstName . ' ' . $lastName);
+    $order_id = $selectedCountryCode . '_PAYOUT_' . time();
+    $hash_src_dbg = '';
+    $hash = build_credit2virtual_hash($order_id, $amount, $currency, $SECRET, $hash_src_dbg);
 
-    // EXACT structure from WhatsApp screenshot.
-    $payload = [
-      'requestOrigin'         => 'Api',
-      'paymentCode'           => $GLOBALS['WITHDRAWAL_PAYMENT_CODE'],
-      'paymentProvider'       => $provider,
-      'merchantURL'           => $merchantURL,
-      'merchantTransactionID' => $merchantTransactionID,
-      'currencyCode'          => $selectedCountry['currencyCode'],
-      'amount'                => $amount,
-      'description'           => $description,
-      'countryCode'           => $selectedCountry['countryCode'],
-      'msisdn'                => $msisdn,
-      'extraData'             => [
-        'transactionType'         => 'MOBILE_TRANSFER',
-        'beneficiaryProvider'     => $provider,
-        'beneficiaryName'         => $beneficiaryName,
-        'beneficiaryEmail'        => $email,
-        'beneficiaryMsisdn'       => $msisdn,
-        'beneficiaryCountryCode'  => $selectedCountry['countryCode'],
-      ],
+    $form = [
+      // Akurateco CREDIT2VIRTUAL documented fields
+      'action'            => 'CREDIT2VIRTUAL',
+      'client_key'        => $CLIENT_KEY,
+      //'brand'             => $BRAND,
+      'order_id'          => $order_id,
+      'order_amount'      => $amount,
+      'order_currency'    => $currency,
+      'order_description' => $description,
+
+      // BanffyPay routing fields from SALE connector
+      'country'           => $selectedCountry['country'],
+      'countryCode'       => $selectedCountry['countryCode'],
+      'channel_id'        => $provider,
+      'payment_code'      => $GLOBALS['WITHDRAWAL_PAYMENT_CODE'],
+
+      // Payee fields from CREDIT2VIRTUAL docs
+      'payee_first_name'  => $payee_first_name,
+      'payee_last_name'   => $payee_last_name,
+      'payee_country'     => $selectedCountry['payee_country'],
+      'payee_phone'       => $phone,
+      //'transactionType'   => 'sync',
+      //'requestType'         => 'sync',
+      //'transactionType'     => 'MOBILE_TRANSFER',
+      //'requestType'         => 'MOBILE_TRANSFER',
     ];
 
-    $jsonBody = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($payee_email !== '') {
+      $form['payee_email'] = $payee_email;
+    }
+
+    // Documented parameters array for brand-specific data.
+    // Akurateco/connector note: Provider should be the same as for PayIn.
+    $form['parameters[provider]'] = $provider;
+    $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
+    $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
+    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
+
+    // Hash is required and added after all business fields.
+    $form['hash'] = $hash;
 
     $debug = [
       'endpoint' => $PAYMENT_URL,
-      'brand_for_mid_routing' => $BRAND,
-      'headers' => [
-        'Content-Type: application/json',
-        'Accept: application/json',
-      ],
-      'json_payload' => $payload,
-      'raw_json_body' => $jsonBody,
+      'form'     => $form,
+      'hash_formula' => 'md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )',
+      'hash_src' => $hash_src_dbg,
+      'hash'     => $hash,
     ];
 
     $ch = curl_init($PAYMENT_URL);
     curl_setopt_array($ch, [
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_POST           => true,
-      CURLOPT_HTTPHEADER     => [
-        'Content-Type: application/json',
-        'Accept: application/json',
-      ],
-      CURLOPT_POSTFIELDS     => $jsonBody,
+      CURLOPT_POSTFIELDS     => $form,
       CURLOPT_TIMEOUT        => 60,
     ]);
 
@@ -286,7 +401,7 @@ $self = current_url();
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>BanffyPay PayOut — WhatsApp JSON format</title>
+<title>BanffyPay CREDIT2VIRTUAL PayOut</title>
 <style>
 :root{--bg:#0f1115;--panel:#171923;--b:#2a2f3a;--text:#e6e6e6;--muted:#9aa4af;--err:#ff8080;--blue:#2b7cff}
 body{background:var(--bg);color:var(--text);font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:0}
@@ -298,14 +413,15 @@ label{display:inline-block;min-width:180px;color:var(--muted)}
 button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#fff;border:0;text-decoration:none;display:inline-block;cursor:pointer}
 .error{color:var(--err)}
 .small{font-size:12px;color:var(--muted);margin-left:184px;margin-top:3px}
-.row{margin:9px 0}.kv{color:var(--muted)}
+.row{margin:9px 0}
+.kv{color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <div class="panel">
-  <h3>Create BanffyPay PayOut — WhatsApp JSON format</h3>
+  <h3>Create CREDIT2VIRTUAL — BanffyPay PayOut</h3>
 
   <?php if (!empty($errors)): ?>
     <div class="error"><pre><?=pretty($errors)?></pre></div>
@@ -317,28 +433,28 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
       <select name="countryCode" id="countryCode">
         <?php foreach ($COUNTRIES as $code => $c): ?>
           <option value="<?=h($code)?>" <?=($selectedCountryCode === $code ? 'selected' : '')?>>
-            <?=h($c['country'])?> / <?=h($code)?> / <?=h($c['currencyCode'])?>
+            <?=h($c['country'])?> / <?=h($code)?> / <?=h($c['currency'])?>
           </option>
         <?php endforeach; ?>
       </select>
     </div>
 
     <div class="row">
-      <label>Payment provider:</label>
+      <label>Provider / Channel:</label>
       <select name="provider" id="provider"></select>
-      <div class="small">Sent as paymentProvider and extraData.beneficiaryProvider.</div>
+      <div class="small">Sent as channel_id and parameters[provider].</div>
     </div>
 
     <div class="row">
-      <label>MSISDN:</label>
-      <input type="text" name="msisdn" id="msisdn" value="<?=h($msisdn)?>">
-      <div class="small">Sent as msisdn and extraData.beneficiaryMsisdn.</div>
+      <label>Payee phone / MSISDN:</label>
+      <input type="text" name="phone" id="phone" value="<?=h($phone)?>">
+      <div class="small">Sent as payee_phone.</div>
     </div>
 
     <div class="row">
       <label>Amount:</label>
-      <input type="text" name="amount" value="<?=h($amount)?>">
-      <div class="small">Sent exactly as entered. Example: 10.00 stays 10.00.</div>
+      <input type="text" name="amount" id="amount" value="<?=h($amount)?>">
+      <div class="small">Sent exactly as entered. No float/int conversion, no number_format. Example: 1000.00 stays 1000.00.</div>
     </div>
 
     <div class="row">
@@ -347,22 +463,22 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
     </div>
 
     <div class="row">
-      <label>Beneficiary first name:</label>
-      <input type="text" name="first_name" value="<?=h($firstName)?>">
+      <label>Payee first name:</label>
+      <input type="text" name="payee_first_name" value="<?=h($payee_first_name)?>">
     </div>
 
     <div class="row">
-      <label>Beneficiary last name:</label>
-      <input type="text" name="last_name" value="<?=h($lastName)?>">
+      <label>Payee last name:</label>
+      <input type="text" name="payee_last_name" value="<?=h($payee_last_name)?>">
     </div>
 
     <div class="row">
-      <label>Beneficiary email:</label>
-      <input type="text" name="email" value="<?=h($email)?>">
+      <label>Payee email:</label>
+      <input type="text" name="payee_email" value="<?=h($payee_email)?>">
     </div>
 
     <div class="row" style="margin-top:14px">
-      <button type="submit">Send JSON payout</button>
+      <button type="submit">Send CREDIT2VIRTUAL</button>
     </div>
   </form>
 </div>
@@ -371,9 +487,9 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
   <h3>Static config</h3>
   <pre><?=pretty([
     'endpoint' => $PAYMENT_URL,
-    'brand_for_mid_routing' => $BRAND,
-    'paymentCode' => $WITHDRAWAL_PAYMENT_CODE,
-    'body_format' => 'application/json',
+    'action' => 'CREDIT2VIRTUAL',
+    'brand' => $BRAND,
+    'payment_code' => $WITHDRAWAL_PAYMENT_CODE,
   ])?></pre>
 </div>
 
@@ -388,13 +504,15 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
 </div>
 
 <div class="panel">
-  <h3>Sent JSON to LeoGC /post</h3>
-  <pre><?=pretty($debug['json_payload'])?></pre>
+  <h3>Sent form-data</h3>
+  <pre><?=pretty($debug['form'])?></pre>
 </div>
 
 <div class="panel">
-  <h3>Raw JSON body</h3>
-  <pre><?=h($debug['raw_json_body'])?></pre>
+  <h3>Hash</h3>
+  <div class="kv"><?=h($debug['hash_formula'])?></div>
+  <pre><?=h($debug['hash_src'])?></pre>
+  <pre><?=h($debug['hash'])?></pre>
 </div>
 
 <div class="panel">
@@ -403,6 +521,9 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
   <?php if (is_array($responseBlocks['json'] ?? null)): ?>
     <h3>Parsed response</h3>
     <pre><?=pretty($responseBlocks['json'])?></pre>
+    <?php if (!empty($responseBlocks['json']['trans_id'])): ?>
+      <a class="btn" target="_blank" href="<?=h($STATUS_HELPER_URL)?>?trans_id=<?=h($responseBlocks['json']['trans_id'])?>">Open status helper</a>
+    <?php endif; ?>
   <?php endif; ?>
 </div>
 <?php endif; ?>
@@ -416,7 +537,7 @@ let selectedProvider = <?=json_encode($provider)?>;
 function refreshProviders(keepSelected = true) {
   const countryCode = document.getElementById('countryCode').value;
   const providerSelect = document.getElementById('provider');
-  const msisdnInput = document.getElementById('msisdn');
+  const phoneInput = document.getElementById('phone');
   const providers = countries[countryCode].providers;
 
   providerSelect.innerHTML = '';
@@ -434,7 +555,7 @@ function refreshProviders(keepSelected = true) {
   }
 
   selectedProvider = providerSelect.value;
-  msisdnInput.value = providers[selectedProvider] || '';
+  phoneInput.value = providers[selectedProvider] || '';
 }
 
 document.getElementById('countryCode').addEventListener('change', function(){
@@ -445,7 +566,7 @@ document.getElementById('countryCode').addEventListener('change', function(){
 document.getElementById('provider').addEventListener('change', function(){
   const countryCode = document.getElementById('countryCode').value;
   selectedProvider = this.value;
-  document.getElementById('msisdn').value = countries[countryCode].providers[this.value] || '';
+  document.getElementById('phone').value = countries[countryCode].providers[this.value] || '';
 });
 
 refreshProviders(true);
