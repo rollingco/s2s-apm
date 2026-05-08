@@ -324,7 +324,7 @@ if ($submitted) {
       // Akurateco CREDIT2VIRTUAL documented fields
       'action'            => 'CREDIT2VIRTUAL',
       'client_key'        => $CLIENT_KEY,
-      'brand'             => $BRAND,
+      //'brand'             => $BRAND,
       'order_id'          => $order_id,
       'order_amount'      => $amount,
       'order_currency'    => $currency,
@@ -343,8 +343,8 @@ if ($submitted) {
       'payee_phone'       => $phone,
       //'transactionType'   => 'sync',
       //'requestType'         => 'sync',
-      'transactionType'     => 'MOBILE_TRANSFER',
-      'requestType'         => 'MOBILE_TRANSFER',
+      //'transactionType'     => 'MOBILE_TRANSFER',
+      //'requestType'         => 'MOBILE_TRANSFER',
     ];
 
     if ($payee_email !== '') {
@@ -356,7 +356,7 @@ if ($submitted) {
     $form['parameters[provider]'] = $provider;
     $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
     $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
-    $form['parameters[BeneficiaryCountryCode]'] = $selectedCountry['countryCode'];
+    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
 
     // Hash is required and added after all business fields.
     $form['hash'] = $hash;
