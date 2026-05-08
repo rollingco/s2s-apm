@@ -19,7 +19,7 @@
 header('Content-Type: text/html; charset=utf-8');
 
 /* ===================== CONFIG ===================== */
-$PAYMENT_URL = 'https://api.leogcltd.com/post-va';
+$PAYMENT_URL = 'https://api.leogcltd.com/post';
 
 $CLIENT_KEY = 'a9375190-26f2-11f0-be42-022c42254708';
 $SECRET     = '554999c284e9f29cf95f090d9a8f3171';
@@ -324,7 +324,7 @@ if ($submitted) {
       // Akurateco CREDIT2VIRTUAL documented fields
       'action'            => 'CREDIT2VIRTUAL',
       'client_key'        => $CLIENT_KEY,
-      //'brand'             => $BRAND,
+      'brand'             => $BRAND,
       'order_id'          => $order_id,
       'order_amount'      => $amount,
       'order_currency'    => $currency,
