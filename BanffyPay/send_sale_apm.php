@@ -139,15 +139,45 @@ $COUNTRIES = [
     'payer_country' => 'NG',
     'payment_code' => '401',
     'providers' => [
-    /*  
-    'Originating Bank name' => '',
+      'Sterling Bank' => '',
+      'Keystone Bank' => '',
+      'FCMB' => '',
+      'United Bank for Africa' => '',
+      'JAIZ Bank' => '',
+      'Fidelity Bank' => '',
+      'Polaris Bank' => '',
+      'Citi Bank' => '',
+      'Ecobank Bank' => '',
+      'Unity Bank' => '',
+      'StanbicIBTC Bank' => '',
+      'GTBank Plc' => '',
       'Access Bank' => '',
-      'Zenith Bank' => '',
-      'GTBank' => '',
-      'First Bank' => '',
-      'UBA' => '',
-      'Opay (if the customer is paying via a fintech wallet)' => '',
-      */
+      'Zenith Bank Plc' => '',
+      'First Bank of Nigeria' => '',
+      'Wema Bank' => '',
+      'Union Bank' => '',
+      'Enterprise Bank' => '',
+      'Heritage Bank' => '',
+      'StandardChartered' => '',
+      'Suntrust Bank' => '',
+      'Providus Bank' => '',
+      'Rand Merchant Bank' => '',
+      'Titan Trust Bank' => '',
+      'Taj Bank' => '',
+      'Globus Bank' => '',
+      'Central Bank of Nigeria' => '',
+      'Lotus Bank' => '',
+      'Premium Trust Bank' => '',
+      'eNaira' => '',
+      'Signature Bank' => '',
+      'Optimus Bank' => '',
+      'Parallex Bank' => '',
+      'NEXIM Bank' => '',
+      'FEWCHORE FINANCE COMPANY LIMITED' => '',
+      'SageGrey Finance Limited' => '',
+      'AAA Finance' => '',
+      'Branch International Financial Services' => '',
+      'Tekla Finance Limited' => '',
     ],
   ],
   'TZ' => [
@@ -284,12 +314,9 @@ if ($submitted) {
 
   $provider = $_POST['provider'] ?? ($DEFAULTS['provider'] ?? '');
 
-  // Nigeria does not require provider validation
-  if ($selectedCountryCode !== 'NG') {
-    if (!isset($selectedCountry['providers'][$provider])) {
-      $errors[] = 'Invalid provider for selected country.';
-      $provider = array_key_first($selectedCountry['providers']);
-    }
+  if (!isset($selectedCountry['providers'][$provider])) {
+    $errors[] = 'Invalid provider for selected country.';
+    $provider = array_key_first($selectedCountry['providers']);
   }
 
   $payer_phone = preg_replace('/\s+/', '', $_POST['phone'] ?? '');
@@ -344,6 +371,7 @@ if ($submitted) {
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
       'channel_id'        => ($selectedCountryCode === 'NG') ? '' : $provider,
+      'paymentProvider'   => ($selectedCountryCode === 'NG') ? $provider : '',
       'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
