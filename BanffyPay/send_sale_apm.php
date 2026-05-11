@@ -370,7 +370,8 @@ if ($submitted) {
 
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
-      'channel_id'        => ($selectedCountryCode === 'NG') ? '' : $provider,
+      //'channel_id'        => ($selectedCountryCode === 'NG') ? '' : $provider,
+      'channel_id'        => ($selectedCountryCode === 'NG') ? $provider,
       'paymentProvider'   => ($selectedCountryCode === 'NG') ? $provider : '',
       'payment_code'      => $payment_code,
 
