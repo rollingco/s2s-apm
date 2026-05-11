@@ -139,13 +139,15 @@ $COUNTRIES = [
     'payer_country' => 'NG',
     'payment_code' => '401',
     'providers' => [
-      'Originating Bank name' => '',
+    /*  
+    'Originating Bank name' => '',
       'Access Bank' => '',
       'Zenith Bank' => '',
       'GTBank' => '',
       'First Bank' => '',
       'UBA' => '',
       'Opay (if the customer is paying via a fintech wallet)' => '',
+      */
     ],
   ],
   'TZ' => [
