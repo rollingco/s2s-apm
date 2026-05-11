@@ -370,6 +370,7 @@ if ($submitted) {
 
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
+      'paymentProvider'   => $provider,
       'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
@@ -381,7 +382,7 @@ if ($submitted) {
       'hash'              => $hash,
     ];
 
-    // For Nigeria SALE requests, channel_id must not be sent.
+    // For Nigeria, channel_id must NOT be sent.
     // For all other countries, channel_id defines MID/provider routing.
     if ($selectedCountryCode !== 'NG') {
       $form['channel_id'] = $provider;
