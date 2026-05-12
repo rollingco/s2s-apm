@@ -38,18 +38,18 @@ $COUNTRIES = [
     'currency' => 'XOF',
     'payee_country' => 'BJ',
     'providers' => [
-      'Mtn' => '22951345789',
-      'Moov' => '22995345789',
+      'mtn-BJ' => '22951345789',
+      'moov-BJ' => '22995345789',
     ],
   ],
-  'Togo' => [
+  'TG' => [
     'country' => 'Togo',
-    'countryCode' => 'Togo',
+    'countryCode' => 'TG',
     'currency' => 'XOF',
-    'payee_country' => 'Togo',
+    'payee_country' => 'TG',
     'providers' => [
-      'Togocel' => '',
-      'Moov' => '',
+      'togocel-TG' => '',
+      'moov-TG' => '',
     ],
   ],
   'SN' => [
@@ -58,8 +58,8 @@ $COUNTRIES = [
     'currency' => 'XOF',
     'payee_country' => 'SN',
     'providers' => [
-      'orange-senegal' => '221773456789',
-      'wave-senegal' => '',
+      'orange-SN' => '221773456789',
+      'wave-SN' => '',
     ],
   ],
   'CM' => [
@@ -68,7 +68,7 @@ $COUNTRIES = [
     'currency' => 'XAF',
     'payee_country' => 'CM',
     'providers' => [
-      'mtn-momo-cameroon' => '237653456789',
+      'mtnmomo-CM' => '237653456789',
     ],
   ],
   'KE' => [
@@ -77,11 +77,11 @@ $COUNTRIES = [
     'currency' => 'KES',
     'payee_country' => 'KE',
     'providers' => [
-      'airtel-kenya' => '',
-      'equitel-kenya' => '',
-      'safaricom-kenya' => '254703456789',
-      't-kash-kenya' => '',
-      'telkom-kenya' => '',
+      'airtel-KE' => '',
+      'equitel-KE' => '',
+      'safaricom-KE' => '254703456789',
+      'tkash-KE' => '',
+      'telkom-KE' => '',
     ],
   ],
   'CI' => [
@@ -90,9 +90,9 @@ $COUNTRIES = [
     'currency' => 'XOF',
     'payee_country' => 'CI',
     'providers' => [
-      'moov-ic' => '',
-      'orange-ic' => '2250734567890',
-      'wave-ic' => '',
+      'moov-CI' => '',
+      'orange-CI' => '2250734567890',
+      'wave-CI' => '',
     ],
   ],
   'ML' => [
@@ -101,8 +101,8 @@ $COUNTRIES = [
     'currency' => 'XOF',
     'payee_country' => 'ML',
     'providers' => [
-      'orange-mali' => '',
-      'moov-mali' => '',
+      'orange-ML' => '',
+      'moov-ML' => '',
     ],
   ],
   'BF' => [
@@ -111,8 +111,8 @@ $COUNTRIES = [
     'currency' => 'XOF',
     'payee_country' => 'BF',
     'providers' => [
-      'Moov' => '22602345678',
-      'Orange' => '22607345678',
+      'moov-BF' => '22602345678',
+      'orange-BF' => '22607345678',
     ],
   ],
   'GH' => [
@@ -121,10 +121,10 @@ $COUNTRIES = [
     'currency' => 'GHS',
     'payee_country' => 'GH',
     'providers' => [
-      'Mtn' => '233593456789',
-      'Zeepay' => '',
-      'Vodafone' => '233503456789',
-      'Airtel-Tigo' => '233273456789',
+      'mtn-GH' => '233593456789',
+      'zeepay-GH' => '',
+      'vodafone-GH' => '233503456789',
+      'airteltigo-GH' => '233273456789',
     ],
   ],
   'ZM' => [
@@ -133,7 +133,7 @@ $COUNTRIES = [
     'currency' => 'ZMW',
     'payee_country' => 'ZM',
     'providers' => [
-      'Zeepay' => '',
+      'zeepay-ZM' => '',
     ],
   ],
   'NG' => [
@@ -157,12 +157,12 @@ $COUNTRIES = [
     'currency' => 'TZS',
     'payee_country' => 'TZ',
     'providers' => [
-      'Vodacom' => '255763456789',
-      'Airtel' => '255683456789',
-      'Tigo' => '255713456789',
-      'Halopesa' => '255623456789',
-      'Azampesa' => '',
-      'Mpesa' => '',
+      'vodacom-TZ' => '255763456789',
+      'airtel-TZ' => '255683456789',
+      'tigo-TZ' => '255713456789',
+      'halopesa-TZ' => '255623456789',
+      'azampesa-TZ' => '',
+      'mpesa-TZ' => '',
     ],
   ],
   'RW' => [
@@ -171,11 +171,11 @@ $COUNTRIES = [
     'currency' => 'RWF',
     'payee_country' => 'RW',
     'providers' => [
-      'Airtel' => '250733456789',
-      'Tigo' => '',
-      'Halopesa' => '',
-      'Azampesa' => '',
-      'Mpesa' => '',
+      'airtel-RW' => '250733456789',
+      'tigo-RW' => '',
+      'halopesa-RW' => '',
+      'azampesa-RW' => '',
+      'mpesa-RW' => '',
     ],
   ],
   'SL' => [
@@ -184,7 +184,7 @@ $COUNTRIES = [
     'currency' => 'SLE',
     'payee_country' => 'SL',
     'providers' => [
-      'All Networks' => '',
+      'allnetworks-SL' => '',
     ],
   ],
   'LR' => [
@@ -193,10 +193,10 @@ $COUNTRIES = [
     'currency' => 'LRD',
     'payee_country' => 'LR',
     'providers' => [
-      'MtnMomo' => '',
-      'Mtn USD' => '',
-      'OrangeMoney' => '',
-      'Orange USD' => '',
+      'mtnmomo-LR' => '',
+      'mtnusd-LR' => '',
+      'orangemoney-LR' => '',
+      'orangeusd-LR' => '',
     ],
   ],
   'CF' => [
@@ -205,10 +205,10 @@ $COUNTRIES = [
     'currency' => 'CAF',
     'payee_country' => 'CF',
     'providers' => [
-      'Vodacom MPesa' => '243813456789',
-      'Africell' => '',
-      'Airtel' => '243973456789',
-      'Orange' => '243893456789',
+      'vodacommpesa-CF' => '243813456789',
+      'africell-CF' => '',
+      'airtel-CF' => '243973456789',
+      'orange-CF' => '243893456789',
     ],
   ],
   'CA' => [
@@ -217,14 +217,14 @@ $COUNTRIES = [
     'currency' => 'CAD',
     'payee_country' => 'CA',
     'providers' => [
-      'For 901' => '',
+      'for901-CA' => '',
     ],
   ],
 ];
 
 $DEFAULTS = [
   'countryCode'       => 'TZ',
-  'provider'          => 'Airtel',
+  'provider'          => 'airtel-TZ',
   'amount'            => '1000.00',
   'description'       => 'BanffyPay payout test',
   'payee_first_name'  => 'John',
