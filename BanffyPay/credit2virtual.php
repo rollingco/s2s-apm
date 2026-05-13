@@ -6,10 +6,9 @@
  * Additional BanffyPay routing fields are added from SALE connector:
  * - country
  * - countryCode
- * - channel_id (provider/channel) for all countries except Nigeria
+ * - channel_id (provider/channel)
  * - payment_code = 999 for withdrawal
- * - parameters[provider] for all countries except Nigeria
- * - parameters[beneficiaryProvider] only for Nigeria
+ * - parameters[provider]
  *
  * Endpoint for CREDIT2VIRTUAL: https://api.leogcltd.com/post
  *
@@ -353,20 +352,18 @@ if ($submitted) {
       $form['payee_email'] = $payee_email;
     }
 
-    // BanffyPay routing logic:
-    // Nigeria: do not send channel_id. Send bank name as parameters[beneficiaryProvider].
-    // Other countries: send channel_id and parameters[provider].
+    // Nigeria uses BANK_DEPOSIT flow without channel_id/provider.
     if ($selectedCountry['countryCode'] === 'NG') {
-      $form['parameters[beneficiaryProvider]'] = $provider;
+      $form['parameters[beneficiaryCountryCode]'] = 'NG';
+      $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
+      $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
     } else {
       $form['channel_id'] = $provider;
       $form['parameters[provider]'] = $provider;
+      $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
+      $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
+      $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
     }
-
-    // Documented parameters array for brand-specific data.
-    $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
-    $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
-    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
 
     // Hash is required and added after all business fields.
     $form['hash'] = $hash;
@@ -452,7 +449,7 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
     <div class="row">
       <label>Provider / Channel:</label>
       <select name="provider" id="provider"></select>
-      <div class="small">For Nigeria: sent as parameters[beneficiaryProvider], without channel_id. For other countries: sent as channel_id and parameters[provider].</div>
+      <div class="small">Sent as channel_id and parameters[provider].</div>
     </div>
 
     <div class="row">
