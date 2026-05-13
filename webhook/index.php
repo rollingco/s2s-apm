@@ -6,9 +6,27 @@ date_default_timezone_set('Europe/Kyiv');
 
 /*
 |--------------------------------------------------------------------------
+| AKURATECO CALLBACK CATCHER + MULTI-FLOW HASH DEBUGGER
+|--------------------------------------------------------------------------
+| Purpose:
+| - receive callback/webhook from payment platform
+| - log headers, raw body, parsed data
+| - try several known Akurateco hash formulas
+| - show which formula matched received hash
+|
+| IMPORTANT:
+| This file is intended mainly for debugging / investigation.
+| Do not expose real merchant password in public repositories or browser output.
+|--------------------------------------------------------------------------
+*/
+
+/*
+|--------------------------------------------------------------------------
 | SETTINGS
 |--------------------------------------------------------------------------
 */
+//$merchantKey  = 'PUT_MERCHANT_KEY_HERE';
+//$merchantPass = 'PUT_MERCHANT_PASSWORD_HERE';
 $merchantKey  = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $merchantPass = '976d5c5d5eacbab78288b12bb15178ba';
 
@@ -65,6 +83,17 @@ function receivedHash(array $data): string
     return strtoupper(trim((string)($data['hash'] ?? '')));
 }
 
+function getFirstAvailable(array $data, array $keys): string
+{
+    foreach ($keys as $key) {
+        if (isset($data[$key]) && (string)$data[$key] !== '') {
+            return (string)$data[$key];
+        }
+    }
+
+    return '';
+}
+
 function checkHashResult(
     string $flow,
     string $formula,
@@ -86,17 +115,6 @@ function checkHashResult(
     ];
 }
 
-function getFirstAvailable(array $data, array $keys): string
-{
-    foreach ($keys as $key) {
-        if (isset($data[$key]) && (string)$data[$key] !== '') {
-            return (string)$data[$key];
-        }
-    }
-
-    return '';
-}
-
 function recursiveKsort(array &$array): void
 {
     foreach ($array as &$value) {
@@ -106,6 +124,17 @@ function recursiveKsort(array &$array): void
     }
 
     ksort($array);
+}
+
+function reverseRecursiveValues(array &$params): void
+{
+    foreach ($params as &$value) {
+        if (is_array($value)) {
+            reverseRecursiveValues($value);
+        } else {
+            $value = strrev((string)$value);
+        }
+    }
 }
 
 function implodeRecursiveValues(array $params): string
@@ -123,15 +152,29 @@ function implodeRecursiveValues(array $params): string
     return $result;
 }
 
-function reverseRecursiveValues(array &$params): void
+function parseRequestBody(string $rawBody): array
 {
-    foreach ($params as &$value) {
-        if (is_array($value)) {
-            reverseRecursiveValues($value);
-        } else {
-            $value = strrev((string)$value);
-        }
+    $data = $_POST;
+
+    if (!empty($data)) {
+        return $data;
     }
+
+    if ($rawBody === '') {
+        return [];
+    }
+
+    $json = json_decode($rawBody, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+        return $json;
+    }
+
+    parse_str($rawBody, $parsed);
+    if (is_array($parsed)) {
+        return $parsed;
+    }
+
+    return [];
 }
 
 /*
@@ -146,15 +189,15 @@ function reverseRecursiveValues(array &$params): void
 
 /*
 |--------------------------------------------------------------------------
-| CHECKOUT / COMMON CALLBACK HASH
+| COMMON CALLBACK HASH - MD5
 |--------------------------------------------------------------------------
-| Formula from callback docs:
-| hash = SHA1(MD5(UPPERCASE(id + order_number + order_amount +
-|                           order_currency + order_description + PASSWORD)))
-| Result is uppercase.
+| Formula from callback notification docs:
+| hash source = id + order_number + order_amount + order_currency +
+|               order_description + PASSWORD
+| Algorithm: MD5, uppercase result.
 |--------------------------------------------------------------------------
 */
-function validateCheckoutCallbackHash(array $data, string $merchantPass): array
+function validateCommonCallbackMd5Hash(array $data, string $merchantPass): array
 {
     $id = getFirstAvailable($data, ['id', 'payment_public_id', 'payment_id']);
     $orderNumber = getFirstAvailable($data, ['order_number', 'order_id', 'number']);
@@ -163,11 +206,11 @@ function validateCheckoutCallbackHash(array $data, string $merchantPass): array
     $description = getFirstAvailable($data, ['order_description', 'description']);
 
     $source = $id . $orderNumber . $amount . $currency . $description . $merchantPass;
-    $expected = strtoupper(sha1(md5(strtoupper($source))));
+    $expected = strtoupper(md5($source));
 
     return checkHashResult(
-        'checkout_callback',
-        'sha1(md5(strtoupper(id . order_number . order_amount . order_currency . order_description . PASSWORD)))',
+        'common_callback_md5',
+        'md5(id . order_number . order_amount . order_currency . order_description . PASSWORD)',
         $source,
         $expected,
         $data,
@@ -177,9 +220,68 @@ function validateCheckoutCallbackHash(array $data, string $merchantPass): array
 
 /*
 |--------------------------------------------------------------------------
+| COMMON CALLBACK HASH - SHA1
+|--------------------------------------------------------------------------
+| Same source as common callback, but SHA1 uppercase result.
+|--------------------------------------------------------------------------
+*/
+function validateCommonCallbackSha1Hash(array $data, string $merchantPass): array
+{
+    $id = getFirstAvailable($data, ['id', 'payment_public_id', 'payment_id']);
+    $orderNumber = getFirstAvailable($data, ['order_number', 'order_id', 'number']);
+    $amount = getFirstAvailable($data, ['order_amount', 'amount']);
+    $currency = getFirstAvailable($data, ['order_currency', 'currency']);
+    $description = getFirstAvailable($data, ['order_description', 'description']);
+
+    $source = $id . $orderNumber . $amount . $currency . $description . $merchantPass;
+    $expected = strtoupper(sha1($source));
+
+    return checkHashResult(
+        'common_callback_sha1',
+        'sha1(id . order_number . order_amount . order_currency . order_description . PASSWORD)',
+        $source,
+        $expected,
+        $data,
+        ['id/payment_public_id/payment_id', 'order_number/order_id/number', 'order_amount/amount', 'order_currency/currency', 'order_description/description']
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| CHECKOUT HASH - SHA1(MD5(UPPERCASE(...)))
+|--------------------------------------------------------------------------
+| Formula from checkout hash docs:
+| sha1(md5(strtoupper(payment_public_id . order_id . amount . currency .
+|                    description . PASSWORD)))
+| Result is uppercase.
+|--------------------------------------------------------------------------
+*/
+function validateCheckoutSha1Md5Hash(array $data, string $merchantPass): array
+{
+    $paymentPublicId = getFirstAvailable($data, ['payment_public_id', 'id', 'payment_id']);
+    $orderId = getFirstAvailable($data, ['order_id', 'order_number', 'number']);
+    $amount = getFirstAvailable($data, ['amount', 'order_amount']);
+    $currency = getFirstAvailable($data, ['currency', 'order_currency']);
+    $description = getFirstAvailable($data, ['description', 'order_description']);
+
+    $source = $paymentPublicId . $orderId . $amount . $currency . $description . $merchantPass;
+    $expected = strtoupper(sha1(md5(strtoupper($source))));
+
+    return checkHashResult(
+        'checkout_sha1_md5',
+        'sha1(md5(strtoupper(payment_public_id . order_id . amount . currency . description . PASSWORD)))',
+        $source,
+        $expected,
+        $data,
+        ['payment_public_id/id/payment_id', 'order_id/order_number/number', 'amount/order_amount', 'currency/order_currency', 'description/order_description']
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
 | CREDIT2VIRTUAL / WITHDRAWAL CALLBACK HASH
 |--------------------------------------------------------------------------
-| Formula:
+| Formula used for withdrawal callback:
 | md5(strtoupper(strrev(trans_id . order_id . status)) . PASSWORD)
 | Result is uppercase.
 |--------------------------------------------------------------------------
@@ -209,7 +311,7 @@ function validateWithdrawalCallbackHash(array $data, string $merchantPass): arra
 |--------------------------------------------------------------------------
 | Formula from hash formulas doc:
 | md5(strtoupper(strrev(email) . PASSWORD . trans_id .
-|                 strrev(first6 + last4)))
+|                 strrev(first6 . last4)))
 | Result is uppercase.
 |--------------------------------------------------------------------------
 */
@@ -275,23 +377,24 @@ function validateS2sApmHash(array $data, string $merchantPass): array
 function validateAllCallbackHashes(array $data, string $merchantPass): array
 {
     $checks = [
-        validateCheckoutCallbackHash($data, $merchantPass),
+        validateCommonCallbackMd5Hash($data, $merchantPass),
+        validateCommonCallbackSha1Hash($data, $merchantPass),
+        validateCheckoutSha1Md5Hash($data, $merchantPass),
         validateWithdrawalCallbackHash($data, $merchantPass),
         validateS2sCardHash($data, $merchantPass),
         validateS2sApmHash($data, $merchantPass),
     ];
 
-    $matched = null;
+    $matched = [];
 
     foreach ($checks as $check) {
         if (!empty($check['valid'])) {
-            $matched = $check;
-            break;
+            $matched[] = $check;
         }
     }
 
     return [
-        'valid'    => $matched !== null,
+        'valid'    => count($matched) > 0,
         'matched'  => $matched,
         'received' => receivedHash($data),
         'all'      => $checks,
@@ -306,7 +409,12 @@ function detectMeaning(array $data, array $hashResult = []): string
     $type = strtolower((string)($data['type'] ?? ''));
     $orderStatus = strtoupper((string)($data['order_status'] ?? ''));
 
-    $flow = $hashResult['matched']['flow'] ?? 'unknown_flow';
+    $matchedFlows = array_map(
+        static fn(array $item): string => (string)($item['flow'] ?? ''),
+        $hashResult['matched'] ?? []
+    );
+
+    $flow = !empty($matchedFlows) ? implode(', ', $matchedFlows) : 'unknown_flow';
     $hashState = !empty($hashResult['valid']) ? 'HASH VALID' : 'HASH INVALID';
 
     if ($action === 'CREDIT2VIRTUAL') {
@@ -314,12 +422,12 @@ function detectMeaning(array $data, array $hashResult = []): string
             return $hashState . ' | ' . $flow . ' | CREDIT2VIRTUAL / withdrawal callback: SUCCESS';
         }
 
-        if ($status === 'DECLINED' || $result === 'DECLINED') {
-            return $hashState . ' | ' . $flow . ' | CREDIT2VIRTUAL / withdrawal callback: DECLINED';
+        if ($status === 'DECLINED' || $result === 'DECLINED' || $result === 'FAIL') {
+            return $hashState . ' | ' . $flow . ' | CREDIT2VIRTUAL / withdrawal callback: DECLINED / FAILED';
         }
 
-        if ($status === 'PREPARE' || $result === 'UNDEFINED') {
-            return $hashState . ' | ' . $flow . ' | CREDIT2VIRTUAL / withdrawal callback: PREPARE / UNDEFINED';
+        if ($status === 'PREPARE' || $result === 'UNDEFINED' || $status === 'WAITING') {
+            return $hashState . ' | ' . $flow . ' | CREDIT2VIRTUAL / withdrawal callback: PREPARE / WAITING / UNDEFINED';
         }
 
         return $hashState . ' | ' . $flow . ' | CREDIT2VIRTUAL / withdrawal callback: Status = ' . $status . ', Result = ' . $result;
@@ -327,7 +435,7 @@ function detectMeaning(array $data, array $hashResult = []): string
 
     if ($type !== '') {
         if ($type === 'sale' && strtolower($status) === 'success') {
-            return $hashState . ' | ' . $flow . ' | SALE: SUCCESS / likely final successful payment';
+            return $hashState . ' | ' . $flow . ' | SALE: SUCCESS / likely final successful payment, check order_status too';
         }
 
         if (($type === 'redirect' || $type === '3ds') && strtolower($status) === 'success') {
@@ -358,15 +466,7 @@ function detectMeaning(array $data, array $hashResult = []): string
 |--------------------------------------------------------------------------
 */
 $rawBody = file_get_contents('php://input') ?: '';
-$data = $_POST;
-
-if (empty($data) && $rawBody) {
-    parse_str($rawBody, $parsed);
-
-    if (is_array($parsed)) {
-        $data = $parsed;
-    }
-}
+$data = parseRequestBody($rawBody);
 
 $headers = getAllHeadersSafe();
 $hashResult = validateAllCallbackHashes($data, $merchantPass);
@@ -378,10 +478,19 @@ $meaning = detectMeaning($data, $hashResult);
 |--------------------------------------------------------------------------
 */
 $timestamp = date('Y-m-d_H-i-s');
-$file = $logDir . "/cb_{$timestamp}_" . bin2hex(random_bytes(3)) . ".log";
+$file = $logDir . "/cb_{$timestamp}_" . bin2hex(random_bytes(3)) . '.log';
+
+$matchedFlows = array_map(
+    static fn(array $item): string => (string)($item['flow'] ?? ''),
+    $hashResult['matched'] ?? []
+);
+
+$matchedFormulas = array_map(
+    static fn(array $item): string => (string)($item['formula'] ?? ''),
+    $hashResult['matched'] ?? []
+);
 
 $log = [];
-
 $log[] = 'TIME: ' . date('Y-m-d H:i:s');
 $log[] = 'IP: ' . ($_SERVER['REMOTE_ADDR'] ?? '');
 $log[] = 'METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? '');
@@ -403,8 +512,8 @@ $log[] = '--------------------------------';
 $log[] = 'HASH VALIDATION SUMMARY:';
 $log[] = 'RECEIVED HASH: ' . ($hashResult['received'] ?? '');
 $log[] = 'HASH VALID: ' . (!empty($hashResult['valid']) ? 'YES' : 'NO');
-$log[] = 'MATCHED FLOW: ' . ($hashResult['matched']['flow'] ?? 'NONE');
-$log[] = 'MATCHED FORMULA: ' . ($hashResult['matched']['formula'] ?? 'NONE');
+$log[] = 'MATCHED FLOW(S): ' . (!empty($matchedFlows) ? implode(', ', $matchedFlows) : 'NONE');
+$log[] = 'MATCHED FORMULA(S): ' . (!empty($matchedFormulas) ? implode(' | ', $matchedFormulas) : 'NONE');
 
 $log[] = '--------------------------------';
 $log[] = 'HASH VALIDATION DETAILS:';
@@ -422,8 +531,9 @@ file_put_contents($file, implode("\n", $log));
 |--------------------------------------------------------------------------
 | RESPONSE
 |--------------------------------------------------------------------------
-| Important: always respond quickly with HTTP 200 OK, even if hash is invalid.
-| Invalid hash should be handled internally by logging / ignoring order update.
+| Important: respond quickly with HTTP 200 OK.
+| If hash is invalid, do not update order status in production logic.
+| For this debugger, we only log and return OK.
 |--------------------------------------------------------------------------
 */
 http_response_code(200);
