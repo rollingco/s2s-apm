@@ -45,20 +45,20 @@ setcookie('sleep_lang', $lang, time() + 60 * 60 * 24 * 365, '/');
             <span class="badge" data-i18n="badgeNap">Денний сон</span>
             <span class="badge" data-i18n="badgeRoutine">План вечора</span>
           </div>
+
+          <div class="inline-tip-card">
+            <div>
+              <h2 data-i18n="randomTipTitle">Порада для кращого сну</h2>
+              <p id="randomTipText"></p>
+            </div>
+            <button class="secondary" type="button" id="nextTipBtn" data-i18n="nextTip">Інша порада</button>
+          </div>
         </div>
 
         <div class="hero-card moon-visual" aria-hidden="true">
           <span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span>
           <div class="moon"></div>
         </div>
-      </section>
-
-      <section class="card tips-card">
-        <div>
-          <h2 data-i18n="randomTipTitle">Порада для кращого сну</h2>
-          <p id="randomTipText"></p>
-        </div>
-        <button class="secondary" type="button" id="nextTipBtn" data-i18n="nextTip">Інша порада</button>
       </section>
 
       <section class="card calculator-card">
