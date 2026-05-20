@@ -353,55 +353,18 @@ if ($submitted) {
     }
 
     // Nigeria uses BANK_DEPOSIT flow without channel_id/provider.
-    if ($selectedCountry['countryCode'] === 'NG') {
-      $form['parameters[beneficiaryCountryCode]'] = 'NG';
-      $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
-      //$form['parameters[beneficiaryProvider]'] = $provider;
-      $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
-      $form['parameters[beneficiaryAccountNumber]'] = $phone; 
-    } else {
-      $form['channel_id'] = $provider;
-      $form['parameters[provider]'] = $provider;
-      $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
-      $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
-      $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
-    }
-
-    // Hash is required and added after all business fields.
-    $form['hash'] = $hash;
-
-    $debug = [
-      'endpoint' => $PAYMENT_URL,
-      'form'     => $form,
-      'hash_formula' => 'md5( strtoupper( strrev( order_id . amount . currency ) ) . SECRET )',
-      'hash_src' => $hash_src_dbg,
-      'hash'     => $hash,
-    ];
-
-    $ch = curl_init($PAYMENT_URL);
-    curl_setopt_array($ch, [
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_POST           => true,
-      CURLOPT_POSTFIELDS     => $form,
-      CURLOPT_TIMEOUT        => 60,
-    ]);
-
-    $start = microtime(true);
-    $raw = curl_exec($ch);
-    $info = curl_getinfo($ch);
-    $err = curl_errno($ch) ? curl_error($ch) : '';
-    curl_close($ch);
-
-    $debug['http_code'] = (int)($info['http_code'] ?? 0);
-    $debug['duration_sec'] = number_format(microtime(true) - $start, 3, '.', '');
-    if ($err) $debug['curl_error'] = $err;
-
-    $responseBlocks['bodyRaw'] = (string)$raw;
-    $json = json_decode($responseBlocks['bodyRaw'], true);
-    if (json_last_error() === JSON_ERROR_NONE) {
-      $responseBlocks['json'] = $json;
-    }
-  }
+if ($selectedCountry['countryCode'] === 'NG') {
+    $form['beneficiaryCountryCode'] = 'NG';
+    $form['beneficiaryBankName'] = strtoupper($provider);
+    $form['transactionType'] = 'BANK_DEPOSIT';
+    $form['beneficiaryAccountNumber'] = $wallet;
+    $form['beneficiaryProvider'] = $provider;
+} else {
+    $form['channel_id'] = $provider;
+    $form['parameters[provider]'] = $provider;
+    $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
+    $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
+    $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
 }
 
 $self = current_url();
