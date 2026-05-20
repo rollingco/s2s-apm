@@ -356,6 +356,7 @@ if ($submitted) {
     if ($selectedCountry['countryCode'] === 'NG') {
       $form['parameters[beneficiaryCountryCode]'] = 'NG';
       $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
+      $form['parameters[beneficiaryProvider]'] = $provider;
       $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
     } else {
       $form['channel_id'] = $provider;
