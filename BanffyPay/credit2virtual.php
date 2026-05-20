@@ -358,7 +358,7 @@ if ($submitted) {
       $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
       $form['parameters[beneficiaryProvider]'] = $provider;
       $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
-      $form['parameters[beneficiaryAccountNumber]'] = $phone;
+      $form['parameters[beneficiaryAccountNumber]'] = $phone; //dfgjkdfgjdlfkj
     } else {
       $form['channel_id'] = $provider;
       $form['parameters[provider]'] = $provider;
