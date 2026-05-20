@@ -148,7 +148,7 @@ $COUNTRIES = [
       'GTBank' => '',
       'First Bank' => '',
       'UBA' => '',
-      'Opay' => '',
+      'Opay' => '9063428448',
     ],
   ],
   'TZ' => [
