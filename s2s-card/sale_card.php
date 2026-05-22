@@ -16,10 +16,10 @@ $merchantKey = '83090eec-3fb4-11f1-83f1-9e5546c62b55';
 $secret      = '2569ee59549a3f0714c11979502e4d47';
 
 // Card
-$cardNumber  = '41111111111111111';
-$expMonth    = '05';
-$expYear     = '2038';
-$cvv         = '108';
+$cardNumber  = '4441111087875187';
+$expMonth    = '03';
+$expYear     = '2030';
+$cvv         = '501';
 
 // Payer
 $payerEmail  = 'garik.m@pay.cc';
