@@ -26,7 +26,7 @@ $payerEmail  = 'garik.m@pay.cc';
 
 // Order
 $orderId     = 'Vasil test order #' . time();
-$amount      = '10.00';
+$amount      = '0.05';
 $currency    = 'USD';
 $desc        = 'DP1222233444222111';
 
