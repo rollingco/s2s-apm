@@ -168,6 +168,16 @@ if (!$curlErr && is_string($rawResponse)) {
   if (is_array($decoded)) $responseArr = $decoded;
 }
 
+// GET_TRANS_STATUS link (uses trans_id returned by SALE response)
+$statusTransId = '';
+$getStatusUrl = '';
+if (is_array($responseArr)) {
+  $statusTransId = (string)($responseArr['trans_id'] ?? $responseArr['transaction_id'] ?? '');
+  if ($statusTransId !== '') {
+    $getStatusUrl = 'get_trans_status.php?trans_id=' . rawurlencode($statusTransId);
+  }
+}
+
 // 3DS detection
 $do3ds = false;
 $redirectUrl = '';
@@ -280,6 +290,15 @@ if (is_array($responseArr)) {
       <pre class="mono"><?=h(is_array($responseArr) ? pretty_json($responseArr) : (string)$rawResponse)?></pre>
     </div>
   </div>
+
+  <?php if ($getStatusUrl !== ''): ?>
+    <div class="card">
+      <h2>Manual status check</h2>
+      <a class="btn" href="<?=h($getStatusUrl)?>" target="_blank" rel="noopener">Get_Trans_Status</a>
+      <div class="hint">Opens GET_TRANS_STATUS check for trans_id: <span class="mono"><?=h($statusTransId)?></span></div>
+      <div class="hint warn">Callback notification should still be used as the main source for final transaction status.</div>
+    </div>
+  <?php endif; ?>
 
   <?php if ($do3ds): ?>
     <div class="card">
