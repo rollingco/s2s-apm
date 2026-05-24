@@ -11,8 +11,8 @@ header('Content-Type: text/html; charset=utf-8');
 $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 
 // credentials (as-is from your file)
-$CLIENT_KEY  = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
-$SECRET      = '976d5c5d5eacbab78288b12bb15178ba';
+$CLIENT_KEY  = 'aba1a6c2192932508728997065c3fa9d';
+$SECRET      = 'aba1a6c2192932508728997065c3fa9d';
 
 $DEFAULTS = [
   'brand'       => 'mtn-momo',      // ✅ changed only this
