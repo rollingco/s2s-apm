@@ -151,6 +151,15 @@ $COUNTRIES = [
       'Opay' => '9063428448',
     ],
   ],
+  'UG' => [
+    'country' => 'Uganda',
+    'countryCode' => 'UG',
+    'currency' => 'UGX',
+    'payee_country' => 'UG',
+    'providers' => [
+      'mtn-UG' => '256772440405',
+    ],
+  ],
   'TZ' => [
     'country' => 'Tanzania',
     'countryCode' => 'TZ',
@@ -352,7 +361,7 @@ if ($submitted) {
       $form['payee_email'] = $payee_email;
     }
 
-    // Nigeria payout format according to latest BanffyPay documentation.
+    // Nigeria payout fields must be sent inside parameters[...] array.
     if ($selectedCountry['countryCode'] === 'NG') {
       $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
