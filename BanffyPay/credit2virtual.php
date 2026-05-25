@@ -151,6 +151,15 @@ $COUNTRIES = [
       'Opay' => '9063428448',
     ],
   ],
+  'UG' => [
+    'country' => 'Uganda',
+    'countryCode' => 'UG',
+    'currency' => 'UGX',
+    'payee_country' => 'UG',
+    'providers' => [
+      'mtn-UG' => '256772440405',
+    ],
+  ],
   'TZ' => [
     'country' => 'Tanzania',
     'countryCode' => 'TZ',
