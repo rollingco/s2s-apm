@@ -365,7 +365,8 @@ if ($submitted) {
     if ($selectedCountry['countryCode'] === 'NG') {
       $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
-      $form['parameters[beneficiaryAccountNumber]'] = $phone;
+      //$form['parameters[beneficiaryAccountNumber]'] = $phone;
+      $form['parameters[beneficiaryAccountNumber]'] = strtoupper($provider);
       $form['parameters[beneficiaryProvider]'] = strtoupper($provider);
       $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
     } else {
