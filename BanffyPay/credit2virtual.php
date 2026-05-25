@@ -151,15 +151,6 @@ $COUNTRIES = [
       'Opay' => '9063428448',
     ],
   ],
-  'UG' => [
-    'country' => 'Uganda',
-    'countryCode' => 'UG',
-    'currency' => 'UGX',
-    'payee_country' => 'UG',
-    'providers' => [
-      'mtn-UG' => '256772440405',
-    ],
-  ],
   'TZ' => [
     'country' => 'Tanzania',
     'countryCode' => 'TZ',
@@ -361,14 +352,13 @@ if ($submitted) {
       $form['payee_email'] = $payee_email;
     }
 
-    // Nigeria uses BANK_DEPOSIT flow without channel_id/provider.
-    // BanffyPay expects these fields at the root level, not inside parameters[...] block.
+    // Nigeria payout format according to latest BanffyPay documentation.
     if ($selectedCountry['countryCode'] === 'NG') {
-      $form['beneficiaryCountryCode'] = 'NG';
-      $form['beneficiaryBankName'] = strtoupper($provider);
-      $form['beneficiaryProvider'] = strtoupper($provider);
-      $form['transactionType'] = 'BANK_DEPOSIT';
-      $form['beneficiaryAccountNumber'] = $phone;
+      $form['parameters[transactionType]'] = 'BANK_DEPOSIT';
+      $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
+      $form['parameters[beneficiaryAccountNumber]'] = $phone;
+      $form['parameters[beneficiaryProvider]'] = strtoupper($provider);
+      $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
     } else {
       $form['channel_id'] = $provider;
       $form['parameters[provider]'] = $provider;
