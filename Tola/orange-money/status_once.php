@@ -7,8 +7,10 @@ $PAYMENT_URL = 'https://api.leogcltd.com/post-va';
 $API_PASS    = 'ORuIO57N6KJyeJ';
 
 //$CLIENT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$CLIENT_KEY  = '9a1cc9fe-55c4-11f1-8e6e-de23b7cf21d1';
-$PASSWORD    = '976d5c5d5eacbab78288b12bb15178ba'; // той самий, що для SALE
+//$CLIENT_KEY  = '9a1cc9fe-55c4-11f1-8e6e-de23b7cf21d1';
+//$PASSWORD    = '976d5c5d5eacbab78288b12bb15178ba'; // той самий, що для SALE
+$CLIENT_KEY = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$PASSWORD     = '976d5c5d5eacbab78288b12bb15178ba';
 $ACTION      = 'GET_TRANS_STATUS';
 
 /* ==== INPUT ==== */
