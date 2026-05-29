@@ -93,7 +93,8 @@ if ($submitted) {
   $phone       = trim((string)($_POST['phone'] ?? ''));
   $email       = trim((string)($_POST['email'] ?? ''));
 
-  $amount = trim($amount_in) === '' ? '' : normalize_amount_2dec($amount_in);
+  //$amount = trim($amount_in) === '' ? '' : normalize_amount_2dec($amount_in);
+  $amount = trim($amount_in);
 
   $errors = [];
   if ($order_id_in === '') $errors[] = 'order_id is required.';
