@@ -98,9 +98,11 @@ if ($submitted) {
 
   $errors = [];
   if ($order_id_in === '') $errors[] = 'order_id is required.';
+  /*
   if ($amount === '' || !preg_match('/^\d+\.\d+$/', $amount)) {
     $errors[] = 'Amount wrong format. Use e.g. 1.00, 10.50, 100.00';
   }
+    */
   if ($currency === '') $errors[] = 'Currency is required.';
   if ($phone === '') $errors[] = 'Phone (MSISDN) is required.';
   // Email не обовʼязковий, але можна додати просту перевірку, якщо ввели щось
