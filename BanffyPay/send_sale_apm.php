@@ -296,7 +296,7 @@ $selectedCountry     = $COUNTRIES[$selectedCountryCode];
 $provider            = $DEFAULTS['provider'];
 $payer_phone         = $selectedCountry['providers'][$provider];
 $order_amt           = $DEFAULTS['amount'];
-$payment_code        = $selectedCountry['payment_code'] ?? $DEFAULTS['payment_code'];
+//$payment_code        = $selectedCountry['payment_code'] ?? $DEFAULTS['payment_code'];
 
 $debug = [];
 $responseBlocks = ['bodyRaw' => '', 'json' => null];
