@@ -158,6 +158,7 @@ $COUNTRIES = [
     'payee_country' => 'UG',
     'providers' => [
       'mtn-UG' => '256772440405',
+      'airtel-UG' => '256772440405',
     ],
   ],
   'TZ' => [
