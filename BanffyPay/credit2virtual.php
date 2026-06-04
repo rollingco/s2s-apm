@@ -59,7 +59,8 @@ $COUNTRIES = [
     'payee_country' => 'SN',
     'providers' => [
       'orange-SN' => '221773456789',
-      'wave-SN' => '',
+      'wave-SN' => '776389999',
+      'free-SN' => '766753132',
     ],
   ],
   'CM' => [
