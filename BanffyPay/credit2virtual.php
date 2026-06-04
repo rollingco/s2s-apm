@@ -206,7 +206,7 @@ $COUNTRIES = [
     'providers' => [
       'mtnmomo-LR' => '',
       'mtnusd-LR' => '',
-      'orangemoney-LR' => '',
+      'orange-LR' => '',
       'orangeusd-LR' => '',
     ],
   ],
