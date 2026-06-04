@@ -224,13 +224,14 @@ $payload = [
     "merchant_key" => $MERCHANT_KEY,
     "operation"    => "purchase",
     "methods"      => ["awcc"],
-    "parameters"   => [
+  /*  "parameters"   => [
         "awcc" => [
             "network_type" => $selectedNetwork,
             "bech32"       => false,
             "crypto_type"  => $selectedCrypto
         ]
     ],
+    */
     "order" => [
         "number"      => $orderNumber,
         "amount"      => $orderAmount,
