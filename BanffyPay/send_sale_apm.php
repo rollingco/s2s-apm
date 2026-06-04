@@ -386,11 +386,20 @@ if ($submitted) {
       $form['channel_id'] = $provider;
     }
 
+    // Build cURL command for debug / copy-paste
+    $curlCommand = "curl --location '" . $PAYMENT_URL . "' \\\n";
+    $curlCommand .= "--header 'Content-Type: application/x-www-form-urlencoded' \\\n";
+
+    foreach ($form as $key => $value) {
+      $curlCommand .= "--data-urlencode '" . $key . "=" . str_replace("'", "\\'", (string)$value) . "' \\\n";
+    }
+
     $debug = [
       'endpoint' => $PAYMENT_URL,
       'form'     => $form,
       'hash_src' => $hash_src_dbg,
       'hash'     => $hash,
+      'curl'     => rtrim($curlCommand, " \\\n"),
     ];
 
     $ch = curl_init($PAYMENT_URL);
@@ -502,6 +511,11 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
   <h3>Hash</h3>
   <pre><?=h($debug['hash_src'])?></pre>
   <pre><?=h($debug['hash'])?></pre>
+</div>
+
+<div class="panel">
+  <h3>cURL Request</h3>
+  <pre><?=h($debug['curl'] ?? '')?></pre>
 </div>
 
 <div class="panel">
