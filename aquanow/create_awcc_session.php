@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $orderNumber   = 'order-' . time();
-$orderAmount   = '0.19';
+$orderAmount   = '0.01';
 $orderCurrency = 'USD';
 $orderDesc     = 'Important gift';
 
