@@ -214,7 +214,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $orderNumber   = 'order-' . time();
 $orderAmount   = '0.01';
 $orderCurrency = 'USD';
-$orderDesc     = 'Important gift';
+$orderDesc = sprintf(
+    'Test %s (%s)',
+    $selectedCrypto,
+    strtoupper($selectedNetwork)
+);
 
 $payload = [
     "merchant_key" => $MERCHANT_KEY,
