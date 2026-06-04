@@ -80,12 +80,9 @@ $COUNTRIES = [
     'payer_country' => 'CI',
     'payment_code' => '112',
     'providers' => [
-      //'moov-ivory-coast' => '',
       'moov-CI' => '',
-      //'orange-ivory-coast' => '2250734567890',
-      'orange-ic' => '2250734567890',
-      //'wave-ivory-coast' => '',
-      'wave-ic' => '',
+      'orange-CI' => '2250734567890',
+      'wave-CI' => '',
     ],
   ],
   'ML' => [
@@ -95,8 +92,8 @@ $COUNTRIES = [
     'payer_country' => 'ML',
     'payment_code' => '205',
     'providers' => [
-      'orange-mali' => '',
-      'moov-mali' => '',
+      'orange-ML' => '',
+      'moov-ML' => '',
     ],
   ],
   'BF' => [
@@ -371,7 +368,7 @@ if ($submitted) {
 
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
-      //'paymentProvider'   => $provider,
+      'paymentProvider'   => $provider,
       'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
