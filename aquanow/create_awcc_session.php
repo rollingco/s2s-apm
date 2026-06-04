@@ -7,8 +7,8 @@
 
 $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 //$MERCHANT_KEY  = 'a9375384-26f2-11f0-877d-022c42254708';
-$MERCHANT_KEY  = 'a9375190-26f2-11f0-be42-022c42254708';
-$MERCHANT_PASS = '554999c284e9f29cf95f090d9a8f3171';
+$MERCHANT_KEY  = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$MERCHANT_PASS = '976d5c5d5eacbab78288b12bb15178ba';
 
 $SUCCESS_URL   = 'https://example.com/success';
 $CANCEL_URL    = 'https://example.com/cancel';
