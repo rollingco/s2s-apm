@@ -44,7 +44,8 @@ $COUNTRIES = [
     'payment_code' => '201',
     'providers' => [
       'orange-SN' => '773456789',
-      'wave-SN' => '776389999',
+      //'wave-SN' => '776389999',
+      'wave-SN' => '221771958713',
       'free-SN' => '766753132',
     ],
   ],
