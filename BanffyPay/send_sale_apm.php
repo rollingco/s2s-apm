@@ -1,6 +1,6 @@
 <?php
 /**
- * S2S APM SALE — multi-country example with channel_id
+ * S2S APM SALE — multi-country example with channel_id autofetch 
  */
 
 header('Content-Type: text/html; charset=utf-8');
