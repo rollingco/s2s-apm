@@ -376,6 +376,7 @@ if ($submitted) {
       $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
       $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
       $form['parameters[transactionType]'] = ($selectedCountry['countryCode'] === 'NG') ? 'BANK_DEPOSIT' : 'MOBILE_TRANSFER';
+      $form['parameters[beneficiaryProvider]'] = $provider;
       
     }
 
