@@ -351,7 +351,7 @@ if ($submitted) {
       // Payee fields from CREDIT2VIRTUAL docs
       'payee_first_name'  => $payee_first_name,
       'payee_last_name'   => $payee_last_name,
-      //'payee_country'     => $selectedCountry['payee_country'],
+      'payee_country'     => $selectedCountry['payee_country'],
       'payee_phone'       => $phone,
 
       
