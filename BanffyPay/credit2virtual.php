@@ -8,7 +8,7 @@
  * - countryCode
  * - channel_id (provider/channel)
  * - payment_code = 999 for withdrawal
- * - parameters[provider]
+ * - parameters[provider] івавіапва
  *
  * Endpoint for CREDIT2VIRTUAL: https://api.leogcltd.com/post
  *
