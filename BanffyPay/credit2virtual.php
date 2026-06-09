@@ -367,7 +367,7 @@ if ($submitted) {
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
       $form['parameters[beneficiaryAccountNumber]'] = $phone;
       //$form['parameters[beneficiaryAccountNumber]'] = strtoupper($provider);
-      $form['parameters[beneficiaryProvider]'] = strtoupper($provider);
+      $form['parameters[beneficiaryProvider]'] = 'NUBAN';
       $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
     } else {
       //$form['channel_id'] = $provider;
