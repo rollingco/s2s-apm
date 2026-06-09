@@ -353,10 +353,11 @@ if ($submitted) {
       'payee_last_name'   => $payee_last_name,
       'payee_country'     => $selectedCountry['payee_country'],
       'payee_phone'       => $phone,
-      //'transactionType'   => 'sync',
-      //'requestType'         => 'sync',
-      //'transactionType'     => 'MOBILE_TRANSFER',
-      //'requestType'         => 'MOBILE_TRANSFER',
+
+      // BanffyPay requires transactionType on the top level.
+      // For regular mobile money payouts use MOBILE_TRANSFER.
+      // Nigeria is a bank payout case, so use BANK_DEPOSIT.
+      'transactionType'   => ($selectedCountry['countryCode'] === 'NG') ? 'BANK_DEPOSIT' : 'MOBILE_TRANSFER',
     ];
 
     if ($payee_email !== '') {
