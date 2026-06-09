@@ -237,7 +237,7 @@ $DEFAULTS = [
   'countryCode'       => 'TZ',
   'provider'          => 'airtel-TZ',
   'amount'            => '1000.00',
-  'description'       => 'BanffyPay payout test',
+  'description'       => 'Payout test',
   'payee_first_name'  => 'John',
   'payee_last_name'   => 'Doe',
   'payee_email'       => 'customer@example.com',
@@ -373,7 +373,7 @@ if ($submitted) {
       //$form['channel_id'] = $provider;
       //$form['parameters[provider]'] = $provider;
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
-      $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
+      //$form['parameters[countryCode]'] = $selectedCountry['countryCode'];
       $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
       $form['parameters[transactionType]'] = ($selectedCountry['countryCode'] === 'NG') ? 'BANK_DEPOSIT' : 'MOBILE_TRANSFER';
       $form['parameters[beneficiaryProvider]'] = $provider;
