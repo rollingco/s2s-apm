@@ -345,13 +345,13 @@ if ($submitted) {
 
       // BanffyPay routing fields from SALE connector
       'country'           => $selectedCountry['country'],
-      'countryCode'       => $selectedCountry['countryCode'],
+      //'countryCode'       => $selectedCountry['countryCode'],
       'payment_code'      => $GLOBALS['WITHDRAWAL_PAYMENT_CODE'],
 
       // Payee fields from CREDIT2VIRTUAL docs
       'payee_first_name'  => $payee_first_name,
       'payee_last_name'   => $payee_last_name,
-      'payee_country'     => $selectedCountry['payee_country'],
+      //'payee_country'     => $selectedCountry['payee_country'],
       'payee_phone'       => $phone,
 
       
