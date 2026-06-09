@@ -186,12 +186,12 @@ $COUNTRIES = [
     'payer_country' => 'TZ',
     'payment_code' => '501',
     'providers' => [
-      'Vodacom' => '255763456789',
-      'Airtel' => '255683456789',
-      'Tigo' => '255713456789',
-      'Halopesa' => '255623456789',
-      'Azampesa' => '',
-      'Mpesa' => '',
+      'vodacom-TZ' => '255763456789',
+      'Airtel-TZ' => '255683456789',
+      'Tigo-TZ' => '255713456789',
+      'Halopesa-TZ' => '255623456789',
+      'Azampesa-TZ' => '',
+      'Mpesa-TZ' => '',
     ],
   ],
   'RW' => [
