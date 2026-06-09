@@ -147,7 +147,7 @@ $COUNTRIES = [
       'Access Bank' => '',
       'Zenith Bank' => '',
       'GTBank' => '',
-      'First Bank' => '',
+      'First Bank of Nigeria' => '3108886655',
       'UBA' => '',
       'Opay' => '9063428448',
     ],
