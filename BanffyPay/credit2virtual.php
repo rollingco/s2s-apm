@@ -370,8 +370,8 @@ if ($submitted) {
       $form['parameters[beneficiaryProvider]'] = strtoupper($provider);
       $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
     } else {
-      $form['channel_id'] = $provider;
-      $form['parameters[provider]'] = $provider;
+      //$form['channel_id'] = $provider;
+      //$form['parameters[provider]'] = $provider;
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
       $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
       $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
