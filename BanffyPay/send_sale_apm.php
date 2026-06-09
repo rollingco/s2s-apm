@@ -187,11 +187,11 @@ $COUNTRIES = [
     'payment_code' => '501',
     'providers' => [
       'vodacom-TZ' => '255763456789',
-      'Airtel-TZ' => '255683456789',
-      'Tigo-TZ' => '255713456789',
-      'Halopesa-TZ' => '255623456789',
-      'Azampesa-TZ' => '',
-      'Mpesa-TZ' => '',
+      'airtel-TZ' => '255683456789',
+      'tigo-TZ' => '255713456789',
+      'halopesa-TZ' => '255623456789',
+      'azampesa-TZ' => '',
+      'mpesa-TZ' => '',
     ],
   ],
   'RW' => [
@@ -201,11 +201,11 @@ $COUNTRIES = [
     'payer_country' => 'RW',
     'payment_code' => '505',
     'providers' => [
-      'Airtel' => '250733456789',
-      'Tigo' => '',
-      'Halopesa' => '',
-      'Azampesa' => '',
-      'Mpesa' => '',
+      'airtel-RW' => '250733456789',
+      'tigo-RW' => '',
+      'halopesa-RW' => '',
+      'azampesa-RW' => '',
+      'mpesa-RW' => '',
     ],
   ],
   'SL' => [
