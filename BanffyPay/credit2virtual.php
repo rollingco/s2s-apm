@@ -357,7 +357,7 @@ if ($submitted) {
       // BanffyPay requires transactionType on the top level.
       // For regular mobile money payouts use MOBILE_TRANSFER.
       // Nigeria is a bank payout case, so use BANK_DEPOSIT.
-      //'transactionType'   => ($selectedCountry['countryCode'] === 'NG') ? 'BANK_DEPOSIT' : 'MOBILE_TRANSFER',
+      'transactionType'   => ($selectedCountry['countryCode'] === 'NG') ? 'BANK_DEPOSIT' : 'MOBILE_TRANSFER',
     ];
 
     if ($payee_email !== '') {
@@ -378,12 +378,6 @@ if ($submitted) {
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
       $form['parameters[countryCode]'] = $selectedCountry['countryCode'];
       $form['parameters[beneficiaryCountryCode]'] = $selectedCountry['countryCode'];
-      $form['parameters[transactionType]'] = ($selectedCountry['countryCode'] === 'NG') ? 'BANK_DEPOSIT' : 'MOBILE_TRANSFER';
-      $form['parameters[beneficiaryProvider]'] = $provider;
-      $form['parameters[beneficiaryName]'] = $payee_first_name . ' ' . $payee_last_name;
-      $form['parameters[beneficiaryAccountNumber]'] = $phone;
-      $form['parameters[beneficiaryMsisdn)'] = $phone;
-
     }
 
     // Hash is required and added after all business fields.
