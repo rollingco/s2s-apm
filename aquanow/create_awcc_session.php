@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $orderNumber   = 'order-' . time();
-$orderAmount   = '0.01';
+$orderAmount   = '1.00';
 $orderCurrency = 'USD';
 
 if ($selectedCrypto === 'USDT') {
