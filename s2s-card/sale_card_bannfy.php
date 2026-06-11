@@ -32,12 +32,12 @@ $payerIp        = '78.158.143.67';
 $payerAddress = 'Keryneias Line 1 Limassol 4604 CY';
 $payerCountry = 'CY';
 $payerCity    = 'Limassol';
-$payerState   = 'TX';
+$payerState   = '';
 $payerZip     = '4604';
 
 // Order
 $orderId  = 'Vasil test order #' . time();
-$amount   = '10.05';
+$amount   = '0.05';
 $currency = 'USD';
 $desc     = 'DP1222233444222111';
 
@@ -103,14 +103,39 @@ function build_3ds_form(string $url, array $params): string {
 
 // ========================= HASH =========================
 // Formula from docs:
-//   to_md5 = payment_public_id + order.number + order.amount + order.currency + order.description + merchant.pass
-//   hash   = SHA1( MD5( strtoupper(to_md5) ) )
+//   SHA1( MD5( strtoupper(payment_public_id + order.number + order.amount + order.currency + order.description + merchant.pass) ) )
 //
-// In this file:
-//   payment_public_id = $merchantKey
-//   merchant.pass     = $secret
-$hashSource = $merchantKey . $orderId . $amount . $currency . $desc . $secret;
+// Here payment_public_id means Merchant ID / merchant_key.
+$paymentPublicId = $merchantKey;
+$merchantPass    = $secret;
+
+$hashSource =
+  $paymentPublicId .
+  $orderId .
+  $amount .
+  $currency .
+  $desc .
+  $merchantPass;
+
 $hash = sha1(md5(strtoupper($hashSource)));
+
+// Debug hash calculation. Delete this block when testing is finished.
+file_put_contents(
+  __DIR__ . '/hash.log',
+  date('Y-m-d H:i:s') . PHP_EOL .
+  'payment_public_id: ' . $paymentPublicId . PHP_EOL .
+  'order.number     : ' . $orderId . PHP_EOL .
+  'order.amount     : ' . $amount . PHP_EOL .
+  'order.currency   : ' . $currency . PHP_EOL .
+  'order.description: ' . $desc . PHP_EOL .
+  'merchant.pass    : ' . $merchantPass . PHP_EOL .
+  'SOURCE           : ' . $hashSource . PHP_EOL .
+  'UPPER            : ' . strtoupper($hashSource) . PHP_EOL .
+  'MD5              : ' . md5(strtoupper($hashSource)) . PHP_EOL .
+  'SHA1             : ' . $hash . PHP_EOL .
+  str_repeat('-', 80) . PHP_EOL,
+  FILE_APPEND
+);
 
 // ========================= REQUEST JSON =========================
 $requestFields = [
