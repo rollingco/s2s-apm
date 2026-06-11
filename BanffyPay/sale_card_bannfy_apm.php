@@ -10,7 +10,7 @@
  */
 
 // ========================= CONFIG =========================
-$endpoint    = 'https://api.leogcltd.com/post';
+$endpoint    = 'https://api.leogcltd.com/post-va';
 
 
 $merchantKey = 'ab1167a8-6422-11f1-9281-fa3c02bf8d26';
