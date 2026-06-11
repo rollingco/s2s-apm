@@ -12,9 +12,9 @@ $requestJson = [
   'merchant_key' => 'ab1167a8-6422-11f1-9281-fa3c02bf8d26',
   'operation'    => 'purchase',
   'order'        => [
-    'number'      => '62',
-    'description' => 'Payment Order # 62 in the store https://www.sandbox.pp.ua/',
-    'amount'      => '0.01',
+    'number'      => 'Order #'.time(),
+    'description' => 'Payment in the store https://www.sandbox.pp.ua/',
+    'amount'      => 10.01',
     'currency'    => 'USD',
   ],
   'customer' => [
@@ -37,7 +37,7 @@ $requestJson = [
   'hash'         => '9c0c207e356363ad12dad6e9fbe8da30ae653e1a',
   'msisdn'       => '255714641171',
   'currencyCode' => 'USD',
-  'amount'       => '0.01',
+  'amount'       => '10.01',
   'requestType'  => 'sync',
   'description'  => 'WooPlugin Test 62',
   'countryCode'  => 'TZ',
@@ -100,9 +100,16 @@ curl_close($ch);
 $ms = (int)round((microtime(true) - $start) * 1000);
 
 $responseArr = null;
+$redirectUrl = '';
+
 if (!$curlErr && is_string($rawResponse)) {
   $decoded = json_decode($rawResponse, true);
-  if (is_array($decoded)) $responseArr = $decoded;
+  if (is_array($decoded)) {
+    $responseArr = $decoded;
+    if (!empty($decoded['redirect_url']) && is_string($decoded['redirect_url'])) {
+      $redirectUrl = $decoded['redirect_url'];
+    }
+  }
 }
 ?>
 <!doctype html>
@@ -125,6 +132,8 @@ if (!$curlErr && is_string($rawResponse)) {
     pre { margin:0; white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.35; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .redirect-link { display:inline-block; margin-top:8px; background:#0b1222; border:1px solid #2b7a4b; color:#e7eefc; padding:10px 14px; border-radius:10px; text-decoration:none; word-break:break-all; }
+    .redirect-link:hover { text-decoration:underline; }
     @media(max-width: 900px){ .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -145,6 +154,13 @@ if (!$curlErr && is_string($rawResponse)) {
       </div>
     <?php endif; ?>
   </div>
+
+  <?php if ($redirectUrl): ?>
+    <div class="card">
+      <h2>Redirect URL</h2>
+      <a class="redirect-link" href="<?=h($redirectUrl)?>" target="_blank" rel="noopener noreferrer"><?=h($redirectUrl)?></a>
+    </div>
+  <?php endif; ?>
 
   <div class="card">
     <h2>Headers (outgoing)</h2>
