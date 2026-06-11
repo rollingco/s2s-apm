@@ -11,7 +11,7 @@
 
 // ========================= CONFIG =========================
 //$endpoint    = 'https://pay.leogcltd.com/api/v1/session';
-$endpoint    = 'https://api.leogcltd.com/post';
+$endpoint    = 'https://api.leogcltd.com/post-va';
 
 $merchantKey = 'ab1167a8-6422-11f1-9281-fa3c02bf8d26';
 $secret      = '1904a0264cd3cb85de83801513c23bac';
