@@ -32,7 +32,7 @@ $payerIp        = '78.158.143.67';
 $payerAddress = 'Keryneias Line 1 Limassol 4604 CY';
 $payerCountry = 'CY';
 $payerCity    = 'Limassol';
-$payerState   = '';
+$payerState   = 'TX';
 $payerZip     = '4604';
 
 // Order
