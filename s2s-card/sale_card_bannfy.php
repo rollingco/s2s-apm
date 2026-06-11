@@ -12,8 +12,8 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://pay.leogcltd.com/api/v1/session';
 
-$merchantKey = '9a1cc9fe-55c4-11f1-8e6e-de23b7cf21d1';
-$secret      = 'aba1a6c2192932508728997065c3fa9d';
+$merchantKey = 'ab1167a8-6422-11f1-9281-fa3c02bf8d26';
+$secret      = '1904a0264cd3cb85de83801513c23bac';
 
 // Card — used for HASH calculation only. Not sent in this JSON request.
 $cardNumber  = '4441111087875187';
