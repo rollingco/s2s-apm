@@ -1,48 +1,47 @@
 <?php
 /**
- * SALE Emulator — READABLE (Headers + Request + Response) + 3DS Button
+ * Checkout Session Emulator — JSON request
  *
- * Sends request as: application/x-www-form-urlencoded
- * Shows request/response in: pretty JSON (human-readable)
- *
- * Hash (SALE/RETRY) formula:
- *   md5( strtoupper( strrev(email) . SECRET . strrev(first6 + last4) ) )
+ * Sends request as: application/json
  */
 
 // ========================= CONFIG =========================
-$endpoint    = 'https://api.leogcltd.com/post';
-$endpoint    = 'https://pay.leogcltd.com/api/v1/session';
+$endpoint = 'https://pay.leogcltd.com/api/v1/session';
 
-$merchantKey = 'ab1167a8-6422-11f1-9281-fa3c02bf8d26';
-$secret      = '1904a0264cd3cb85de83801513c23bac';
-
-// Card
-$cardNumber  = '4441111087875187';
-$expMonth    = '03';
-$expYear     = '2030';
-$cvv         = '501';
-
-// Payer
-$payerEmail  = 'garik.m@pay.cc';
-
-// Order
-$orderId     = 'Vasil test order #' . time();
-$amount      = '10.05';
-$currency    = 'USD';
-$desc        = 'DP1222233444222111';
-
-$termUrl3ds  = 'https://sandbox.pp.ua/s2stest/webhook/';
-$merchantURL = 'https://sandbox.pp.ua/s2stest/webhook/';
-$termTarget  = '_self';
-$authOnly    = 'N';
-$msisdn      = '255714641171';
-$currencyCode = 'USD';
-$amount      = '0.01';
-$requestType = 'sync';
-$description = 'Test '.time() ;
-$countryCode = 'TZ';
-$requestOrigin = 'Api';
-$paymentCode = '502';
+$requestJson = [
+  'merchant_key' => 'ab1167a8-6422-11f1-9281-fa3c02bf8d26',
+  'operation'    => 'purchase',
+  'order'        => [
+    'number'      => '62',
+    'description' => 'Payment Order # 62 in the store https://www.sandbox.pp.ua/',
+    'amount'      => '0.01',
+    'currency'    => 'USD',
+  ],
+  'customer' => [
+    'name'       => 'Vasyl Vasyl',
+    'email'      => 'vasiliy.kachalo@gmail.com',
+    'birth_date' => '1980-01-01',
+  ],
+  'billing_address' => [
+    'country'      => 'US',
+    'state'        => 'Wisconsin',
+    'city'         => 'K-P',
+    'address'      => 'Shmidta 19',
+    'zip'          => '28000',
+    'phone'        => '255714641171',
+    'district'     => 'TX',
+    'house_number' => '123',
+  ],
+  'success_url'  => 'https://www.sandbox.pp.ua/checkout/order-received/62/?key=wc_order_OuKdJQpmBFt3J',
+  'cancel_url'   => 'https://www.sandbox.pp.ua/my-account/view-order/62/',
+  'hash'         => '9c0c207e356363ad12dad6e9fbe8da30ae653e1a',
+  'msisdn'       => '255714641171',
+  'currencyCode' => 'USD',
+  'amount'       => '0.01',
+  'requestType'  => 'sync',
+  'description'  => 'WooPlugin Test 62',
+  'countryCode'  => 'TZ',
+];
 
 // ========================= HELPERS =========================
 function h($v): string { return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
@@ -58,91 +57,15 @@ function pretty_json($data): string {
   return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
-function mask_pan(string $pan): string {
-  $len = strlen($pan);
-  if ($len < 10) return str_repeat('*', $len);
-  return substr($pan, 0, 6) . str_repeat('*', $len - 10) . substr($pan, -4);
-}
-
-function mask_sensitive(array $arr): array {
-  $out = $arr;
-
-  if (isset($out['card_number'])) $out['card_number'] = mask_pan((string)$out['card_number']);
-  if (isset($out['card_cvv2']))   $out['card_cvv2']   = '***';
-
-  if (isset($out['hash']) && is_string($out['hash']) && strlen($out['hash']) > 16) {
-    $out['hash'] = substr($out['hash'], 0, 10) . '…' . substr($out['hash'], -10);
-  }
-  return $out;
-}
-
-function build_3ds_form(string $url, array $params): string {
-  $inputs = '';
-  foreach ($params as $k => $v) {
-    $inputs .= '<input type="hidden" name="'.h($k).'" value="'.h($v).'">';
-  }
-
-  return '
-    <form method="post" action="'.h($url).'" class="form3ds">
-      '.$inputs.'
-      <button type="submit" class="btn">Continue 3DS (POST)</button>
-      <div class="hint">This will POST redirect_params to ACS (PaReq + TermUrl, etc.).</div>
-    </form>
-  ';
-}
-
-// ========================= HASH =========================
-$first6 = substr($cardNumber, 0, 6);
-$last4  = substr($cardNumber, -4);
-
-$hashSource = strrev($payerEmail) . $secret . strrev($first6 . $last4);
-$hash = md5(strtoupper($hashSource));
-
-// ========================= REQUEST (fields) =========================
-$requestFields = [
-  'action'            => 'SALE',
-  'client_key'        => $merchantKey,
-  'order_id'          => $orderId,
-  'order_amount'      => $amount,
-  'order_currency'    => $currency,
-  'order_description' => $desc,
-
-  'card_number'       => $cardNumber,
-  'card_exp_month'    => $expMonth,
-  'card_exp_year'     => $expYear,
-  'card_cvv2'         => $cvv,
-
-  'payer_first_name'  => 'Alan',
-  'payer_last_name'   => 'Ward',
-  'payer_address'     => 'Keryneias Line 1 Limassol 4604 CY',
-  'payer_country'     => 'CY',
-  'payer_city'        => 'Limassol',
-  'payer_state'       => '',
-  'payer_zip'         => '4604',
-  'payer_email'       => $payerEmail,
-  'payer_phone'       => '+35795952955',
-  'payer_ip'          => '78.158.143.67',
-
-  'term_url_3ds'      => $termUrl3ds,
-  //'term_url_target'   => $termTarget,
-  //'auth'              => $authOnly,
-  'hash'              => $hash,
-  'paymentCode'      => $paymentCode,
-  'requestType'      => $requestType,
-  'description'      => $description,
-  'countryCode'      => $countryCode,
-  'requestOrigin'    => $requestOrigin, 
-];
-
 // What we actually send:
-$formBody = http_build_query($requestFields);
+$body = json_encode($requestJson, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
 // ========================= OUTGOING HEADERS =========================
 $outHeaders = [
-  'Content-Type: application/x-www-form-urlencoded',
+  'Content-Type: application/json',
   'Accept: application/json',
-  'User-Agent: SALE-Readable-Emulator/1.0',
-  'Content-Length: ' . strlen($formBody),
+  'User-Agent: Checkout-JSON-Emulator/1.0',
+  'Content-Length: ' . strlen($body),
 ];
 
 // ========================= cURL COMMAND (debug) =========================
@@ -151,12 +74,11 @@ $curlParts = [
 ];
 
 foreach ($outHeaders as $header) {
-  $curlParts[] = "--header '" . str_replace("'", "'\''", $header) . "'";
+  $curlParts[] = "--header '" . str_replace("'", "'\\''", $header) . "'";
 }
 
-$curlParts[] = "--data '" . str_replace("'", "'\''", $formBody) . "'";
-$curlCommand = implode(" \
-", $curlParts);
+$curlParts[] = "--data '" . str_replace("'", "'\\''", $body) . "'";
+$curlCommand = implode(" \\\n", $curlParts);
 
 // ========================= EXECUTE =========================
 $start = microtime(true);
@@ -165,7 +87,7 @@ $ch = curl_init($endpoint);
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST           => true,
-  CURLOPT_POSTFIELDS     => $formBody,
+  CURLOPT_POSTFIELDS     => $body,
   CURLOPT_HTTPHEADER     => $outHeaders,
   CURLOPT_TIMEOUT        => 60,
 ]);
@@ -182,43 +104,12 @@ if (!$curlErr && is_string($rawResponse)) {
   $decoded = json_decode($rawResponse, true);
   if (is_array($decoded)) $responseArr = $decoded;
 }
-
-// GET_TRANS_STATUS link (uses trans_id returned by SALE response)
-$statusTransId = '';
-$getStatusUrl = '';
-if (is_array($responseArr)) {
-  $statusTransId = (string)($responseArr['trans_id'] ?? $responseArr['transaction_id'] ?? '');
-  if ($statusTransId !== '') {
-    $getStatusUrl = 'get_trans_status.php?trans_id=' . rawurlencode($statusTransId);
-  }
-}
-
-// 3DS detection
-$do3ds = false;
-$redirectUrl = '';
-$redirectMethod = '';
-$redirectParams = [];
-
-if (is_array($responseArr)) {
-  $redirectUrl    = (string)($responseArr['redirect_url'] ?? '');
-  $redirectMethod = (string)($responseArr['redirect_method'] ?? '');
-  $redirectParams = (array) ($responseArr['redirect_params'] ?? []);
-
-  $do3ds = (
-    (($responseArr['result'] ?? '') === 'REDIRECT') &&
-    (strtoupper($redirectMethod) === 'POST') &&
-    $redirectUrl !== '' &&
-    !empty($redirectParams)
-  );
-}
-
-// ========================= HTML OUTPUT =========================
 ?>
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>SALE Emulator — Readable Logs</title>
+  <title>Checkout JSON Emulator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -235,22 +126,18 @@ if (is_array($responseArr)) {
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     @media(max-width: 900px){ .grid { grid-template-columns: 1fr; } }
-    .btn { appearance:none; border:1px solid #3a65d9; background:#2a4ec2; color:white; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; }
-    .btn:hover { filter: brightness(1.08); }
-    .hint { margin-top: 8px; font-size: 12px; opacity: .85; }
-    .warn { color:#ffd08a; }
   </style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="card">
-    <h1>SALE Emulator — Readable view</h1>
+    <h1>Checkout JSON Emulator</h1>
     <div class="meta">
       <div class="pill">Endpoint: <b><?=h($endpoint)?></b></div>
       <div class="pill <?=($httpCode>=200 && $httpCode<400 && !$curlErr)?'ok':'bad'?>">HTTP: <b><?=h($httpCode)?></b></div>
       <div class="pill">Time: <b><?=h($ms)?> ms</b></div>
-      <div class="pill">order_id: <b><?=h($orderId)?></b></div>
+      <div class="pill">Order number: <b><?=h($requestJson['order']['number'])?></b></div>
     </div>
     <?php if ($curlErr): ?>
       <div class="meta" style="margin-top:10px;">
@@ -264,33 +151,18 @@ if (is_array($responseArr)) {
     <pre class="mono"><?=h(implode("\n", $outHeaders))?></pre>
   </div>
 
-  <div class="grid">
-    <div class="card">
-      <h2>Request (readable JSON, masked)</h2>
-      <pre class="mono"><?=h(pretty_json(mask_sensitive($requestFields)))?></pre>
-      <div class="hint warn">Masked view: PAN/CVV hidden, hash shortened.</div>
-    </div>
-
-    <div class="card">
-      <h2>Signature debug</h2>
-      <pre class="mono"><?=h(pretty_json([
-        'email' => $payerEmail,
-        'first6' => $first6,
-        'last4' => $last4,
-        'hash_source' => $hashSource,
-        'hash' => $hash,
-      ]))?></pre>
-      <div class="hint warn">Не пиши secret у прод-логах. Тут для дебагу.</div>
-    </div>
+  <div class="card">
+    <h2>Request JSON</h2>
+    <pre class="mono"><?=h(pretty_json($requestJson))?></pre>
   </div>
 
   <div class="card">
-    <h2>Request body (what is actually sent, form-urlencoded)</h2>
-    <pre class="mono"><?=h($formBody)?></pre>
+    <h2>Request body (what is actually sent)</h2>
+    <pre class="mono"><?=h($body)?></pre>
   </div>
 
   <div class="card">
-    <h2>cURL request (what is actually sent)</h2>
+    <h2>cURL request</h2>
     <pre class="mono"><?=h($curlCommand)?></pre>
   </div>
 
@@ -305,30 +177,6 @@ if (is_array($responseArr)) {
       <pre class="mono"><?=h(is_array($responseArr) ? pretty_json($responseArr) : (string)$rawResponse)?></pre>
     </div>
   </div>
-
-  <?php if ($getStatusUrl !== ''): ?>
-    <div class="card">
-      <h2>Manual status check</h2>
-      <a class="btn" href="<?=h($getStatusUrl)?>" target="_blank" rel="noopener">Get_Trans_Status</a>
-      <div class="hint">Opens GET_TRANS_STATUS check for trans_id: <span class="mono"><?=h($statusTransId)?></span></div>
-      <div class="hint warn">Callback notification should still be used as the main source for final transaction status.</div>
-    </div>
-  <?php endif; ?>
-
-  <?php if ($do3ds): ?>
-    <div class="card">
-      <h2>Next step: 3DS redirect</h2>
-      <pre class="mono"><?=h(pretty_json([
-        'redirect_url' => $redirectUrl,
-        'redirect_method' => $redirectMethod,
-        'redirect_params' => $redirectParams,
-      ]))?></pre>
-
-      <div style="margin-top:14px;">
-        <?=build_3ds_form($redirectUrl, $redirectParams)?>
-      </div>
-    </div>
-  <?php endif; ?>
 
 </div>
 </body>
