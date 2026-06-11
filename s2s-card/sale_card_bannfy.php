@@ -5,8 +5,8 @@
  * Sends request as: application/json
  * Shows request/response in: pretty JSON (human-readable)
  *
- * Hash formula for /api/v1/session:
- *   SHA1( MD5( strtoupper(payment_public_id + order.number + order.amount + order.currency + order.description + merchant.pass) ) )
+ * Hash formula for /api/v1/session from Checkout Integration docs:
+ *   SHA1( MD5( strtoupper(order.number + order.amount + order.currency + order.description + merchant.pass) ) )
  */
 
 // ========================= CONFIG =========================
@@ -102,36 +102,36 @@ function build_3ds_form(string $url, array $params): string {
 }
 
 // ========================= HASH =========================
-// Formula from docs:
-//   SHA1( MD5( strtoupper(payment_public_id + order.number + order.amount + order.currency + order.description + merchant.pass) ) )
+// Formula from Checkout Integration docs for /api/v1/session:
+//   SHA1( MD5( strtoupper(order.number + order.amount + order.currency + order.description + merchant.pass) ) )
 //
-// Here payment_public_id means Merchant ID / merchant_key.
-$paymentPublicId = $merchantKey;
-$merchantPass    = $secret;
+// Important: merchant_key / payment_public_id is NOT included in this hash formula.
+$merchantPass = $secret;
 
 $hashSource =
-  $paymentPublicId .
   $orderId .
   $amount .
   $currency .
   $desc .
   $merchantPass;
 
-$hash = sha1(md5(strtoupper($hashSource)));
+$hashUpper = strtoupper($hashSource);
+$hashMd5   = md5($hashUpper);
+$hash      = sha1($hashMd5);
 
 // Debug hash calculation. Delete this block when testing is finished.
 file_put_contents(
   __DIR__ . '/hash.log',
   date('Y-m-d H:i:s') . PHP_EOL .
-  'payment_public_id: ' . $paymentPublicId . PHP_EOL .
+  'FORMULA          : SHA1(MD5(STRTOUPPER(order.number + order.amount + order.currency + order.description + merchant.pass)))' . PHP_EOL .
   'order.number     : ' . $orderId . PHP_EOL .
   'order.amount     : ' . $amount . PHP_EOL .
   'order.currency   : ' . $currency . PHP_EOL .
   'order.description: ' . $desc . PHP_EOL .
   'merchant.pass    : ' . $merchantPass . PHP_EOL .
   'SOURCE           : ' . $hashSource . PHP_EOL .
-  'UPPER            : ' . strtoupper($hashSource) . PHP_EOL .
-  'MD5              : ' . md5(strtoupper($hashSource)) . PHP_EOL .
+  'UPPER            : ' . $hashUpper . PHP_EOL .
+  'MD5              : ' . $hashMd5 . PHP_EOL .
   'SHA1             : ' . $hash . PHP_EOL .
   str_repeat('-', 80) . PHP_EOL,
   FILE_APPEND
@@ -316,10 +316,14 @@ if (is_array($responseArr)) {
     <div class="card">
       <h2>Signature debug</h2>
       <pre class="mono"><?=h(pretty_json([
-        'email' => $payerEmail,
-        'first6' => $first6,
-        'last4' => $last4,
+        'formula' => 'sha1(md5(strtoupper(order.number + order.amount + order.currency + order.description + merchant.pass)))',
+        'order.number' => $orderId,
+        'order.amount' => $amount,
+        'order.currency' => $currency,
+        'order.description' => $desc,
         'hash_source' => $hashSource,
+        'upper' => $hashUpper,
+        'md5' => $hashMd5,
         'hash' => $hash,
       ]))?></pre>
       <div class="hint warn">Не пиши secret у прод-логах. Тут для дебагу.</div>
