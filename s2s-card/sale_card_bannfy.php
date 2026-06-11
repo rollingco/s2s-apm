@@ -5,15 +5,15 @@
  * Sends request as: application/json
  * Shows request/response in: pretty JSON (human-readable)
  *
- * Hash (SALE/RETRY) formula:
- *   md5( strtoupper( strrev(email) . SECRET . strrev(first6 + last4) ) )
+ * Hash formula for /api/v1/session:
+ *   SHA1( MD5( strtoupper(payment_public_id + order.number + order.amount + order.currency + order.description + merchant.pass) ) )
  */
 
 // ========================= CONFIG =========================
 $endpoint    = 'https://pay.leogcltd.com/api/v1/session';
 
-$merchantKey = 'ab1167a8-6422-11f1-9281-fa3c02bf8d26';
-$secret      = '1904a0264cd3cb85de83801513c23bac';
+$merchantKey = '9a1cc9fe-55c4-11f1-8e6e-de23b7cf21d1';
+$secret      = 'aba1a6c2192932508728997065c3fa9d';
 
 // Card — used for HASH calculation only. Not sent in this JSON request.
 $cardNumber  = '4441111087875187';
@@ -24,20 +24,20 @@ $cvv         = '501';
 // Payer
 $payerFirstName = 'Alan';
 $payerLastName  = 'Ward';
-$payerEmail     = 'vasiliy.kachalo@gmail.com';
-$payerPhone     = '255714641171';
+$payerEmail     = 'garik.m@pay.cc';
+$payerPhone     = '+35795952955';
 $payerIp        = '78.158.143.67';
 
 // Billing address
 $payerAddress = 'Keryneias Line 1 Limassol 4604 CY';
 $payerCountry = 'CY';
 $payerCity    = 'Limassol';
-$payerState   = 'TX';
+$payerState   = '';
 $payerZip     = '4604';
 
 // Order
 $orderId  = 'Vasil test order #' . time();
-$amount   = '10.05';
+$amount   = '0.05';
 $currency = 'USD';
 $desc     = 'DP1222233444222111';
 
@@ -102,11 +102,15 @@ function build_3ds_form(string $url, array $params): string {
 }
 
 // ========================= HASH =========================
-$first6 = substr($cardNumber, 0, 6);
-$last4  = substr($cardNumber, -4);
-
-$hashSource = strrev($payerEmail) . $secret . strrev($first6 . $last4);
-$hash = md5(strtoupper($hashSource));
+// Formula from docs:
+//   to_md5 = payment_public_id + order.number + order.amount + order.currency + order.description + merchant.pass
+//   hash   = SHA1( MD5( strtoupper(to_md5) ) )
+//
+// In this file:
+//   payment_public_id = $merchantKey
+//   merchant.pass     = $secret
+$hashSource = $merchantKey . $orderId . $amount . $currency . $desc . $secret;
+$hash = sha1(md5(strtoupper($hashSource)));
 
 // ========================= REQUEST JSON =========================
 $requestFields = [
