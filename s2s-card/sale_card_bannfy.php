@@ -25,12 +25,12 @@ $cvv         = '501';
 $payerFirstName = 'Alan';
 $payerLastName  = 'Ward';
 $payerEmail     = 'garik.m@pay.cc';
-$payerPhone     = '+35795952955';
-$payerIp        = '78.158.143.67';
+$payerPhone     = '255714641171';
+$payerIp        = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
 
 // Billing address
 $payerAddress = 'Keryneias Line 1 Limassol 4604 CY';
-$payerCountry = 'CY';
+$payerCountry = 'TZ';
 $payerCity    = 'Limassol';
 $payerState   = 'TX';
 $payerZip     = '4604';
