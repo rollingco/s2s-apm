@@ -176,6 +176,7 @@ $requestFields = [
   'requestType'  => $requestType,
   'description'  => $desc,
   'countryCode'  => $countryCode,
+  'channel_id'   => 'card',
 ];
 
 // What we actually send:
