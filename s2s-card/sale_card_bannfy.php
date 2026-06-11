@@ -32,12 +32,12 @@ $payerIp        = '78.158.143.67';
 $payerAddress = 'Keryneias Line 1 Limassol 4604 CY';
 $payerCountry = 'CY';
 $payerCity    = 'Limassol';
-$payerState   = '';
+$payerState   = 'TX';
 $payerZip     = '4604';
 
 // Order
 $orderId  = 'Vasil test order #' . time();
-$amount   = '0.05';
+$amount   = '10.05';
 $currency = 'USD';
 $desc     = 'DP1222233444222111';
 
