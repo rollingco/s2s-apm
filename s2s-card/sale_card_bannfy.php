@@ -376,6 +376,22 @@ if (is_array($responseArr)) {
     </div>
   <?php endif; ?>
 
+  <?php if (!empty($responseArr['redirect_url'])): ?>
+  <div class="card">
+    <h2>Checkout URL</h2>
+
+    <a class="btn"
+       href="<?=h($responseArr['redirect_url'])?>"
+       target="_blank"
+       rel="noopener">
+      Open Checkout
+    </a>
+
+    <div class="hint mono" style="margin-top:10px;">
+      <?=h($responseArr['redirect_url'])?>
+    </div>
+  </div>
+  <?php endif; ?>
 </div>
 </body>
 </html>
