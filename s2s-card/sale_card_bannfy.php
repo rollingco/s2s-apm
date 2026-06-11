@@ -14,7 +14,7 @@ $requestJson = [
   'order'        => [
     'number'      => 'Order #'.time(),
     'description' => 'Payment in the store https://www.sandbox.pp.ua/',
-    'amount'      => 10.01',
+    'amount'      => '10.01',
     'currency'    => 'USD',
   ],
   'customer' => [
