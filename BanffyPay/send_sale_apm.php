@@ -72,6 +72,7 @@ $COUNTRIES = [
       'safaricom-kenya' => '254703456789',
       't-kash-kenya' => '',
       'telkom-kenya' => '',
+      'mpesa-KE' => '254703456789',
     ],
   ],
   'CI' => [
