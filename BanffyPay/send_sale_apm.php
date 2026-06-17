@@ -232,17 +232,17 @@ $COUNTRIES = [
       'Orange (in USD)' => '',
     ],
   ],
-  'CF' => [
+  'CD' => [
     'country' => 'DRC',
-    'countryCode' => 'CF',
+    'countryCode' => 'CD',
     'currency' => 'CDF',
-    'payer_country' => 'CF',
+    'payer_country' => 'CD',
     'payment_code' => '801',
     'providers' => [
-      'mpesa-CF' => '243813456789',
-      'afrimoney-CF' => '',
-      'airtel-CF' => '243973456789',
-      'orange-CF' => '243893456789',
+      'mpesa-CD' => '243813456789',
+      'afrimoney-CD' => '',
+      'airtel-CD' => '243973456789',
+      'orange-CD' => '243893456789',
     ],
   ],
   'CA' => [
