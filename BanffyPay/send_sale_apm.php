@@ -239,10 +239,10 @@ $COUNTRIES = [
     'payer_country' => 'CF',
     'payment_code' => '801',
     'providers' => [
-      'mpesa-CD' => '243813456789',
-      'afrimoney-CD' => '',
-      'airtel-CD' => '243973456789',
-      'orange-CD' => '243893456789',
+      'mpesa-CF' => '243813456789',
+      'afrimoney-CF' => '',
+      'airtel-CF' => '243973456789',
+      'orange-CF' => '243893456789',
     ],
   ],
   'CA' => [
