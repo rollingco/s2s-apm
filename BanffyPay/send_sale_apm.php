@@ -235,14 +235,14 @@ $COUNTRIES = [
   'CF' => [
     'country' => 'DRC',
     'countryCode' => 'CF',
-    'currency' => 'CAF',
+    'currency' => 'CDF',
     'payer_country' => 'CF',
     'payment_code' => '801',
     'providers' => [
-      'Vodacom (MPesa)' => '243813456789',
-      'Africell' => '',
-      'Airtel' => '243973456789',
-      'Orange' => '243893456789',
+      'mpesa-CD' => '243813456789',
+      'afrimoney-CD' => '',
+      'airtel-CD' => '243973456789',
+      'orange-CD' => '243893456789',
     ],
   ],
   'CA' => [
