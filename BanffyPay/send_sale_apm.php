@@ -370,8 +370,8 @@ if ($submitted) {
 
       'country'           => $selectedCountry['country'],
       'countryCode'       => $selectedCountry['countryCode'],
-      'paymentProvider'   => $provider,
-      'payment_code'      => $payment_code,
+      //'paymentProvider'   => $provider,
+      //'payment_code'      => $payment_code,
 
       'payer_phone'       => $payer_phone,
       'payer_country'     => $selectedCountry['payer_country'],
