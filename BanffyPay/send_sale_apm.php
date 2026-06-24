@@ -228,7 +228,7 @@ $COUNTRIES = [
     'providers' => [
       'mtn-LR' => '231881052626',
       'Mtn (in USD)' => '',
-      'orange-LR' => '11',
+      'orange-LR' => '881052626',
       'Orange (in USD)' => '',
     ],
   ],
