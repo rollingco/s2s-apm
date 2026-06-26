@@ -38,7 +38,7 @@ $payerZip     = '4604';
 
 // Order
 $orderId  = 'Vasil test order #' . time();
-$amount   = '0.05';
+$amount   = '1.05';
 $currency = 'USD';
 $desc     = 'DP1222233444222111';
 
