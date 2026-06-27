@@ -43,8 +43,8 @@ $currency = 'USD';
 $desc     = 'DP1222233444222111';
 
 // Fields that are not present in the old code — taken from the screenshot structure/sample.
-$successUrl = 'https://www.sandbox.pp.ua/checkout/order-received/62/?key=wc_order_OuKdJQpmBFt3J';
-$cancelUrl  = 'https://www.sandbox.pp.ua/my-account/view-order/62/';
+$successUrl = 'https://google.com/';
+$cancelUrl  = 'https://yahoo.com/';
 $birthDate  = '1980-01-01';
 $requestType = 'sync';
 $countryCode = 'TZ';
