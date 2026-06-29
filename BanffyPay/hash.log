@@ -22,3 +22,15 @@ UPPER            : VASIL TEST ORDER #17825668821.05USDDP12222334442221111904A026
 MD5              : 5d45a3fb80fb4787bbb87b9ccc5903e2
 SHA1             : 13865772cdc5e441d7a284c4996a156e98bffaef
 --------------------------------------------------------------------------------
+2026-06-29 12:43:37
+FORMULA          : SHA1(MD5(STRTOUPPER(order.number + order.amount + order.currency + order.description + merchant.pass)))
+order.number     : Vasil test order #1782737017
+order.amount     : 0.15
+order.currency   : USD
+order.description: DP122111
+merchant.pass    : 1904a0264cd3cb85de83801513c23bac
+SOURCE           : Vasil test order #17827370170.15USDDP1221111904a0264cd3cb85de83801513c23bac
+UPPER            : VASIL TEST ORDER #17827370170.15USDDP1221111904A0264CD3CB85DE83801513C23BAC
+MD5              : 1f4f2a108bbe52b75a94b5bbe66dbe28
+SHA1             : a9b190f359ef8452812361b2539983643cacfbbf
+--------------------------------------------------------------------------------
