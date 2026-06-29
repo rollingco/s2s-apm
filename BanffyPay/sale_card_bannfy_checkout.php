@@ -42,7 +42,7 @@ $amount   = '0.15';
 $currency = 'USD';
 $desc     = 'DP122111';
 
-// Fields that are not present in the old code — taken from the screenshot structure/sample.
+// Fields that are not present in the old code — takegggggn from the screenshot structure/sample.
 $successUrl = 'https://google.com/';
 $cancelUrl  = 'https://yahoo.com/';
 $birthDate  = '1980-02-18';
