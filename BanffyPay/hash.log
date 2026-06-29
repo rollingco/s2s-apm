@@ -1,0 +1,24 @@
+2026-06-27 13:23:57
+FORMULA          : SHA1(MD5(STRTOUPPER(order.number + order.amount + order.currency + order.description + merchant.pass)))
+order.number     : Vasil test order #1782566637
+order.amount     : 1.05
+order.currency   : USD
+order.description: DP1222233444222111
+merchant.pass    : 1904a0264cd3cb85de83801513c23bac
+SOURCE           : Vasil test order #17825666371.05USDDP12222334442221111904a0264cd3cb85de83801513c23bac
+UPPER            : VASIL TEST ORDER #17825666371.05USDDP12222334442221111904A0264CD3CB85DE83801513C23BAC
+MD5              : 49578a2c3d6d9d98c89ee3801925ff0a
+SHA1             : d8d2ac37ec2cbe0fa5b797ae3a33bc622115fd72
+--------------------------------------------------------------------------------
+2026-06-27 13:28:02
+FORMULA          : SHA1(MD5(STRTOUPPER(order.number + order.amount + order.currency + order.description + merchant.pass)))
+order.number     : Vasil test order #1782566882
+order.amount     : 1.05
+order.currency   : USD
+order.description: DP1222233444222111
+merchant.pass    : 1904a0264cd3cb85de83801513c23bac
+SOURCE           : Vasil test order #17825668821.05USDDP12222334442221111904a0264cd3cb85de83801513c23bac
+UPPER            : VASIL TEST ORDER #17825668821.05USDDP12222334442221111904A0264CD3CB85DE83801513C23BAC
+MD5              : 5d45a3fb80fb4787bbb87b9ccc5903e2
+SHA1             : 13865772cdc5e441d7a284c4996a156e98bffaef
+--------------------------------------------------------------------------------

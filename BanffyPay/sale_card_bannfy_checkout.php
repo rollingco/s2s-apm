@@ -23,33 +23,33 @@ $expYear     = '2030';
 $cvv         = '501';
 
 // Payer
-$payerFirstName = 'Alan';
-$payerLastName  = 'Ward';
-$payerEmail     = 'garik.m@pay.cc';
-$payerPhone     = '255714641171';
+$payerFirstName = 'Vasil';
+$payerLastName  = 'Kachalo';
+$payerEmail     = 'vasiliy.kachalo@gmail.com ';
+$payerPhone     = '380673812507';
 $payerIp        = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
 
 // Billing address
-$payerAddress = 'Keryneias Line 1 Limassol 4604 CY';
+$payerAddress = 'Shmidta 19';
 $payerCountry = 'TZ';
-$payerCity    = 'Limassol';
-$payerState   = 'TX';
-$payerZip     = '4604';
+$payerCity    = 'K-P';
+$payerState   = 'KHM';
+$payerZip     = '32316';
 
 // Order
 $orderId  = 'Vasil test order #' . time();
-$amount   = '1.05';
+$amount   = '0.15';
 $currency = 'USD';
-$desc     = 'DP1222233444222111';
+$desc     = 'DP122111';
 
 // Fields that are not present in the old code — taken from the screenshot structure/sample.
 $successUrl = 'https://google.com/';
 $cancelUrl  = 'https://yahoo.com/';
-$birthDate  = '1980-01-01';
+$birthDate  = '1980-02-18';
 $requestType = 'sync';
 $countryCode = 'TZ';
-$district = 'TX';
-$houseNumber = '123';
+$district = 'KHM';
+$houseNumber = '19';
 
 // ========================= HELPERS =========================
 function h($v): string { return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
