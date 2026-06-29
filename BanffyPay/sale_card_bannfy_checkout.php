@@ -25,7 +25,7 @@ $cvv         = '501';
 // Payer
 $payerFirstName = 'Vasil';
 $payerLastName  = 'Kachalo';
-$payerEmail     = 'vasiliy.kachalo@gmail.com ';
+$payerEmail     = 'vasiliy.kachalo@gmail.com';
 $payerPhone     = '380673812507';
 $payerIp        = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
 
