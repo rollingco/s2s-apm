@@ -32,7 +32,7 @@ $billingAddress = [
     'address'      => '960 Tornado Ridge',
     'house_number' => '960',
     'zip'          => '78130',
-    'phone'        => '7028068369',
+    //'phone'        => '7028068369',
 ];
 
 /* ===================== HELPERS ===================== */
