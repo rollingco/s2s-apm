@@ -356,8 +356,8 @@ if ($submitted) {
       'payee_last_name'   => $payee_last_name,
       'payee_country'     => $selectedCountry['payee_country'],
       'payee_phone'       => $phone,
-      'subMerchantLegalName' => 'LEOGC LTD',
-      'subMerchantSegment' => 'ECOMMERCE',
+      'parameters[subMerchantLegalName]' => 'LEOGC LTD',
+      'parameters[subMerchantSegment]' => 'ECOMMERCE',
     ];
 
     if ($payee_email !== '') {
