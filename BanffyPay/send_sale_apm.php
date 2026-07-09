@@ -216,7 +216,8 @@ $COUNTRIES = [
     'payer_country' => 'SL',
     'payment_code' => '601',
     'providers' => [
-      'All Networks' => '',
+      'orange-SL' => '',
+      'africell-SL' => '',
     ],
   ],
   'LR' => [
