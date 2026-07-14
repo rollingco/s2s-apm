@@ -263,7 +263,7 @@ $DEFAULTS = [
   'identifier'        => '111',
   'return_url'        => 'https://google.com',
   'countryCode'       => 'TZ',
-  'provider'          => 'Airtel',
+  'provider'          => 'airtel-TZ',
   'payment_code'      => '501',
   'amount'            => '200.00',
   'email'             => 'customer@example.com',
@@ -297,7 +297,7 @@ $selectedCountry     = $COUNTRIES[$selectedCountryCode];
 $provider            = $DEFAULTS['provider'];
 $payer_phone         = $selectedCountry['providers'][$provider];
 $order_amt           = $DEFAULTS['amount'];
-//$payment_code        = $selectedCountry['payment_code'] ?? $DEFAULTS['payment_code'];
+$payment_code        = $selectedCountry['payment_code'] ?? $DEFAULTS['payment_code'];
 
 $debug = [];
 $responseBlocks = ['bodyRaw' => '', 'json' => null];
@@ -410,19 +410,34 @@ if ($submitted) {
     curl_setopt_array($ch, [
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_POST           => true,
-      CURLOPT_POSTFIELDS     => $form,
+      CURLOPT_POSTFIELDS     => http_build_query($form),
+      CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/x-www-form-urlencoded',
+        'Accept: application/json',
+      ],
+      CURLOPT_CONNECTTIMEOUT => 15,
       CURLOPT_TIMEOUT        => 60,
+      CURLOPT_FOLLOWLOCATION => true,
     ]);
 
     $raw = curl_exec($ch);
     $info = curl_getinfo($ch);
-    $err = curl_errno($ch) ? curl_error($ch) : '';
+    $errno = curl_errno($ch);
+    $err = $errno ? curl_error($ch) : '';
     curl_close($ch);
 
     $debug['http_code'] = (int)($info['http_code'] ?? 0);
-    if ($err) $debug['curl_error'] = $err;
+    $debug['curl_errno'] = $errno;
+    $debug['curl_error'] = $err;
+    $debug['response_bytes'] = is_string($raw) ? strlen($raw) : 0;
 
-    $responseBlocks['bodyRaw'] = (string)$raw;
+    if ($raw === false) {
+      $responseBlocks['bodyRaw'] = 'cURL error #' . $errno . ': ' . $err;
+    } elseif ($raw === '') {
+      $responseBlocks['bodyRaw'] = 'Empty response body. HTTP code: ' . $debug['http_code'];
+    } else {
+      $responseBlocks['bodyRaw'] = $raw;
+    }
     $json = json_decode($responseBlocks['bodyRaw'], true);
     if (json_last_error() === JSON_ERROR_NONE) {
       $responseBlocks['json'] = $json;
@@ -520,6 +535,16 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
 <div class="panel">
   <h3>cURL Request</h3>
   <pre><?=h($debug['curl'] ?? '')?></pre>
+</div>
+
+<div class="panel">
+  <h3>HTTP / cURL diagnostics</h3>
+  <pre><?=pretty([
+    'http_code' => $debug['http_code'] ?? null,
+    'curl_errno' => $debug['curl_errno'] ?? null,
+    'curl_error' => $debug['curl_error'] ?? null,
+    'response_bytes' => $debug['response_bytes'] ?? null,
+  ])?></pre>
 </div>
 
 <div class="panel">
