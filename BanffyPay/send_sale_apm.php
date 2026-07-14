@@ -290,7 +290,16 @@ function build_sale_hash($identifier, $order_id, $amount, $currency, $secret, &$
   return md5(strtoupper(strrev($src)));
 }
 
-$submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+function build_status_hash($trans_id, $secret, &$srcOut = null){
+  $src = strtoupper(strrev($trans_id)) . $secret;
+  if ($srcOut !== null) $srcOut = $src;
+  return md5($src);
+}
+
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$formAction = $_POST['form_action'] ?? 'SALE';
+$isSaleRequest = $requestMethod === 'POST' && $formAction === 'SALE';
+$isStatusRequest = $requestMethod === 'POST' && $formAction === 'GET_STATUS';
 
 $selectedCountryCode = $DEFAULTS['countryCode'];
 $selectedCountry     = $COUNTRIES[$selectedCountryCode];
@@ -303,7 +312,7 @@ $debug = [];
 $responseBlocks = ['bodyRaw' => '', 'json' => null];
 $errors = [];
 
-if ($submitted) {
+if ($isSaleRequest) {
   $selectedCountryCode = $_POST['countryCode'] ?? $DEFAULTS['countryCode'];
 
   if (!isset($COUNTRIES[$selectedCountryCode])) {
@@ -379,8 +388,8 @@ if ($submitted) {
       'payer_email'       => $DEFAULTS['email'],
       'payer_first_name'  => $DEFAULTS['payer_first_name'],
       'payer_last_name'   => $DEFAULTS['payer_last_name'],
-      //'parameters[subMerchantLegalName]' => 'LEOGC LTD',
-      //'parameters[subMerchantSegment]' => 'ECOMMERCE',
+      'parameters[subMerchantLegalName]' => 'LEOGC LTD',
+      'parameters[subMerchantSegment]' => 'ECOMMERCE',
       'hash'              => $hash,
     ];
 
@@ -443,6 +452,81 @@ if ($submitted) {
       $responseBlocks['json'] = $json;
     }
   }
+} elseif ($isStatusRequest) {
+  $trans_id = trim($_POST['trans_id'] ?? '');
+
+  if ($trans_id === '') {
+    $errors[] = 'Transaction ID is required.';
+  }
+
+  if (!$errors) {
+    $hash_src_dbg = '';
+    $hash = build_status_hash($trans_id, $SECRET, $hash_src_dbg);
+
+    $form = [
+      'action'     => 'GET_TRANS_STATUS',
+      'client_key' => $CLIENT_KEY,
+      'trans_id'   => $trans_id,
+      'hash'       => $hash,
+    ];
+
+    $curlCommand = "curl --location '" . $PAYMENT_URL . "' \
+";
+    $curlCommand .= "--header 'Content-Type: application/x-www-form-urlencoded' \
+";
+
+    foreach ($form as $key => $value) {
+      $curlCommand .= "--data-urlencode '" . $key . "=" . str_replace("'", "\\'", (string)$value) . "' \
+";
+    }
+
+    $debug = [
+      'endpoint' => $PAYMENT_URL,
+      'form'     => $form,
+      'hash_src' => $hash_src_dbg,
+      'hash'     => $hash,
+      'curl'     => rtrim($curlCommand, " \
+"),
+    ];
+
+    $ch = curl_init($PAYMENT_URL);
+    curl_setopt_array($ch, [
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_POST           => true,
+      CURLOPT_POSTFIELDS     => http_build_query($form),
+      CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/x-www-form-urlencoded',
+        'Accept: application/json',
+      ],
+      CURLOPT_CONNECTTIMEOUT => 15,
+      CURLOPT_TIMEOUT        => 60,
+      CURLOPT_FOLLOWLOCATION => true,
+    ]);
+
+    $raw = curl_exec($ch);
+    $info = curl_getinfo($ch);
+    $errno = curl_errno($ch);
+    $err = $errno ? curl_error($ch) : '';
+    curl_close($ch);
+
+    $debug['http_code'] = (int)($info['http_code'] ?? 0);
+    $debug['curl_errno'] = $errno;
+    $debug['curl_error'] = $err;
+    $debug['response_bytes'] = is_string($raw) ? strlen($raw) : 0;
+
+    if ($raw === false) {
+      $responseBlocks['bodyRaw'] = 'cURL error #' . $errno . ': ' . $err;
+    } elseif ($raw === '') {
+      $responseBlocks['bodyRaw'] = 'Empty response body. HTTP code: ' . $debug['http_code'];
+    } else {
+      $responseBlocks['bodyRaw'] = $raw;
+    }
+
+    $json = json_decode($responseBlocks['bodyRaw'], true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+      $responseBlocks['json'] = $json;
+    }
+  }
 }
 
 ?>
@@ -475,6 +559,7 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
   <?php endif; ?>
 
   <form method="post">
+    <input type="hidden" name="form_action" value="SALE">
     <div>
       <label>Country:</label>
       <select name="countryCode" id="countryCode">
@@ -551,6 +636,29 @@ button{padding:10px 14px;border-radius:10px;background:#2b7cff;color:#fff;border
   <h3>Response</h3>
   <pre><?=pretty($responseBlocks['bodyRaw'])?></pre>
 </div>
+
+<?php
+$transId = '';
+if (is_array($responseBlocks['json'])) {
+  $transId = (string)(
+    $responseBlocks['json']['response']['trans_id']
+    ?? $responseBlocks['json']['trans_id']
+    ?? ''
+  );
+}
+?>
+
+<?php if ($isSaleRequest && $transId !== ''): ?>
+<div class="panel">
+  <h3>Transaction status</h3>
+  <p>Transaction ID: <strong><?=h($transId)?></strong></p>
+  <form method="post">
+    <input type="hidden" name="form_action" value="GET_STATUS">
+    <input type="hidden" name="trans_id" value="<?=h($transId)?>">
+    <button type="submit">GET_TRANS_STATUS</button>
+  </form>
+</div>
+<?php endif; ?>
 <?php endif; ?>
 
 </div>

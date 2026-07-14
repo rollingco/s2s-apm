@@ -32,7 +32,6 @@ $SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
 $BRAND = 'leogc-bannf-dbm';
 $WITHDRAWAL_PAYMENT_CODE = '999';
 
-$STATUS_HELPER_URL = 'status_credit2virtual.php';
 
 $COUNTRIES = [
   'BJ' => [
@@ -271,6 +270,16 @@ function build_credit2virtual_hash($order_id, $amount, $currency, $secret, &$src
   return md5($src);
 }
 
+/**
+ * GET_TRANS_STATUS hash:
+ * md5( strtoupper( strrev( trans_id ) ) . SECRET )
+ */
+function build_status_hash($trans_id, $secret, &$srcOut = null){
+  $src = strtoupper(strrev($trans_id)) . $secret;
+  if ($srcOut !== null) $srcOut = $src;
+  return md5($src);
+}
+
 
 function current_url(){
   $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
@@ -278,7 +287,11 @@ function current_url(){
 }
 
 /* ===================== Initial state ===================== */
-$submitted = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$formAction = $_POST['form_action'] ?? 'CREDIT2VIRTUAL';
+
+$isPayoutRequest = ($requestMethod === 'POST' && $formAction === 'CREDIT2VIRTUAL');
+$isStatusRequest = ($requestMethod === 'POST' && $formAction === 'GET_TRANS_STATUS');
 
 $selectedCountryCode = $_GET['countryCode'] ?? $DEFAULTS['countryCode'];
 if (!isset($COUNTRIES[$selectedCountryCode])) $selectedCountryCode = $DEFAULTS['countryCode'];
@@ -299,7 +312,7 @@ $responseBlocks = ['bodyRaw' => '', 'json' => null];
 $errors = [];
 
 /* ===================== Submit ===================== */
-if ($submitted) {
+if ($isPayoutRequest) {
   $selectedCountryCode = $_POST['countryCode'] ?? $DEFAULTS['countryCode'];
   if (!isset($COUNTRIES[$selectedCountryCode])) {
     $errors[] = 'Invalid country.';
@@ -418,6 +431,78 @@ if ($submitted) {
       $responseBlocks['json'] = $json;
     }
   }
+} elseif ($isStatusRequest) {
+  $trans_id = trim((string)($_POST['trans_id'] ?? ''));
+
+  if ($trans_id === '') {
+    $errors[] = 'Transaction ID is required for GET_TRANS_STATUS.';
+  }
+
+  if (!$errors) {
+    $hash_src_dbg = '';
+    $hash = build_status_hash($trans_id, $SECRET, $hash_src_dbg);
+
+    $form = [
+      'action'     => 'GET_TRANS_STATUS',
+      'client_key' => $CLIENT_KEY,
+      'trans_id'   => $trans_id,
+      'hash'       => $hash,
+    ];
+
+    $curlCommand = "curl --location '" . $PAYMENT_URL . "' \\\n";
+    $curlCommand .= "--header 'Content-Type: application/x-www-form-urlencoded' \\\n";
+    foreach ($form as $key => $value) {
+      $curlCommand .= "--data-urlencode '" . $key . "=" . str_replace("'", "\\'", (string)$value) . "' \\\n";
+    }
+
+    $debug = [
+      'endpoint' => $PAYMENT_URL,
+      'form'     => $form,
+      'hash_formula' => 'md5( strtoupper( strrev( trans_id ) ) . SECRET )',
+      'hash_src' => $hash_src_dbg,
+      'hash'     => $hash,
+      'curl'     => rtrim($curlCommand, " \\\n"),
+    ];
+
+    $ch = curl_init($PAYMENT_URL);
+    curl_setopt_array($ch, [
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_POST           => true,
+      CURLOPT_POSTFIELDS     => http_build_query($form),
+      CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/x-www-form-urlencoded',
+        'Accept: application/json',
+      ],
+      CURLOPT_CONNECTTIMEOUT => 15,
+      CURLOPT_TIMEOUT        => 60,
+      CURLOPT_FOLLOWLOCATION => true,
+    ]);
+
+    $start = microtime(true);
+    $raw = curl_exec($ch);
+    $info = curl_getinfo($ch);
+    $errno = curl_errno($ch);
+    $err = $errno ? curl_error($ch) : '';
+    curl_close($ch);
+
+    $debug['http_code'] = (int)($info['http_code'] ?? 0);
+    $debug['duration_sec'] = number_format(microtime(true) - $start, 3, '.', '');
+    $debug['curl_errno'] = $errno;
+    if ($err) $debug['curl_error'] = $err;
+
+    if ($raw === false) {
+      $responseBlocks['bodyRaw'] = 'cURL error #' . $errno . ': ' . $err;
+    } elseif ($raw === '') {
+      $responseBlocks['bodyRaw'] = 'Empty response body. HTTP code: ' . $debug['http_code'];
+    } else {
+      $responseBlocks['bodyRaw'] = (string)$raw;
+    }
+
+    $json = json_decode($responseBlocks['bodyRaw'], true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+      $responseBlocks['json'] = $json;
+    }
+  }
 }
 
 $self = current_url();
@@ -453,6 +538,7 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
   <?php endif; ?>
 
   <form action="<?=h($self)?>" method="post">
+    <input type="hidden" name="form_action" value="CREDIT2VIRTUAL">
     <div class="row">
       <label>Country:</label>
       <select name="countryCode" id="countryCode">
@@ -540,14 +626,31 @@ button,.btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#f
   <pre><?=h($debug['hash'])?></pre>
 </div>
 
+<?php if (!empty($debug['curl'])): ?>
+<div class="panel">
+  <h3>cURL Request</h3>
+  <pre><?=h($debug['curl'])?></pre>
+</div>
+<?php endif; ?>
+
 <div class="panel">
   <h3>Response</h3>
   <pre><?=pretty($responseBlocks['bodyRaw'])?></pre>
   <?php if (is_array($responseBlocks['json'] ?? null)): ?>
     <h3>Parsed response</h3>
     <pre><?=pretty($responseBlocks['json'])?></pre>
-    <?php if (!empty($responseBlocks['json']['trans_id'])): ?>
-      <a class="btn" target="_blank" href="<?=h($STATUS_HELPER_URL)?>?trans_id=<?=h($responseBlocks['json']['trans_id'])?>">Open status helper</a>
+    <?php
+      $statusTransId =
+        $responseBlocks['json']['trans_id']
+        ?? $responseBlocks['json']['response']['trans_id']
+        ?? '';
+    ?>
+    <?php if ($statusTransId !== ''): ?>
+      <form action="<?=h($self)?>" method="post" style="margin-top:14px">
+        <input type="hidden" name="form_action" value="GET_TRANS_STATUS">
+        <input type="hidden" name="trans_id" value="<?=h($statusTransId)?>">
+        <button type="submit">GET_TRANS_STATUS</button>
+      </form>
     <?php endif; ?>
   <?php endif; ?>
 </div>
