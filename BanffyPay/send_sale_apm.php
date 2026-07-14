@@ -379,7 +379,8 @@ if ($submitted) {
       'payer_email'       => $DEFAULTS['email'],
       'payer_first_name'  => $DEFAULTS['payer_first_name'],
       'payer_last_name'   => $DEFAULTS['payer_last_name'],
-
+      'parameters[subMerchantLegalName]' => 'LEOGC LTD',
+      'parameters[subMerchantSegment]' => 'ECOMMERCE',
       'hash'              => $hash,
     ];
 
