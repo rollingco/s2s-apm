@@ -207,6 +207,7 @@ $COUNTRIES = [
     'payment_code' => '505',
     'providers' => [
       'airtel-RW' => '250733456789',
+      'mnt-RW' => '250733456789',
       'tigo-RW' => '',
       'halopesa-RW' => '',
       'azampesa-RW' => '',
@@ -394,7 +395,11 @@ if ($isSaleRequest) {
       'payer_last_name'   => $DEFAULTS['payer_last_name'],
       'parameters[subMerchantLegalName]' => 'LEOGC LTD',
       'parameters[subMerchantSegment]' => 'ECOMMERCE',
+      'parameters[redirect_url]' => 'https://google.com/redirect',
+      'parameters[cancel_url]' => 'https://google.com/cancel',
       'hash'              => $hash,
+
+      
     ];
 
     // For Nigeria, channel_id must NOT be sent.
