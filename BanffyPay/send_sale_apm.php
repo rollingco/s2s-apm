@@ -123,6 +123,27 @@ $COUNTRIES = [
       'Airtel-Tigo' => '233273456789',
     ],
   ],
+  'GN' => [
+    'country' => 'Guinea',
+    'countryCode' => 'GN',
+    'currency' => 'GNF',
+    'payer_country' => 'GN',
+    'payment_code' => '311',
+    'providers' => [
+      'orange-GN' => '002245456789',
+      'mtn-GN' => '002245456789',
+    ],
+  ],
+  'MW' => [
+    'country' => 'Malawi',
+    'countryCode' => 'MW',
+    'currency' => 'MWK',
+    'payer_country' => 'MW',
+    'payment_code' => '510',
+    'providers' => [
+      'airtel-MW' => '265973456789',
+    ],
+  ],
   'ZM' => [
     'country' => 'Zambia',
     'countryCode' => 'ZM',
