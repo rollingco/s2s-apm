@@ -141,7 +141,8 @@ $COUNTRIES = [
     'payer_country' => 'MW',
     'payment_code' => '510',
     'providers' => [
-      'airtel-MW' => '265973456789',
+      'airtel-MW' => '265973456789',  
+      'tnm-MW' => '265973456789',
     ],
   ],
   'ZM' => [
