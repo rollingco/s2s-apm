@@ -130,8 +130,8 @@ $COUNTRIES = [
     'payer_country' => 'GN',
     'payment_code' => '311',
     'providers' => [
-      'orange-GN' => '002245456789',
-      'mtn-GN' => '002245456789',
+      'orange-GN' => '624664567',
+      'mtn-GN' => '669735711',
     ],
   ],
   'MW' => [
