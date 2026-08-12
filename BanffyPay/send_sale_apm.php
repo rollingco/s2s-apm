@@ -283,6 +283,17 @@ $COUNTRIES = [
       'For 901:' => '',
     ],
   ],
+  'MZ' => [
+    'country' => 'Mozambique',
+    'countryCode' => 'MZ',
+    'currency' => 'MZN',
+    'payer_country' => 'MZ',
+    'payment_code' => '514',
+    'providers' => [
+      'mpesa-MZ' => '258841234567',
+      'movitel-MZ' => '258841234567',
+    ],
+  ],
 ];
 
 $DEFAULTS = [
