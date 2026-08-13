@@ -34,11 +34,40 @@ $cancelUrl  = 'https://example.com/cancel.php';
 $errorUrl   = 'https://example.com/error.php';
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+function h($s): string
+{
+    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+}
+
+function calc_hash(
+    string $number,
+    string $amount,
+    string $currency,
+    string $description,
+    string $password
+): string {
+    $input = strtoupper(
+        $number .
+        $amount .
+        $currency .
+        $description .
+        $password
+    );
+
+    return sha1(md5($input));
+}
+
+// ============================================================
 // HASH
 //
-// Checkout hash:
+// IMPORTANT:
+// merchant_key is NOT included in the hash.
+//
+// Formula:
 // sha1(md5(strtoupper(
-//     merchant_key +
 //     order_number +
 //     amount +
 //     currency +
@@ -47,18 +76,20 @@ $errorUrl   = 'https://example.com/error.php';
 // )))
 // ============================================================
 
-$hashString =
-    $merchantKey .
+$hashInput = strtoupper(
     $orderNumber .
     $orderAmount .
     $orderCurrency .
     $orderDescription .
-    $password;
+    $password
+);
 
-$hash = sha1(
-    md5(
-        strtoupper($hashString)
-    )
+$hash = calc_hash(
+    $orderNumber,
+    $orderAmount,
+    $orderCurrency,
+    $orderDescription,
+    $password
 );
 
 // ============================================================
@@ -67,10 +98,8 @@ $hash = sha1(
 
 $request = [
     'merchant_key' => $merchantKey,
+    'operation'    => 'purchase',
 
-    'operation' => 'purchase',
-
-    // We explicitly tell Checkout to show Google Pay
     'methods' => [
         'num-googlepay'
     ],
@@ -134,18 +163,26 @@ $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 
-curl_close($ch);
+// PHP 8.5: curl_close() is deprecated and has no effect,
+// so it is intentionally not used here.
 
 // ============================================================
-// OUTPUT
+// PARSE RESPONSE
 // ============================================================
+
+$responseData = json_decode((string)$response, true);
+$redirectUrl = '';
+
+if (is_array($responseData) && !empty($responseData['redirect_url'])) {
+    $redirectUrl = (string)$responseData['redirect_url'];
+}
 
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Google Pay Checkout Test</title>
+    <title>Google Pay Hosted Checkout Test</title>
 
     <style>
         body {
@@ -160,6 +197,8 @@ curl_close($ch);
             padding: 20px;
             overflow-x: auto;
             border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .button {
@@ -175,6 +214,16 @@ curl_close($ch);
         .error {
             color: #b00020;
         }
+
+        .ok {
+            color: #087a2f;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -182,46 +231,45 @@ curl_close($ch);
 
 <h1>Google Pay Hosted Checkout Test</h1>
 
+<h2>Hash input</h2>
+
+<pre><?= h($hashInput) ?></pre>
+
+<h2>Calculated hash</h2>
+
+<pre><?= h($hash) ?></pre>
+
 <h2>Request</h2>
 
-<pre><?= htmlspecialchars($json) ?></pre>
+<pre><?= h($json) ?></pre>
 
 <h2>HTTP status</h2>
 
-<pre><?= htmlspecialchars((string)$httpCode) ?></pre>
+<pre><?= h($httpCode) ?></pre>
 
 <?php if ($curlError): ?>
 
     <h2>cURL error</h2>
-
-    <pre class="error"><?= htmlspecialchars($curlError) ?></pre>
+    <pre class="error"><?= h($curlError) ?></pre>
 
 <?php else: ?>
 
     <h2>Response</h2>
+    <pre><?= h($response) ?></pre>
 
-    <pre><?= htmlspecialchars($response) ?></pre>
-
-    <?php
-
-    $responseData = json_decode($response, true);
-
-    if (!empty($responseData['redirect_url'])):
-
-        $redirectUrl = $responseData['redirect_url'];
-
-    ?>
+    <?php if ($redirectUrl !== ''): ?>
 
         <h2>Checkout</h2>
 
-        <p>
+        <p class="ok">
             Session was created successfully.
         </p>
 
         <a
             class="button"
-            href="<?= htmlspecialchars($redirectUrl) ?>"
+            href="<?= h($redirectUrl) ?>"
             target="_blank"
+            rel="noopener noreferrer"
         >
             Open Hosted Checkout
         </a>
@@ -238,3 +286,4 @@ curl_close($ch);
 
 </body>
 </html>
+
