@@ -57,7 +57,8 @@ $COUNTRIES = [
     'payer_country' => 'CM',
     'payment_code' => '202',
     'providers' => [
-      'mtn-momo-cameroon' => '237653456789',
+      'mtn-CM' => '237653456789',
+      'orange-CM' => '237693456789',
     ],
   ],
   'KE' => [
