@@ -1,7 +1,7 @@
 <?php
 /**
  * S2S APM SALE — phone + amount → minimal logs
- * - NO headers logging at all
+ * - NO headers logging at all Some tests tests tests
  */
 
 header('Content-Type: text/html; charset=utf-8');
