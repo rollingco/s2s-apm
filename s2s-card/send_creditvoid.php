@@ -8,8 +8,8 @@
 
 $endpoint = 'https://api.leogcltd.com/post';
 
-$merchantKey = 'a9375190-26f2-11f0-be42-022c42254708';
-$secret      = '554999c284e9f29cf95f090d9a8f3171';
+$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$secret      = '976d5c5d5eacbab78288b12bb15178ba';
 
 // ===================== ORIGINAL TRANSACTION =====================
 
@@ -23,7 +23,7 @@ $payerEmail = 'jon.doe@gmail.com';
 
 // refund amount (optional)
 // comment this line for full refund
-$amount = '0.50';
+$amount = '10.50';
 
 // ===================== HELPERS =====================
 
