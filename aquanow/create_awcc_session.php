@@ -4,8 +4,8 @@ $CHECKOUT_HOST = 'https://pay.leogcltd.com';
 $MERCHANT_KEY  = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $MERCHANT_PASS = '976d5c5d5eacbab78288b12bb15178ba';
 
-$SUCCESS_URL   = 'https://example.com/success';
-$CANCEL_URL    = 'https://example.com/cancel';
+$SUCCESS_URL   = 'https://google.com';
+$CANCEL_URL    = 'https://yahoo.com';
 
 $cryptoList = [
     'USDT','TRX','AMP','USDC','WLD','FDUSD','AVAX','TON','LTC','HBAR','S','KNC','ETC','FIL',
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $orderNumber   = 'order-' . time();
-$orderAmount   = '1.00';
+$orderAmount   = '0.50';
 $orderCurrency = 'USD';
 
 if ($selectedCrypto === 'USDT') {
