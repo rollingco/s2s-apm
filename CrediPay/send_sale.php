@@ -20,7 +20,7 @@ $merchantPass = '976d5c5d5eacbab78288b12bb15178ba';
 /* ===================== INPUTS ===================== */
 
 $orderNumber      = (string)time();
-$orderAmount      = '1.00';
+$orderAmount      = '0.10';
 $orderCurrency    = 'USD';
 $orderDescription = 'Vasyl test ' . time();
 
