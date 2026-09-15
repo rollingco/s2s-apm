@@ -16,7 +16,7 @@ $merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $secret      = '976d5c5d5eacbab78288b12bb15178ba';
 
 // Card
-$cardNumber  = '5200000000001096';
+$cardNumber  = '4441111087875187';
 $expMonth    = '03';
 $expYear     = '2030';
 $cvv         = '501';
@@ -28,7 +28,7 @@ $payerEmail  = 'garik.m@pay.cc';
 $orderId     = 'Vasil test order #' . time();
 $amount      = '0.05';
 $currency    = 'USD';
-$desc        = 'DP1222233444222111';
+$desc        = 'Vasil Test';
 
 $termUrl3ds  = 'https://portal.pay.cc/payment/p_controller/atomix/ret/return/w/1S2zavARHcZHlyNVCQWuhiA';
 $termTarget  = '_self';

@@ -26,15 +26,15 @@ $COUNTRIES = [
       'Moov' => '22995345789',
     ],
   ],
-  'Togo' => [
+  'TG' => [
     'country' => 'Togo',
-    'countryCode' => 'Togo',
+    'countryCode' => 'TG',
     'currency' => 'XOF',
-    'payer_country' => 'Togo',
+    'payer_country' => 'TG',
     'payment_code' => '106',
     'providers' => [
-      'Togocel' => '',
-      'Moov' => '',
+      'togocel-TG' => '22876543210',
+      'moov-TG' => '22876543210',
     ],
   ],
   'SN' => [
