@@ -25,7 +25,7 @@ $cvv         = '177';
 $payerFirstName = 'Vasyl';
 $payerLastName  = 'Kachalo';
 $payerEmail     = 'vasiliy.kachalo@gmail.com';
-$payerPhone     = '+380671234567';
+$payerPhone     = '380671234567';
 $payerAddress   = '15 Khreshchatyk Street';
 $payerCountry   = 'UA';
 $payerCity      = 'Kyiv';
@@ -43,7 +43,7 @@ $amount      = '0.05';
 $currency    = 'USD';
 $desc        = 'Vasil Test';
 
-$termUrl3ds  = 'https://portal.pay.cc/payment/p_controller/atomix/ret/return/w/1S2zavARHcZHlyNVCQWuhiA';
+$termUrl3ds  = 'https://sandbox.pp.ua/3ds_callback.php';
 $termTarget  = '_self';
 $authOnly    = 'N';
 
