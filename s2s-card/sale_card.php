@@ -21,8 +21,21 @@ $expMonth    = '06';
 $expYear     = '2028';
 $cvv         = '177';
 
-// Payer
-$payerEmail  = 'garik.m@pay.cc';
+// Payer / Enriched 3DS data
+$payerFirstName = 'Vasyl';
+$payerLastName  = 'Kachalo';
+$payerEmail     = 'vasiliy.kachalo@gmail.com';
+$payerPhone     = '+380671234567';
+$payerAddress   = '15 Khreshchatyk Street';
+$payerCountry   = 'UA';
+$payerCity      = 'Kyiv';
+$payerState     = 'Kyiv';
+$payerZip       = '01001';
+$payerIp        = '93.75.1.1';
+
+// Cardholder name used for enriched 3DS data.
+// IMPORTANT: add it to the API request only when the exact merchant-API field name is confirmed.
+$nameOnCard     = $payerFirstName . ' ' . $payerLastName;
 
 // Order
 $orderId     = 'Vasil test order #' . time();
@@ -102,16 +115,32 @@ $requestFields = [
   'card_exp_year'     => $expYear,
   'card_cvv2'         => $cvv,
 
-  'payer_first_name'  => 'Alan',
-  'payer_last_name'   => 'Ward',
-  'payer_address'     => 'null',
-  'payer_country'     => 'CY',
-  'payer_city'        => 'null',
-  'payer_state'       => '',
-  'payer_zip'         => 'null',
+  // Enriched 3DS customer / billing data
+  'payer_first_name'  => $payerFirstName,
+  'payer_last_name'   => $payerLastName,
+  'payer_address'     => $payerAddress,
+  'payer_country'     => $payerCountry,
+  'payer_city'        => $payerCity,
+  'payer_state'       => $payerState,
+  'payer_zip'         => $payerZip,
   'payer_email'       => $payerEmail,
-  'payer_phone'       => '+35795952955',
-  'payer_ip'          => '78.158.143.67',
+  'payer_phone'       => $payerPhone,
+  'payer_ip'          => $payerIp,
+
+  // Enriched 3DS data
+  'sourceOfFunds.provided.card.nameOnCard' => 'Vasyl Kachalo',
+  'customer.email'                         => $payerEmail,
+  'customer.phone'                         => $payerPhone,
+  'billing.address.street'                 => $payerAddress,
+  'billing.address.city'                   => $payerCity,
+  'billing.address.country'                => $payerCountry,
+  'billing.address.postcodeZip'            => $payerZip,
+  'billing.address.stateProvinceCode'      => '30',
+  'billing.address.stateProvince'          => $payerState,
+
+  // sourceOfFunds.provided.card.nameOnCard is part of the new enriched 3DS data.
+  // Do NOT uncomment until the exact public API field name is confirmed.
+  // 'card_holder_name' => $nameOnCard,
 
   'term_url_3ds'      => $termUrl3ds,
   //'term_url_target'   => $termTarget,
@@ -267,6 +296,23 @@ if (is_array($responseArr)) {
       ]))?></pre>
       <div class="hint warn">Не пиши secret у прод-логах. Тут для дебагу.</div>
     </div>
+  </div>
+
+  <div class="card">
+    <h2>3DS Enriched Data</h2>
+    <pre class="mono"><?=h(pretty_json([
+      'sourceOfFunds.provided.card.nameOnCard' => $nameOnCard,
+      'customer.email' => $payerEmail,
+      'customer.phone' => $payerPhone,
+      'billing.address.street' => $payerAddress,
+      'billing.address.city' => $payerCity,
+      'billing.address.country' => $payerCountry,
+      'billing.address.postcodeZip' => $payerZip,
+      'billing.address.stateProvinceCode' => $payerState,
+      'billing.address.stateProvince' => $payerState,
+    ]))?></pre>
+    <div class="hint">MID setting: <span class="mono">Send enriched 3DS data</span> should be configured as <span class="mono">SEND_ONLY</span> for this test. The fields above show the enriched values represented by this emulator.</div>
+    <div class="hint warn">nameOnCard is displayed here but is not sent until the exact merchant API field name is confirmed.</div>
   </div>
 
   <div class="card">

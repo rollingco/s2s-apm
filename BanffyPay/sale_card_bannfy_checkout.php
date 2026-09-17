@@ -1,4 +1,4 @@
-<?php
+git<?php
 /**
  * Checkout Session Emulator — JSON request
  *
