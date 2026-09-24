@@ -29,7 +29,7 @@ $payerPhone     = '380671234567';
 $payerAddress   = '15 Khreshchatyk Street';
 $payerCountry   = 'UA';
 $payerCity      = 'Kyiv';
-$payerState     = 'Kyiv';
+$payerState     = 'null';
 $payerZip       = '01001';
 $payerIp        = '93.75.1.1';
 
