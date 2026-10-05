@@ -18,12 +18,14 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-$merchantKey = '9a1cc9fe-55c4-11f1-8e6e-de23b7cf21d1';
-$secret      = 'aba1a6c2192932508728997065c3fa9d';
+$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+//$merchantKey = '09e65a20-bdcb-11f1-a899-cac28a421ee9';
+$secret      = '976d5c5d5eacbab78288b12bb15178ba';
+//$secret      = 'bd94b29f4d3f91666f6bb7027032c908';
 
 // Same payer/card data used in SALE request because it is required for hash calculation.
-$cardNumber  = '4441111087875187';
-$payerEmail  = 'garik.m@pay.cc';
+$cardNumber  = '5100947330319591';
+$payerEmail  = 'vasiliy.kachalo@gmail.com';
 
 // ========================= HELPERS =========================
 function h($v): string { return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
