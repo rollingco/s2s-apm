@@ -34,7 +34,8 @@ $billingAddress = [
     'address'      => '960 Tornado Ridge',
     'house_number' => '960',
     'zip'          => '78130',
-    //'phone'        => '7028068369',
+    'phone'        => '+380671234567',
+  
 ];
 
 /* ===================== HELPERS ===================== */
@@ -98,10 +99,16 @@ $request = [
         'currency'    => $orderCurrency,
         'description' => $orderDescription,
     ],
+    'customer' => [
+        'first_name' => 'Vasiliy',
+        'last_name'  => 'Kachalo',
+        'email'      => 'vasiliy.kachalo@gmail.com',
+    ],
     'billing_address' => $billingAddress,
     'success_url' => $successUrl,
     'cancel_url'  => $cancelUrl,
     'hash'        => $hash,
+
 ];
 
 /* ===================== CURL DEBUG ===================== */
