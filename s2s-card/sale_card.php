@@ -12,10 +12,10 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-//$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
-$merchantKey = '09e65a20-bdcb-11f1-a899-cac28a421ee9';
-//$secret      = '976d5c5d5eacbab78288b12bb15178ba';
-$secret      = 'bd94b29f4d3f91666f6bb7027032c908';
+$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+//$merchantKey = '09e65a20-bdcb-11f1-a899-cac28a421ee9';
+$secret      = '976d5c5d5eacbab78288b12bb15178ba';
+//$secret      = 'bd94b29f4d3f91666f6bb7027032c908';
 
 // Card
 $cardNumber  = '5100947330319591';
@@ -45,7 +45,7 @@ $amount      = '10.05';
 $currency    = 'USD';
 $desc        = 'Vasil Test';
 
-$termUrl3ds  = 'https://sandbox.pp.ua/3ds_callback.php';
+$termUrl3ds  = 'https://google.com/3ds_callback.php';
 $termTarget  = '_self';
 $authOnly    = 'N';
 
