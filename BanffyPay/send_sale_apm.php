@@ -98,8 +98,8 @@ $COUNTRIES = [
     'payer_country' => 'ML',
     'payment_code' => '205',
     'providers' => [
-      'orange-ML' => '',
-      'moov-ML' => '',
+      'orange-ML' => '22376123456',
+      'moov-ML' => '22376123456',
     ],
   ],
   'BF' => [
