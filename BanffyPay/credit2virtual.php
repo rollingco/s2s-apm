@@ -213,6 +213,7 @@ $COUNTRIES = [
       'orangeusd-LR' => '',
     ],
   ],
+  /*
   'CF' => [
     'country' => 'DRC',
     'countryCode' => 'CF',
@@ -223,6 +224,19 @@ $COUNTRIES = [
       'africell-CF' => '',
       'airtel-CF' => '243973456789',
       'orange-CF' => '243893456789',
+    ],
+  ],
+  */
+    'CD' => [
+    'country' => 'DRC',
+    'countryCode' => 'CD',
+    'currency' => 'CDF',
+    'payer_country' => 'CD',
+    'providers' => [
+      'mpesa-CD' => '243813456789',
+      'afrimoney-CD' => '',
+      'airtel-CD' => '243973456789',
+      'orange-CD' => '243893456789',
     ],
   ],
   'CA' => [

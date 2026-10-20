@@ -35,7 +35,7 @@ $COUNTRIES = [
     'payer_country' => 'TG',
     'payment_code' => '106',
     'providers' => [
-      'togocel-TG' => '22876543210',
+      'togo-TG' => '22876543210',
       'moov-TG' => '22876543210',
     ],
   ],

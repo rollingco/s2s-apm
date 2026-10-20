@@ -28,7 +28,7 @@ $cancelUrl  = 'https://sandbox.pp.ua/cancel';
 /* ===================== BILLING ADDRESS ===================== */
 $billingAddress = [
     'country'      => 'UA',
-    'state'        => 'TX',
+    'state'        => null,
     'city'         => 'New Braunfels',
     'district'     => 'New Braunfels',
     'address'      => '960 Tornado Ridge',
