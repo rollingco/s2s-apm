@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+// Save the raw request body before any parsing (one file per request).
+(function (): void {
+    $body = file_get_contents('php://input');
+    if ($body === false) {
+        error_log('Unable to read raw webhook body.');
+        return;
+    }
+    $path = __DIR__ . '/webhook_raw_' . bin2hex(random_bytes(16)) . '.log';
+    if (file_put_contents($path, $body, LOCK_EX) !== strlen($body)) {
+        error_log('Unable to save raw webhook body: ' . $path);
+    }
+})();
+
 date_default_timezone_set('Europe/Kyiv');
 
 /*
