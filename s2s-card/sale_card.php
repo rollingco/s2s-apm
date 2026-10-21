@@ -13,7 +13,9 @@
 $endpoint    = 'https://api.leogcltd.com/post';
 
 $merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+
 //$merchantKey = '278a8e1a-b282-11f1-b707-6ef88403152a';
+
 $secret      = '976d5c5d5eacbab78288b12bb15178ba';
 //$secret      = 'd5aa532bbfc19775131729b93a4c6146';
 
