@@ -1,0 +1,19 @@
+
+name: Test FTP Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-ftp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test FTP login
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          curl --verbose --fail --max-time 30 \
+            --user "$FTP_USERNAME:$FTP_PASSWORD" \
+            --list-only "ftp://$FTP_HOST/"
