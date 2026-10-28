@@ -401,7 +401,7 @@ if ($isPayoutRequest) {
       $form['parameters[beneficiaryProvider]'] = 'NUBAN';
       $form['parameters[beneficiaryBankName]'] = strtoupper($provider);
     } else {
-      //$form['channel_id'] = $provider;
+      $form['channel_id'] = $provider;
       //$form['parameters[provider]'] = $provider;
       $form['parameters[paymentCode]'] = $GLOBALS['WITHDRAWAL_PAYMENT_CODE'];
       //$form['parameters[countryCode]'] = $selectedCountry['countryCode'];

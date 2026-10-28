@@ -12,12 +12,12 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+//$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 
-//$merchantKey = '278a8e1a-b282-11f1-b707-6ef88403152a';
+$merchantKey = '8a08c9b8-a2cd-11f1-90c2-8645003a7359';
 
-$secret      = '976d5c5d5eacbab78288b12bb15178ba';
-//$secret      = 'd5aa532bbfc19775131729b93a4c6146';
+//$secret      = '976d5c5d5eacbab78288b12bb15178ba';
+$secret      = 'bc4553cde88ee3f35834d7c99bd6958c';
 
 // MasterCard
 /*
