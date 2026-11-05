@@ -12,8 +12,10 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-$merchantKey = '8af2433a-1269-11f1-9540-2a588e8348b1';
-$secret      = '71d7e2e8a5bca26c7cc63776fc36078d'; // PASSWORD from docs
+//$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$merchantKey = '5f306ac0-0ff2-11f1-9be0-0a9a38974658';
+
+$secret      = '976d5c5d5eacbab78288b12bb15178ba'; // PASSWORD from docs
 
 // Card (TEST ONLY)
 $cardNumber  = '4111111111111111';
