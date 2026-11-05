@@ -12,35 +12,24 @@
 // ========================= CONFIG =========================
 $endpoint    = 'https://api.leogcltd.com/post';
 
-//$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$secret      = '976d5c5d5eacbab78288b12bb15178ba';
 
-$merchantKey = '8a08c9b8-a2cd-11f1-90c2-8645003a7359';
-
-//$secret      = '976d5c5d5eacbab78288b12bb15178ba';
-$secret      = 'bc4553cde88ee3f35834d7c99bd6958c';
-
-// MasterCard
-/*
+// Card
 $cardNumber  = '5100947330319591';
 $expMonth    = '06';
 $expYear     = '2028';
 $cvv         = '177';
-*/
-//VISA
-$cardNumber  = '4441111087875187';
-$expMonth    = '03';
-$expYear     = '2030';
-$cvv         = '501';
 
 // Payer / Enriched 3DS data
 $payerFirstName = 'Vasyl';
 $payerLastName  = 'Kachalo';
 $payerEmail     = 'vasiliy.kachalo@gmail.com';
-$payerPhone     = '380671234567';
+$payerPhone     = '+380671234567';
 $payerAddress   = '15 Khreshchatyk Street';
 $payerCountry   = 'UA';
 $payerCity      = 'Kyiv';
-$payerState     = 'null';
+$payerState     = 'Kyiv';
 $payerZip       = '01001';
 $payerIp        = '93.75.1.1';
 
@@ -50,11 +39,11 @@ $nameOnCard     = $payerFirstName . ' ' . $payerLastName;
 
 // Order
 $orderId     = 'Vasil test order #' . time();
-$amount      = '10.05';
+$amount      = '0.05';
 $currency    = 'USD';
 $desc        = 'Vasil Test';
 
-$termUrl3ds  = 'https://google.com/3ds_callback.php';
+$termUrl3ds  = 'https://portal.pay.cc/payment/p_controller/atomix/ret/return/w/1S2zavARHcZHlyNVCQWuhiA';
 $termTarget  = '_self';
 $authOnly    = 'N';
 
@@ -139,7 +128,7 @@ $requestFields = [
   'payer_ip'          => $payerIp,
 
   // Enriched 3DS data
-  'sourceOfFunds.provided.card.nameOnCard' => 'Vasyl Kachalo',
+  'sourceOfFunds.provided.card.nameOnCard' => 'Vasyl Kachalocd',
   'customer.email'                         => $payerEmail,
   'customer.phone'                         => $payerPhone,
   'billing.address.street'                 => $payerAddress,
