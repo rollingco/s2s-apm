@@ -13,7 +13,9 @@
 $endpoint    = 'https://api.leogcltd.com/post';
 
 $merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
+$merchantKey = '8a08c9b8-a2cd-11f1-90c2-8645003a7359'; // 1x card
 $secret      = '976d5c5d5eacbab78288b12bb15178ba';
+$secret      = 'bc4553cde88ee3f35834d7c99bd6958c'; // test
 
 // Card
 $cardNumber  = '5100947330319591';
@@ -39,7 +41,7 @@ $nameOnCard     = $payerFirstName . ' ' . $payerLastName;
 
 // Order
 $orderId     = 'Vasil test order #' . time();
-$amount      = '0.05';
+$amount      = '10.05';
 $currency    = 'USD';
 $desc        = 'Vasil Test';
 
