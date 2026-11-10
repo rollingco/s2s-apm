@@ -23,6 +23,11 @@ $expMonth    = '06';
 $expYear     = '2028';
 $cvv         = '177';
 
+$cardNumber  = '4441111087875187';
+$expMonth    = '03';
+$expYear     = '2030';
+$cvv         = '501';
+
 // Payer / Enriched 3DS data
 $payerFirstName = 'Vasyl';
 $payerLastName  = 'Kachalo';
@@ -41,7 +46,7 @@ $nameOnCard     = $payerFirstName . ' ' . $payerLastName;
 
 // Order
 $orderId     = 'Vasil test order #' . time();
-$amount      = '10.05';
+$amount      = '100.05';
 $currency    = 'USD';
 $desc        = 'Vasil Test';
 
