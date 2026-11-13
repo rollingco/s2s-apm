@@ -14,19 +14,34 @@ $endpoint    = 'https://api.leogcltd.com/post';
 
 $merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $merchantKey = '8a08c9b8-a2cd-11f1-90c2-8645003a7359'; // 1x card
+//$merchantKey = 'f1ce9382-194a-11f1-b872-4e16b5645926'; // Korvion
 $secret      = '976d5c5d5eacbab78288b12bb15178ba';
-$secret      = 'bc4553cde88ee3f35834d7c99bd6958c'; // test
+$secret      = 'bc4553cde88ee3f35834d7c99bd6958c'; // 1x card
+//$secret      = 'af8f3f78e6414fb73542f4c18ff6e4f8'; // Korvion
 
-// Card
-$cardNumber  = '5100947330319591';
-$expMonth    = '06';
-$expYear     = '2028';
-$cvv         = '177';
-
-$cardNumber  = '4441111087875187';
-$expMonth    = '03';
-$expYear     = '2030';
-$cvv         = '501';
+// Card — values from the submitted form.
+$isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+$cardNumber = is_string($_POST['card_number'] ?? null) ? preg_replace('/[ -]/', '', trim($_POST['card_number'])) : '';
+$expMonth = is_string($_POST['card_exp_month'] ?? null) ? trim($_POST['card_exp_month']) : '';
+$expYear = is_string($_POST['card_exp_year'] ?? null) ? trim($_POST['card_exp_year']) : '';
+$cvv = is_string($_POST['card_cvv2'] ?? null) ? trim($_POST['card_cvv2']) : '';
+$formError = '';
+if ($isPost && (!preg_match('/^[0-9]{12,19}$/D', $cardNumber)
+    || !preg_match('/^(0?[1-9]|1[0-2])$/D', $expMonth)
+    || !preg_match('/^[0-9]{4}$/D', $expYear)
+    || !preg_match('/^[0-9]{3,4}$/D', $cvv))) {
+  $formError = 'Enter PAN (12–19 digits), month (01–12), year (YYYY), and CVV (3–4 digits).';
+}
+$amount = $isPost ? (is_string($_POST['amount'] ?? null) ? trim($_POST['amount']) : '') : '1.99';
+if ($isPost && (!preg_match('/^(0|[1-9][0-9]{0,5})(\.[0-9]{1,2})?$/D', $amount) || (float)$amount <= 0)) {
+  $formError = 'Enter amount from 0.01 to 999999.99 USD, with up to two decimal places.';
+}
+$submitted = $isPost && $formError === '';
+if ($submitted) {
+  $amountParts = explode('.', $amount);
+  $amount = $amountParts[0] . '.' . str_pad($amountParts[1] ?? '', 2, '0');
+}
+if ($submitted) $expMonth = str_pad($expMonth, 2, '0', STR_PAD_LEFT);
 
 // Payer / Enriched 3DS data
 $payerFirstName = 'Vasyl';
@@ -46,7 +61,6 @@ $nameOnCard     = $payerFirstName . ' ' . $payerLastName;
 
 // Order
 $orderId     = 'Vasil test order #' . time();
-$amount      = '100.05';
 $currency    = 'USD';
 $desc        = 'Vasil Test';
 
@@ -100,6 +114,8 @@ function build_3ds_form(string $url, array $params): string {
     </form>
   ';
 }
+
+if ($submitted) {
 
 // ========================= HASH =========================
 $first6 = substr($cardNumber, 0, 6);
@@ -233,6 +249,8 @@ if (is_array($responseArr)) {
   );
 }
 
+} // Run SALE only after submitting valid card fields.
+
 // ========================= HTML OUTPUT =========================
 ?>
 <!doctype html>
@@ -264,6 +282,22 @@ if (is_array($responseArr)) {
 </head>
 <body>
 <div class="wrap">
+
+  <div class="card">
+    <h2>Card details</h2>
+    <?php if ($formError !== ''): ?><p class="warn"><?=h($formError)?></p><?php endif; ?>
+    <form method="post" action="" autocomplete="off">
+      <p><label>PAN<br><input name="card_number" inputmode="numeric" maxlength="30" required></label></p>
+      <p><label>Expiry month (MM)<br><input name="card_exp_month" inputmode="numeric" pattern="0?[1-9]|1[0-2]" maxlength="2" required></label></p>
+      <p><label>Expiry year (YYYY)<br><input name="card_exp_year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label></p>
+      <p><label>CVV<br><input type="password" name="card_cvv2" inputmode="numeric" pattern="[0-9]{3,4}" maxlength="4" required></label></p>
+      <p><label>Amount (USD)<br><input type="number" name="amount" min="0.01" max="999999.99" step="0.01" value="<?=h($amount)?>" required></label></p>
+      <button type="submit" class="btn">Send SALE</button>
+    </form>
+  </div>
+
+  <?php if ($submitted): ?>
+
 
   <div class="card">
     <h1>SALE Emulator — Readable view</h1>
@@ -368,6 +402,7 @@ if (is_array($responseArr)) {
     </div>
   <?php endif; ?>
 
+  <?php endif; ?>
 </div>
 </body>
 </html>
