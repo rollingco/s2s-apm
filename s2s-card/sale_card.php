@@ -53,7 +53,7 @@ $payerCountry   = 'UA';
 $payerCity      = 'Kyiv';
 $payerState     = 'Kyiv';
 $payerZip       = '01001';
-$payerIp        = '93.75.1.1';
+$payerIp        = $_SERVER['REMOTE_ADDR'];
 
 // Cardholder name used for enriched 3DS data.
 // IMPORTANT: add it to the API request only when the exact merchant-API field name is confirmed.
