@@ -16,14 +16,16 @@ $SESSION_URL   = $CHECKOUT_HOST . '/api/v1/session';
 $merchantKey  = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 //$merchantKey = '8a08c9b8-a2cd-11f1-90c2-8645003a7359';
 //$merchantKey  = '8708bf06-1d3b-11f1-abb0-0239ede258e8';
+$merchantKey    = 'ae8c0d46-d904-11f1-8dca-7644d442be42';
 
 $merchantPass = '976d5c5d5eacbab78288b12bb15178ba';
 //$merchantPass   = '9a8767f2aaee6bf83f2f026f91daf02b';
 //$merchantPass = '659b1519ea16454dc45bcd889193ccb8';
+$merchantPass   = 'd70856a334ca3350b49507c2ae13e7ab';
 
 /* ===================== INPUTS ===================== */
 $orderNumber      = 'order-' . time();
-$orderAmount      = '10.49';
+$orderAmount      = '51.49';
 $orderCurrency    = 'USD';
 $orderDescription = 'Important gift';
 
