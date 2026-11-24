@@ -24,8 +24,8 @@ $COUNTRIES = [
     'payer_country' => 'BJ',
     'payment_code' => '101',
     'providers' => [
-      'Mtn' => '22951345789',
-      'Moov' => '22995345789',
+      'mtn-BJ' => '22951345789',
+      'moov-BJ' => '22995345789',
     ],
   ],
   'TG' => [
