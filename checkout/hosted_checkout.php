@@ -41,7 +41,8 @@ $billingAddress = [
     'address'      => '960 Tornado Ridge',
     'house_number' => '960',
     'zip'          => '78130',
-    'phone'        => '+380671234567',
+    //'phone'        => '+380671234567',
+    'phone'        => '00000',
   
 ];
 

@@ -15,9 +15,11 @@ $endpoint    = 'https://api.leogcltd.com/post';
 $merchantKey = '5f306e12-0ff2-11f1-bac9-0a9a38974658';
 $merchantKey = '8a08c9b8-a2cd-11f1-90c2-8645003a7359'; // 1x card
 //$merchantKey = 'f1ce9382-194a-11f1-b872-4e16b5645926'; // Korvion
+$merchantKey = 'ae8c0d46-d904-11f1-8dca-7644d442be42'; //Trevinioo
 $secret      = '976d5c5d5eacbab78288b12bb15178ba';
 $secret      = 'bc4553cde88ee3f35834d7c99bd6958c'; // 1x card
 //$secret      = 'af8f3f78e6414fb73542f4c18ff6e4f8'; // Korvion
+$secret      = 'd70856a334ca3350b49507c2ae13e7ab'; //Trevinioo
 
 // Card — values from the submitted form.
 $isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
