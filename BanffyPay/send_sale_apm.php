@@ -17,6 +17,28 @@ $SECRET     = '976d5c5d5eacbab78288b12bb15178ba';
 
 
 $COUNTRIES = [
+  'GW' => [
+    'country' => 'Guinea-Bissau',
+    'countryCode' => 'GW',
+    'currency' => 'XOF',
+    'payer_country' => 'GW',
+    'payment_code' => '104',
+    'providers' => [
+      'mtn-GW' => '245053456789',
+      'orange-GW' => '245053456789',
+    ],
+  ],
+  'CG' => [
+    'country' => 'Congo',
+    'countryCode' => 'CG',
+    'currency' => 'XAF',
+    'payer_country' => 'CG',
+    'payment_code' => '103',
+    'providers' => [
+      'mtn-CG' => '242053456789',
+
+      ],
+  ],
   'BJ' => [
     'country' => 'Benin',
     'countryCode' => 'BJ',
